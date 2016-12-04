@@ -217,36 +217,3 @@ static void increment(long *const midStateCopyLow, long *const midStateCopyHigh,
 		}
 	}
 }
-
-
-void getRandomTrits (int *RandomTrits, int length) {
-
-	int i = 0;
-
-	//int RandomTrits[length]; It's fine to declare these like they are java arrays; normally, you would put it on the heap, though, with a call to malloc().
-
-	srand(time(NULL));
-
-	while (i < length) {
-
-		RandomTrits[i] = rand() % 3 - 1;
-
-		/* Original code in comment:
-		char RandomTrit = rand() % 3 - 1;
-		if (RandomTrit == 0)
-			RandomTrits[i] = -1;
-		if (RandomTrit == 1)
-			RandomTrits[i] = 0;
-		if (RandomTrit == 2)
-			RandomTrits[i] = 1;
-		*/
-		i++;
-	}
-
-	/* not necessary for debugging. you already have your randomtrits outside here. just do this shit in your test code
-	for(i = 0; i < length; i++)
-		printf("%d", RandomTrits[i]);
-	*/
-
-	//return RandomTrits;
-}

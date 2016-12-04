@@ -17,7 +17,7 @@ typedef struct _PearlDiver *PearlDiver;
 void interrupt(PearlDiver pearl_diver);
 bool search(PearlDiver pearl_diver, int *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads);
 
-/*
+/* Another way of doing it...
 extern PearlDiver *pearl_diver__create(void);
 extern void pearl_diver__create(PearlDiver *pearl_diver);
 extern void pearl_diver__interrupt(void);

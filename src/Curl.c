@@ -8,53 +8,52 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define __TRUTH_TABLE  1, 0, -1, 1, -1, 0, -1, 1, 0
+#define __TRUTH_TABLE  	1, 0, -1, \
+			1, -1, 0, \
+			-1, 1, 0
 
-struct Curl {
-	int state[STATE_LENGTH];
-};
-static const int TRUTH_TABLE[9] = { __TRUTH_TABLE };
+static const long TRUTH_TABLE[9] = { __TRUTH_TABLE };
 
-void absorb(Curl curl, int *const trits, int offset, int length);
-void squeeze(Curl curl, int *const trits, int offset, int length);
-void reset(Curl curl);
-void transform(Curl curl);
+static long state[STATE_LENGTH];
+void absorb(long *const trits, int offset, int length);
+void squeeze(long *const trits, int offset, int length);
+void reset();
+void transform();
 
 
-
-void absorb(Curl curl, int *const trits, int offset, int length) {
+void absorb(long *const trits, int offset, int length) {
 
 	do {
-		memcpy(curl->state, trits, (length < HASH_LENGTH? length: HASH_LENGTH) * sizeof(int));
-		transform(curl);
+		memcpy(state, trits, (length < HASH_LENGTH? length: HASH_LENGTH) * sizeof(long));
+		transform();
 		offset += HASH_LENGTH;
 	} while ((length -= HASH_LENGTH) > 0);
 }
 
 
-void squeeze(Curl curl, int *const trits, int offset, int length) {
+void squeeze(long *const trits, int offset, int length) {
 
 	do {
-		memcpy(trits,  curl->state, (length < HASH_LENGTH? length: HASH_LENGTH) * sizeof(int));
-		transform(curl);
+		memcpy(trits,  state, (length < HASH_LENGTH? length: HASH_LENGTH) * sizeof(long));
+		transform();
 		offset += HASH_LENGTH;
 	} while ((length -= HASH_LENGTH) > 0);
 }
 
-void transform(Curl curl) {
+void transform() {
 
-	int *const scratchpad = malloc( sizeof(int) * STATE_LENGTH);
+	long *const scratchpad = malloc( sizeof(long) * STATE_LENGTH);
 	int scratchpadIndex = 0;
 	for (int round = 0; round < NUMBER_OF_ROUNDS; round++) {
-		memcpy(scratchpad, curl->state,STATE_LENGTH * sizeof(int));
+		memcpy(scratchpad, state,STATE_LENGTH * sizeof(long));
 		for (int stateIndex = 0; stateIndex < STATE_LENGTH; stateIndex++) {
-			curl->state[stateIndex] = TRUTH_TABLE[scratchpad[scratchpadIndex] + scratchpad[scratchpadIndex += (scratchpadIndex < 365 ? 364 : -365)] * 3 + 4];
+			state[stateIndex] = TRUTH_TABLE[scratchpad[scratchpadIndex] + scratchpad[scratchpadIndex += (scratchpadIndex < 365 ? 364 : -365)] * 3 + 4];
 		}
 	}
 }
 
-void reset(Curl curl) {
+void reset() {
 	for (int stateIndex = 0; stateIndex < STATE_LENGTH; stateIndex++) {
-		curl->state[stateIndex] = 0;
+		state[stateIndex] = 0;
 	}
 }
