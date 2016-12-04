@@ -47,8 +47,7 @@ bool search(PearlDiver pearl_diver, int *const transactionTrits, int length, con
 	int bitIndex;
 	int threadIndex;
 
-	// long scratchpadLow[243*3]; << This Method of declaration puts the array on the stack. 
-	// In this case, that is BAD. This belongs on the heap. Keep the stack clean. Use pointers and malloc
+	// long scratchpadLow[243*3]; 
 	long *scratchpadLow, *scratchpadHigh, 
 	     *midStateCopyLow, *midStateCopyHigh,
 	     *stateLow, *stateHigh,
@@ -63,11 +62,9 @@ bool search(PearlDiver pearl_diver, int *const transactionTrits, int length, con
 	midStateHigh = malloc(STATE_LENGTH*sizeof(long));
 
 	if (length != TRANSACTION_LENGTH) {
-
 		return Invalid_transaction_trits_length;
 	}
 	if (minWeightMagnitude < 0 || minWeightMagnitude > HASH_LENGTH) {
-
 		return Invalid_min_weight_magnitude;
 	}
 	
