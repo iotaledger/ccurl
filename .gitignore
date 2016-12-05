@@ -8,3 +8,4 @@ CMakeCache.txt
 .ninja*
 *ninja*
 *.swp
+vgcore*

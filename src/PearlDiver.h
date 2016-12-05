@@ -9,14 +9,17 @@
 #define Invalid_min_weight_magnitude 0x64
 #define InterruptedException 0x65
 #define TRANSACTION_LENGTH 8019
+//#define TRANSACTION_LENGTH 891
 #define HIGH_BITS 0b1111111111111111111111111111111111111111111111111111111111111111L
 #define LOW_BITS 0b0000000000000000000000000000000000000000000000000000000000000000L
 
 struct _PearlDiver {
-	volatile bool finished, interrupted, nonceFound;
+	volatile bool finished, interrupted, nonceFound, parentFinished;
 	pthread_mutex_t new_thread_search;
 	pthread_mutex_t new_thread_interrupt;
+	pthread_cond_t cond_search;
 };
+
 typedef struct _PearlDiver *PearlDiver;
 
 extern PearlDiver Create_PearlDiver();
