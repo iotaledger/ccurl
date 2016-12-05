@@ -221,7 +221,10 @@ void *find_nonce(void *states){
 
 			fprintf(stderr, "found it:%d \n", my_states->threadIndex);
 			pthread_mutex_lock(&pearl_diver->new_thread_search);
-			if(pearl_diver->finished) {return 0;}
+			if(pearl_diver->finished) {
+				pthread_mutex_unlock(&pearl_diver->new_thread_search);
+				return 0;
+			}
 			pearl_diver->finished = true;
 			for ( i = 0; i < HASH_LENGTH; i++) {
 				my_states->trits[TRANSACTION_LENGTH - HASH_LENGTH + i] = ((((long)(midStateCopyLow[i] >> bitIndex)) & 1) == 0) ? 1 : (((((long)(midStateCopyHigh[i] >> bitIndex)) & 1) == 0) ? -1 : 0);
