@@ -9,3 +9,5 @@ CMakeCache.txt
 *ninja*
 *.swp
 vgcore*
+lib/
+src/

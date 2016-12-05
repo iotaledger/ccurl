@@ -4,6 +4,7 @@ find_package (Threads)
 project (Curl)
 
 set (SOURCES src/Curl.c src/PearlDiver.c)
+set (LIBRARY_NAME curl)
 
 #set (CC /usr/bin/clang)
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall")
@@ -22,3 +23,17 @@ set_target_properties (test_pearldiver PROPERTIES LINK_FLAGS -Wl,-lcunit,-lpthre
 
 add_test (test_curl ${EXECUTABLE_OUTPUT_PATH}/test_curl)
 add_test (test_pearldiver ${EXECUTABLE_OUTPUT_PATH}/test_pearldiver)
+
+add_library (${LIBRARY_NAME} SHARED ${SOURCES})
+#target_include_directories (curl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+
+# Install library
+#install(TARGETS curl DESTINATION lib/${LIBRARY_NAME})
+set_target_properties (${LIBRARY_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY lib)
+install(TARGETS ${LIBRARY_NAME} 
+	LIBRARY DESTINATION lib/${LIBRARY_NAME}
+	ARCHIVE DESTINATION lib/${LIBRARY_NAME})
+
+# Install library headers
+file(GLOB HEADERS src/*.h)
+install(FILES ${HEADERS} DESTINATION include/${LIBRARY_NAME})
