@@ -230,8 +230,8 @@ void *find_nonce(void *states){
 				*/
 			pthread_mutex_unlock(&new_thread_search);
 			break;
-		NEXT_BIT_INDEX:
-			continue;
+			NEXT_BIT_INDEX:
+			;
 		}
 	}
 	return 0;
