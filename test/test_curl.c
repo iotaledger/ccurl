@@ -2,6 +2,7 @@
 #include "CUnit/Basic.h"
 #include "../src/Hash.h"
 #include "../src/Curl.h"
+#include "random_trits.h"
 #include <stdio.h>
 #include <string.h>
 

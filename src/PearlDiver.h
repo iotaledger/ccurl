@@ -12,10 +12,18 @@
 #define HIGH_BITS 0b1111111111111111111111111111111111111111111111111111111111111111L
 #define LOW_BITS 0b0000000000000000000000000000000000000000000000000000000000000000L
 
-struct _PearlDiver;
+struct _PearlDiver {
+	volatile bool finished, interrupted, nonceFound;
+	pthread_mutex_t new_thread_search;
+	pthread_mutex_t new_thread_interrupt;
+};
 typedef struct _PearlDiver *PearlDiver;
+
+extern PearlDiver Create_PearlDiver();
+extern void Destroy_PearlDiver(PearlDiver);
+
 void interrupt(PearlDiver pearl_diver);
-bool search(PearlDiver pearl_diver, int *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads);
+bool search(PearlDiver pearl_diver, long *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads);
 
 /* Another way of doing it...
 extern PearlDiver *pearl_diver__create(void);

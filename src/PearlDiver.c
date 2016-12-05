@@ -15,20 +15,32 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <time.h>
-*/
 struct _PearlDiver {
 	volatile bool finished, interrupted, nonceFound;
 	pthread_mutex_t new_thread_search;
 	pthread_mutex_t new_thread_interrupt;
 };
+*/
 
 static inline void transform( long *const stateLow, long *const stateHigh, long *const scratchpadLow, long *const scratchpadHigh);
 static void increment(long *const midStateCopyLow, long *const midStateCopyHigh, const int fromIndex, const int toIndex);
 void getRandomTrits (int *RandomTrits, int length);
 
 // PearlDiver public functions
+PearlDiver Create_PearlDiver();
+void Destroy_PearlDiver(PearlDiver);
 void interrupt(PearlDiver pearl_diver);
-bool search(PearlDiver pearl_diver, int *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads);
+bool search(PearlDiver pearl_diver, long *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads);
+
+PearlDiver Create_PearlDiver() {
+	PearlDiver diver = malloc(sizeof(struct _PearlDiver));
+	return diver;
+}
+
+void Destroy_PearlDiver(PearlDiver pearl_diver) {
+	struct _PearlDiver *pd = pearl_diver;
+	free(pd);
+}
 
 void interrupt(PearlDiver pearl_diver) {
 
@@ -40,7 +52,7 @@ void interrupt(PearlDiver pearl_diver) {
 	pthread_mutex_unlock(&pearl_diver->new_thread_interrupt);
 }
 
-bool search(PearlDiver pearl_diver, int *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads) {
+bool search(PearlDiver pearl_diver, long *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads) {
 
 	int i, j;
 	int offset = 0;
