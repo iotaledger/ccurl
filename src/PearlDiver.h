@@ -22,11 +22,9 @@ struct _PearlDiver {
 
 typedef struct _PearlDiver *PearlDiver;
 
-extern PearlDiver Create_PearlDiver();
-extern void Destroy_PearlDiver(PearlDiver);
 
-void interrupt(PearlDiver pearl_diver);
-bool search(PearlDiver pearl_diver, long *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads);
+void interrupt(void);
+bool search(long *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads);
 
 /* Another way of doing it...
 extern PearlDiver *pearl_diver__create(void);
