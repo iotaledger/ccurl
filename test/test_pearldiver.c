@@ -54,15 +54,15 @@ void test_pearl_diver_search(void)
 		return;
 	}
 	
-	int nonce_size = 18;
+	int nonce_size = 1;
 	long trits[TRANSACTION_LENGTH];// = { trit_1 };
 	getRandomTrits(trits, TRANSACTION_LENGTH);
 
 	//clock_t start = clock(), diff;
-	search(pearl_diver, trits, TRANSACTION_LENGTH, nonce_size, 8);
+	search(pearl_diver, trits, TRANSACTION_LENGTH, nonce_size, 32);
 	//diff = clock() - start;
 	
-	CU_ASSERT(true);
+	CU_ASSERT(pearl_diver->nonceFound);
 	
 	free(pearl_diver);
 }

@@ -3,15 +3,16 @@ enable_language (C)
 find_package (Threads)
 project (Curl)
 
-set (SOURCES src/Curl.c src/PearlDiver.c)
+set (SOURCES ${PROJECT_SOURCE_DIR}/src/Curl.c ${PROJECT_SOURCE_DIR}/src/PearlDiver.c)
 set (LIBRARY_NAME curl)
 
 #set (CC /usr/bin/clang)
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall")
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin) 
+SET (CTEST_BUILD_TARGET "DEVELOPMENT")
 
-#add_executable (adder adder.c ${SOURCES}) 
+#add_subdirectory (test)
 
 enable_testing ()
 

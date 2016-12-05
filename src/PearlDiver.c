@@ -201,7 +201,7 @@ void *find_nonce(void *states){
 
 	long scratchpadLow[STATE_LENGTH],scratchpadHigh[STATE_LENGTH],stateLow[STATE_LENGTH],stateHigh[STATE_LENGTH];
 
-	//fprintf(stderr, "starting thread Index:%d Already Finished?:%d \n", my_states->threadIndex, pearl_diver->finished);
+	fprintf(stderr, "starting thread Index:%d Already Finished?:%d \n", my_states->threadIndex, pearl_diver->finished);
 	while (!pearl_diver->finished) {
 
 		increment(midStateCopyLow, midStateCopyHigh, (HASH_LENGTH / 3) * 2, HASH_LENGTH);
@@ -219,7 +219,9 @@ void *find_nonce(void *states){
 			}
 
 
+			fprintf(stderr, "found it:%d \n", my_states->threadIndex);
 			pthread_mutex_lock(&pearl_diver->new_thread_search);
+			if(pearl_diver->finished) {return 0;}
 			pearl_diver->finished = true;
 			for ( i = 0; i < HASH_LENGTH; i++) {
 				my_states->trits[TRANSACTION_LENGTH - HASH_LENGTH + i] = ((((long)(midStateCopyLow[i] >> bitIndex)) & 1) == 0) ? 1 : (((((long)(midStateCopyHigh[i] >> bitIndex)) & 1) == 0) ? -1 : 0);
