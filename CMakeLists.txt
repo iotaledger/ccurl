@@ -24,12 +24,20 @@ set_target_properties (test_pearldiver PROPERTIES LINK_FLAGS -Wl,-lcunit,-lpthre
 add_test (test_curl ${EXECUTABLE_OUTPUT_PATH}/test_curl)
 add_test (test_pearldiver ${EXECUTABLE_OUTPUT_PATH}/test_pearldiver)
 
+
+#### BUILD LIBRARY
+# http://stackoverflow.com/questions/8096015/creating-a-simple-makefile-to-build-a-shared-library
+# http://www.thegeekstuff.com/2012/06/linux-shared-libraries
 add_library (${LIBRARY_NAME} SHARED ${SOURCES})
+
+set_target_properties (${LIBRARY_NAME} PROPERTIES 
+	LIBRARY_OUTPUT_DIRECTORY lib
+	LINK_FLAGS -lpthread
+	)
 #target_include_directories (curl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Install library
 #install(TARGETS curl DESTINATION lib/${LIBRARY_NAME})
-set_target_properties (${LIBRARY_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY lib)
 install(TARGETS ${LIBRARY_NAME} 
 	LIBRARY DESTINATION lib/${LIBRARY_NAME}
 	ARCHIVE DESTINATION lib/${LIBRARY_NAME})
