@@ -58,7 +58,6 @@ void interrupt(PearlDiver pearl_diver) {
 	pearl_diver->finished = true;
 	pearl_diver->interrupted = true;
 
-	//notifyAll();
 	pthread_mutex_unlock(&pearl_diver->new_thread_interrupt);
 }
 
@@ -139,7 +138,6 @@ bool search(PearlDiver pearl_diver, long *const transactionTrits, int length, co
 		return 1;
 	}
 	pthread_mutex_unlock(&pearl_diver->new_thread_search);
-
 
 	pthread_t tid[numberOfThreads];
 	thread_count = numberOfThreads;
