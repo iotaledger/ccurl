@@ -10,5 +10,4 @@ CMakeCache.txt
 *.swp
 vgcore*
 lib/
-src/
 tags/
