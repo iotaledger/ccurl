@@ -44,10 +44,13 @@ void transform() {
 
 	long *const scratchpad = malloc( sizeof(long) * STATE_LENGTH);
 	int scratchpadIndex = 0;
+	int scratchpadIndexSave;
 	for (int round = 0; round < NUMBER_OF_ROUNDS; round++) {
 		memcpy(scratchpad, state,STATE_LENGTH * sizeof(long));
 		for (int stateIndex = 0; stateIndex < STATE_LENGTH; stateIndex++) {
-			state[stateIndex] = TRUTH_TABLE[scratchpad[scratchpadIndex] + scratchpad[scratchpadIndex += (scratchpadIndex < 365 ? 364 : -365)] * 3 + 4];
+			scratchpadIndexSave = scratchpadIndex;
+			scratchpadIndex += (scratchpadIndex < 365 ? 364 : -365);
+			state[stateIndex] = TRUTH_TABLE[scratchpad[scratchpadIndexSave ] + scratchpad[scratchpadIndex ] * 3 + 4];
 		}
 	}
 }

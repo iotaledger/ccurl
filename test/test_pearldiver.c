@@ -21,6 +21,7 @@ int clean_suite(void) {return 0;}
 
 /************** Test case functions ****************/
 
+/*
 void test_case_sample(void) {
 	CU_ASSERT(CU_TRUE);
 	CU_ASSERT_NOT_EQUAL(2,-1);
@@ -31,6 +32,7 @@ void test_pearl_diver_create(void)
 	PearlDiver pearl_diver;
 	CU_ASSERT(sizeof(pearl_diver) == 8);
 }
+*/
 
 void test_pearl_diver_destroy(void)
 {
@@ -55,7 +57,6 @@ void test_pearl_diver_search(void)
 		return;
 	}
 	*/
-	bool out;
 	int nonce_size = 1;
 	long trits[TRANSACTION_LENGTH];// = { trit_1 };
 	getRandomTrits(trits, TRANSACTION_LENGTH);
@@ -110,7 +111,7 @@ int main (int argc, char** argv) {
 	}
 
 	/* add the tests to the suite */ 
-	if ( (NULL == CU_add_test(pSuite, "PearlDiver Create Test", test_pearl_diver_create)) ||
+	if ( //(NULL == CU_add_test(pSuite, "PearlDiver Create Test", test_pearl_diver_create)) ||
 		(NULL == CU_add_test(pSuite, "PearlDiver Destroy Test", test_pearl_diver_destroy)) ||
 		(NULL == CU_add_test(pSuite, "PearlDiver Search Test", test_pearl_diver_search))// ||
 		//(NULL == CU_add_test(pSuite, "PearlDiver Thread Test", test_pearl_diver_threads))
