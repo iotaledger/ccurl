@@ -8,23 +8,12 @@
 #include <unistd.h>
 #include <sys/wait.h>
 
-/*
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <pthread.h>
-#include <unistd.h>
-#include <sys/wait.h>
-#include <time.h>
-*/
-
 typedef struct States {
 	long *low;
 	long *high;
 	long *trits;
 	int minWeightMagnitude;
 	int threadIndex;
-	//PearlDiver pearl_diver;
 } States;
 
 volatile bool finished, interrupted, nonceFound;
@@ -39,14 +28,8 @@ void getRandomTrits (int *RandomTrits, int length);
 
 void *runthread();
 
-// PearlDiver public functions
-
-//void interrupt(PearlDiver pearl_diver);
 void interrupt(void);
 bool search(long *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads);
-
-
-
 
 void interrupt(void) {
 
@@ -61,10 +44,6 @@ bool search(long *const transactionTrits, int length, const int minWeightMagnitu
 
 	int i, j,k, thread_count;
 	int offset = 0;
-	//int bitIndex;
-	//int threadIndex;
-
-	// long scratchpadLow[STATE_LENGTH]; 
 	long midStateLow[STATE_LENGTH], midStateHigh[STATE_LENGTH];
 
 	if (length != TRANSACTION_LENGTH) {
@@ -120,10 +99,8 @@ bool search(long *const transactionTrits, int length, const int minWeightMagnitu
 
 	if (numberOfThreads <= 0) {
 		numberOfThreads = sysconf(_SC_NPROCESSORS_ONLN) - 1;
-		if (numberOfThreads < 1) {
+		if (numberOfThreads < 1)
 			numberOfThreads = 1;
-		}
-		//pearl_diver->tid = malloc(numberOfThreads  * sizeof(pthread_t));
 	}
 
 	pthread_mutex_init(&new_thread_search, NULL);
@@ -149,19 +126,9 @@ bool search(long *const transactionTrits, int length, const int minWeightMagnitu
 		pthread_create(&tid[numberOfThreads],NULL,&find_nonce,(void *)&states);
 	}
 
-	/*
-	while(!pearl_diver->finished)
-		pthread_cond_wait(&pearl_diver->cond_search, &pearl_diver->new_thread_search);
-	pearl_diver->parentFinished = true;
-	//pthread_cond_signal(&pearl_diver->cond_search);
-	pthread_mutex_unlock(&pearl_diver->new_thread_search);
-	*/
 
-
-	for(k = thread_count; k > 0; k--)  {
+	for(k = thread_count; k > 0; k--) 
 		pthread_join(tid[k-1], NULL);
-		//fprintf(stderr, "End thread:%d \n", k-1);
-	}
 
 	/*
 	if (wait(NULL))
@@ -172,17 +139,9 @@ bool search(long *const transactionTrits, int length, const int minWeightMagnitu
 }
 
 void *find_nonce(void *states){
-	States *my_states = (States *)states;
 	long midStateCopyLow[STATE_LENGTH],midStateCopyHigh[STATE_LENGTH];
 	int i,bitIndex;
-
-	/*
-	fprintf(stderr, "pearldiver finished?:%d index: %d thread:%d\n", 
-			pearl_diver->finished,
-		       	&my_states->pearl_diver->finished,
-			my_states->threadIndex
-			);
-			*/
+	States *my_states = (States *)states;
 
 	memcpy(midStateCopyLow, my_states->low, STATE_LENGTH*sizeof(long));
 	memcpy(midStateCopyHigh, my_states->high, STATE_LENGTH*sizeof(long));
@@ -223,11 +182,6 @@ void *find_nonce(void *states){
 				my_states->trits[TRANSACTION_LENGTH - HASH_LENGTH + i] = ((((long)(midStateCopyLow[i] >> bitIndex)) & 1) == 0) ? 1 : (((((long)(midStateCopyHigh[i] >> bitIndex)) & 1) == 0) ? -1 : 0);
 				nonceFound = true;
 			}
-			/*
-			pthread_cond_broadcast(&pearl_diver->cond_search);
-			while(!pearl_diver->parentFinished)
-				pthread_cond_wait(&pearl_diver->cond_search, &pearl_diver->new_thread_search);
-				*/
 			pthread_mutex_unlock(&new_thread_search);
 			break;
 			NEXT_BIT_INDEX:

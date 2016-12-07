@@ -12,37 +12,38 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall")
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin) 
 SET (CTEST_BUILD_TARGET "DEVELOPMENT")
 
-#add_subdirectory (test)
-
-enable_testing ()
-
-add_executable (test_curl test/test_curl.c ${SOURCES})
-set_target_properties (test_curl PROPERTIES LINK_FLAGS -Wl,-lcunit)
-
-add_executable (test_pearldiver test/test_pearldiver.c ${SOURCES} test/random_trits.c)
-set_target_properties (test_pearldiver PROPERTIES LINK_FLAGS -Wl,-lcunit,-lpthread)
-
-add_test (test_curl ${EXECUTABLE_OUTPUT_PATH}/test_curl)
-add_test (test_pearldiver ${EXECUTABLE_OUTPUT_PATH}/test_pearldiver)
+add_subdirectory (test)
+add_subdirectory (src)
 
 
+#enable_testing ()
+
+#add_executable (test_curl test/test_curl.c ${SOURCES})
+#set_target_properties (test_curl PROPERTIES LINK_FLAGS -Wl,-lcunit)
+#
+#add_executable (test_pearldiver test/test_pearldiver.c ${SOURCES} test/random_trits.c)
+#set_target_properties (test_pearldiver PROPERTIES LINK_FLAGS -Wl,-lcunit,-lpthread)
+#
+#add_test (test_curl ${EXECUTABLE_OUTPUT_PATH}/test_curl)
+#add_test (test_pearldiver ${EXECUTABLE_OUTPUT_PATH}/test_pearldiver)
+#
 #### BUILD LIBRARY
 # http://stackoverflow.com/questions/8096015/creating-a-simple-makefile-to-build-a-shared-library
 # http://www.thegeekstuff.com/2012/06/linux-shared-libraries
-add_library (${LIBRARY_NAME} SHARED ${SOURCES})
+#add_library (${LIBRARY_NAME} SHARED ${SOURCES})
 
-set_target_properties (${LIBRARY_NAME} PROPERTIES 
-	LIBRARY_OUTPUT_DIRECTORY lib
-	LINK_FLAGS -lpthread
-	)
-#target_include_directories (curl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-
-# Install library
-#install(TARGETS curl DESTINATION lib/${LIBRARY_NAME})
-install(TARGETS ${LIBRARY_NAME} 
-	LIBRARY DESTINATION lib/${LIBRARY_NAME}
-	ARCHIVE DESTINATION lib/${LIBRARY_NAME})
-
-# Install library headers
-file(GLOB HEADERS src/*.h)
-install(FILES ${HEADERS} DESTINATION include/${LIBRARY_NAME})
+#set_target_properties (${LIBRARY_NAME} PROPERTIES 
+#	LIBRARY_OUTPUT_DIRECTORY lib
+#	LINK_FLAGS -lpthread
+#	)
+##target_include_directories (curl PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+#
+## Install library
+##install(TARGETS curl DESTINATION lib/${LIBRARY_NAME})
+#install(TARGETS ${LIBRARY_NAME} 
+#	LIBRARY DESTINATION lib/${LIBRARY_NAME}
+#	ARCHIVE DESTINATION lib/${LIBRARY_NAME})
+#
+## Install library headers
+#file(GLOB HEADERS src/*.h)
+#install(FILES ${HEADERS} DESTINATION include/${LIBRARY_NAME})
