@@ -1,5 +1,5 @@
-#include "CUnit/CUnit.h"
-#include "CUnit/Basic.h"
+#include "BCUnit/BCUnit.h"
+#include "BCUnit/Basic.h"
 #include "../src/Hash.h"
 #include "../src/Curl.h"
 #include "random_trits.h"
