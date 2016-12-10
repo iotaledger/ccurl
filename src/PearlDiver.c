@@ -14,6 +14,7 @@ typedef struct States {
 	long *trits;
 	int minWeightMagnitude;
 	int threadIndex;
+	PearlDiver *ctx;
 } States;
 
 volatile bool finished, interrupted, nonceFound;
@@ -24,23 +25,20 @@ pthread_cond_t cond_search;
 void *find_nonce(void *states);
 static inline void transform( long *const stateLow, long *const stateHigh, long *const scratchpadLow, long *const scratchpadHigh);
 static void increment(long *const midStateCopyLow, long *const midStateCopyHigh, const int fromIndex, const int toIndex);
-void getRandomTrits (int *RandomTrits, int length);
 
-void *runthread();
+void init_pearldiver(PearlDiver *ctx) {
+	ctx = malloc(sizeof(struct _PearlDiver));
+}
+void interrupt(PearlDiver *ctx) {
 
-void interrupt(void);
-bool search(long *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads);
-
-void interrupt(void) {
-
-	pthread_mutex_lock(&new_thread_interrupt);
+	pthread_mutex_lock(&ctx->new_thread_search);
 	finished = true;
 	interrupted = true;
 
-	pthread_mutex_unlock(&new_thread_interrupt);
+	pthread_mutex_unlock(&ctx->new_thread_search);
 }
 
-bool search(long *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads) {
+bool search(PearlDiver *ctx, long *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads) {
 
 	int i, j,k, thread_count;
 	int offset = 0;
@@ -53,9 +51,9 @@ bool search(long *const transactionTrits, int length, const int minWeightMagnitu
 		return Invalid_min_weight_magnitude;
 	}
 
-	finished = false;
-	interrupted = false;
-	nonceFound = false;
+	ctx->finished = false;
+	ctx->interrupted = false;
+	ctx->nonceFound = false;
 
 	{
 		for (i = HASH_LENGTH; i < STATE_LENGTH; i++) {
@@ -103,13 +101,13 @@ bool search(long *const transactionTrits, int length, const int minWeightMagnitu
 			numberOfThreads = 1;
 	}
 
-	pthread_mutex_init(&new_thread_search, NULL);
-	pthread_cond_init(&cond_search, NULL);
-	if (pthread_mutex_lock(&new_thread_search) != 0) {
+	pthread_mutex_init(&ctx->new_thread_search, NULL);
+	//pthread_cond_init(&cond_search, NULL);
+	if (pthread_mutex_lock(&ctx->new_thread_search) != 0) {
 		printf("mutex init failed");
 		return 1;
 	}
-	pthread_mutex_unlock(&new_thread_search);
+	pthread_mutex_unlock(&ctx->new_thread_search);
 
 	pthread_t tid[numberOfThreads];
 	thread_count = numberOfThreads;
@@ -121,19 +119,19 @@ bool search(long *const transactionTrits, int length, const int minWeightMagnitu
 			.high = midStateHigh,
 			.trits = transactionTrits,
 			.minWeightMagnitude = minWeightMagnitude,
-			.threadIndex = numberOfThreads
+			.threadIndex = numberOfThreads,
+			.ctx = ctx
 		};
 		pthread_create(&tid[numberOfThreads],NULL,&find_nonce,(void *)&states);
 	}
 
 
+	if (wait(NULL))
+		return InterruptedException;
+
 	for(k = thread_count; k > 0; k--) 
 		pthread_join(tid[k-1], NULL);
 
-	/*
-	if (wait(NULL))
-		return InterruptedException;
-		*/
 
 	return interrupted;
 }
@@ -172,9 +170,9 @@ void *find_nonce(void *states){
 
 
 			fprintf(stderr, "found it:%d \n", my_states->threadIndex);
-			pthread_mutex_lock(&new_thread_search);
+			pthread_mutex_lock(&my_states->ctx->new_thread_search);
 			if(finished) {
-				pthread_mutex_unlock(&new_thread_search);
+				pthread_mutex_unlock(&my_states->ctx->new_thread_search);
 				return 0;
 			}
 			finished = true;
@@ -182,7 +180,7 @@ void *find_nonce(void *states){
 				my_states->trits[TRANSACTION_LENGTH - HASH_LENGTH + i] = ((((long)(midStateCopyLow[i] >> bitIndex)) & 1) == 0) ? 1 : (((((long)(midStateCopyHigh[i] >> bitIndex)) & 1) == 0) ? -1 : 0);
 				nonceFound = true;
 			}
-			pthread_mutex_unlock(&new_thread_search);
+			pthread_mutex_unlock(&my_states->ctx->new_thread_search);
 			break;
 			NEXT_BIT_INDEX:
 			;

@@ -26,9 +26,10 @@ int clean_suites(void) {return 0;}
 
 void test_pearl_diver_destroy(void)
 {
-	PearlDiver pearl_diver;
+	PearlDiver *pearl_diver = NULL;
 
-	pearl_diver = malloc(sizeof(struct _PearlDiver));
+	init_pearldiver(pearl_diver);
+	//pearl_diver = malloc(sizeof(struct _PearlDiver));
 	
 	CU_ASSERT(sizeof(struct _PearlDiver) > 8);
 
@@ -37,22 +38,20 @@ void test_pearl_diver_destroy(void)
 
 void test_pearl_diver_search(void)
 {
-	//PearlDiver pearl_diver;
+	PearlDiver *pearl_diver = NULL;
 
-	//fprintf(stderr, "\n _PearlDiver size:%d\n", sizeof(struct _PearlDiver));
-	/*
-	pearl_diver = malloc(sizeof(struct _PearlDiver));
+	init_pearldiver(pearl_diver);
+
 	if (pearl_diver == NULL) {
 		CU_ASSERT(false);
 		return;
 	}
-	*/
 	int nonce_size = 1;
 	long trits[TRANSACTION_LENGTH];// = { trit_1 };
 	getRandomTrits(trits, TRANSACTION_LENGTH);
 
 	//clock_t start = clock(), diff;
-	search(trits, TRANSACTION_LENGTH, nonce_size, 32);
+	search(pearl_diver, trits, TRANSACTION_LENGTH, nonce_size, 32);
 	//diff = clock() - start;
 	
 	//CU_ASSERT(out);
@@ -62,9 +61,9 @@ void test_pearl_diver_search(void)
 
 void test_pearl_diver_threads(void)
 {
-	PearlDiver pearl_diver;
+	PearlDiver *pearl_diver = NULL;
+	init_pearldiver(pearl_diver);
 
-	pearl_diver = malloc(sizeof(struct _PearlDiver));
 	if (pearl_diver == NULL) {
 		CU_ASSERT(false);
 		return;
@@ -75,7 +74,7 @@ void test_pearl_diver_threads(void)
 	//getRandomTrits(trits, TRANSACTION_LENGTH);
 
 	clock_t start = clock(), diff;
-	search(trits, TRANSACTION_LENGTH, 18, 8);
+	search(pearl_diver, trits, TRANSACTION_LENGTH, 18, 8);
 	diff = clock() - start;
 
 	CU_ASSERT(memcmp(trits, expect, TRANSACTION_LENGTH * sizeof(long)));
