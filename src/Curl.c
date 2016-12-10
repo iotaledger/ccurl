@@ -24,7 +24,7 @@ void transform();
 void absorb(long *const trits, int offset, int length) {
 
 	do {
-		memcpy(state, trits, (length < HASH_LENGTH? length: HASH_LENGTH) * sizeof(long));
+		memcpy(state, &trits[offset], (length < HASH_LENGTH? length: HASH_LENGTH) * sizeof(long));
 		transform();
 		offset += HASH_LENGTH;
 	} while ((length -= HASH_LENGTH) > 0);
@@ -34,7 +34,7 @@ void absorb(long *const trits, int offset, int length) {
 void squeeze(long *const trits, int offset, int length) {
 
 	do {
-		memcpy(trits,  state, (length < HASH_LENGTH? length: HASH_LENGTH) * sizeof(long));
+		memcpy(trits,  &state[offset], (length < HASH_LENGTH? length: HASH_LENGTH) * sizeof(long));
 		transform();
 		offset += HASH_LENGTH;
 	} while ((length -= HASH_LENGTH) > 0);
