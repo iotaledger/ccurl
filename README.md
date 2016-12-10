@@ -5,7 +5,7 @@ C port of the Curl library
 
 * To Compile
 
-`cmake && make`
+`mkdir build && cd build && cmake .. && make`
 
 Include the header files found in `src/`.
 
