@@ -6,6 +6,7 @@
 #include "Curl.h"
 #include "PearlDiver.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 #define __TRUTH_TABLE  	1, 0, -1, \
@@ -14,33 +15,47 @@
 
 static const long TRUTH_TABLE[9] = { __TRUTH_TABLE };
 
-static long state[STATE_LENGTH];
-void absorb(long *const trits, int offset, int length);
-void squeeze(long *const trits, int offset, int length);
-void reset();
-void transform();
+//static long state[STATE_LENGTH];
+void transform(long *const state);
 
+void init_curl(Curl *ctx) {
+	ctx->state = malloc(sizeof(trit_t) * STATE_LENGTH);
+}
 
-void absorb(long *const trits, int offset, int length) {
-
+void absorb(Curl *ctx, long *const trits, int offset, int length) {
+	do {
+		memcpy(ctx->state, &trits[offset], (length < HASH_LENGTH? length: HASH_LENGTH) * sizeof(long));
+		transform(ctx->state);
+		offset += HASH_LENGTH;
+	} while ((length -= HASH_LENGTH) > 0);
+}
+void squeeze(Curl *ctx, long *const trits, int offset, int length) {
+	do {
+		memcpy(trits,  &ctx->state[offset], (length < HASH_LENGTH? length: HASH_LENGTH) * sizeof(long));
+		transform(ctx->state);
+		offset += HASH_LENGTH;
+	} while ((length -= HASH_LENGTH) > 0);
+}
+/*
+void absorb(long *const state, long *const trits, int offset, int length) {
 	do {
 		memcpy(state, &trits[offset], (length < HASH_LENGTH? length: HASH_LENGTH) * sizeof(long));
-		transform();
+		transform(state);
 		offset += HASH_LENGTH;
 	} while ((length -= HASH_LENGTH) > 0);
 }
 
 
-void squeeze(long *const trits, int offset, int length) {
-
+void squeeze(long *const state, long *const trits, int offset, int length) {
 	do {
 		memcpy(trits,  &state[offset], (length < HASH_LENGTH? length: HASH_LENGTH) * sizeof(long));
-		transform();
+		transform(state);
 		offset += HASH_LENGTH;
 	} while ((length -= HASH_LENGTH) > 0);
 }
+*/
 
-void transform() {
+void transform(long *const state ) {
 
 	long *const scratchpad = malloc( sizeof(long) * STATE_LENGTH);
 	int scratchpadIndex = 0;
@@ -55,8 +70,11 @@ void transform() {
 	}
 }
 
-void reset() {
+void reset(Curl *ctx) {
+	memset(ctx->state,0,STATE_LENGTH);
+	/*
 	for (int stateIndex = 0; stateIndex < STATE_LENGTH; stateIndex++) {
 		state[stateIndex] = 0;
 	}
+	*/
 }

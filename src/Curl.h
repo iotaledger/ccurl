@@ -12,8 +12,18 @@
 
 #define NUMBER_OF_ROUNDS 27
 
-void absorb(long *const trits, int offset, int length);
-void squeeze(long *const trits, int offset, int length);
-void reset();
+typedef long trit_t;
+
+typedef struct _Curl {
+	trit_t *state;
+} Curl;
+
+void init_curl(Curl *ctx);
+
+void absorb(Curl *ctx, long *const trits, int offset, int length);
+void squeeze(Curl *ctx, long *const trits, int offset, int length);
+//void absorb(long *const state, long *const trits, int offset, int length);
+//void squeeze(long *const state, long *const trits, int offset, int length);
+void reset(Curl *ctx);
 
 #endif
