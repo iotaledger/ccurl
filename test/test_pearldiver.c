@@ -13,6 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include <unistd.h>
 
 
 
@@ -24,63 +25,47 @@ int clean_suites(void) {return 0;}
 /************** Test case functions ****************/
 
 
-void test_pearl_diver_destroy(void)
-{
-	PearlDiver *pearl_diver = NULL;
-
-	init_pearldiver(pearl_diver);
-	//pearl_diver = malloc(sizeof(struct _PearlDiver));
-	
-	CU_ASSERT(sizeof(struct _PearlDiver) > 8);
-
-	free(pearl_diver);
-}
-
 void test_pearl_diver_search(void)
 {
-	PearlDiver *pearl_diver = NULL;
+	PearlDiver pearl_diver;
 
-	init_pearldiver(pearl_diver);
-
-	if (pearl_diver == NULL) {
-		CU_ASSERT(false);
-		return;
-	}
 	int nonce_size = 1;
 	long trits[TRANSACTION_LENGTH];// = { trit_1 };
 	getRandomTrits(trits, TRANSACTION_LENGTH);
 
-	//clock_t start = clock(), diff;
-	search(pearl_diver, trits, TRANSACTION_LENGTH, nonce_size, 32);
-	//diff = clock() - start;
+	clock_t start = clock(), diff;
+	search(&pearl_diver, trits, TRANSACTION_LENGTH, nonce_size, 32);
+	diff = clock() - start;
 	
-	//CU_ASSERT(out);
+	CU_ASSERT(pearl_diver.nonceFound);
 	
-	//free(pearl_diver);
 }
 
-void test_pearl_diver_threads(void)
-{
-	PearlDiver *pearl_diver = NULL;
-	init_pearldiver(pearl_diver);
+void *dosearch(void *ctx) {
+	PearlDiver *pearl_diver = (PearlDiver *)ctx;
 
-	if (pearl_diver == NULL) {
-		CU_ASSERT(false);
-		return;
-	}
-	
+	int nonce_size = 18;
 	long trits[TRANSACTION_LENGTH];// = { trit_1 };
-	long expect[TRANSACTION_LENGTH];// = { trit_output_1 };
-	//getRandomTrits(trits, TRANSACTION_LENGTH);
+	getRandomTrits(trits, TRANSACTION_LENGTH);
 
-	clock_t start = clock(), diff;
-	search(pearl_diver, trits, TRANSACTION_LENGTH, 18, 8);
-	diff = clock() - start;
+	search(pearl_diver, trits, TRANSACTION_LENGTH, nonce_size, 32);
+	return 0;
+}
+void test_pearl_diver_interrupt(void)
+{
+	PearlDiver pearl_diver;
 
-	CU_ASSERT(memcmp(trits, expect, TRANSACTION_LENGTH * sizeof(long)));
-	CU_ASSERT(diff > 50000000);
+	pthread_t tid;
+	pthread_create(&tid,NULL,&dosearch,(void *)&pearl_diver);
 
-	free(pearl_diver);
+	sleep(1);
+
+	interrupt(&pearl_diver);
+
+	sleep(1);
+	
+	CU_ASSERT(!pearl_diver.nonceFound);
+	CU_ASSERT(pearl_diver.interrupted);
 }
 
 void getRandomTrits (long *RandomTrits, int length) {
@@ -94,10 +79,8 @@ void getRandomTrits (long *RandomTrits, int length) {
 }
 
 static CU_TestInfo tests[] = {
-	//{"PearlDiver Create Test", test_pearl_diver_create},
-	{"PearlDiver Destroy Test", test_pearl_diver_destroy},
 	{"PearlDiver Search Test", test_pearl_diver_search},
-	//{"PearlDiver Thread Test", test_pearl_diver_threads},
+	{"PearlDiver Interrupt Test",test_pearl_diver_interrupt},
 	CU_TEST_INFO_NULL,
 };
 

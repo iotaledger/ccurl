@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sched.h>
 
 typedef struct States {
 	long *low;
@@ -17,23 +18,16 @@ typedef struct States {
 	PearlDiver *ctx;
 } States;
 
-volatile bool finished, interrupted, nonceFound;
-pthread_mutex_t new_thread_search;
-pthread_mutex_t new_thread_interrupt;
-pthread_cond_t cond_search;
 
 void *find_nonce(void *states);
 static inline void transform( long *const stateLow, long *const stateHigh, long *const scratchpadLow, long *const scratchpadHigh);
 static void increment(long *const midStateCopyLow, long *const midStateCopyHigh, const int fromIndex, const int toIndex);
 
-void init_pearldiver(PearlDiver *ctx) {
-	ctx = malloc(sizeof(struct _PearlDiver));
-}
 void interrupt(PearlDiver *ctx) {
 
 	pthread_mutex_lock(&ctx->new_thread_search);
-	finished = true;
-	interrupted = true;
+	ctx->finished = true;
+	ctx->interrupted = true;
 
 	pthread_mutex_unlock(&ctx->new_thread_search);
 }
@@ -125,15 +119,12 @@ bool search(PearlDiver *ctx, long *const transactionTrits, int length, const int
 		pthread_create(&tid[numberOfThreads],NULL,&find_nonce,(void *)&states);
 	}
 
-
-	if (wait(NULL))
-		return InterruptedException;
-
+	sched_yield();
+	
 	for(k = thread_count; k > 0; k--) 
 		pthread_join(tid[k-1], NULL);
 
-
-	return interrupted;
+	return ctx->interrupted;
 }
 
 void *find_nonce(void *states){
@@ -141,6 +132,7 @@ void *find_nonce(void *states){
 	int i,bitIndex;
 	States *my_states = (States *)states;
 
+	PearlDiver *ctx = my_states->ctx;
 	memcpy(midStateCopyLow, my_states->low, STATE_LENGTH*sizeof(long));
 	memcpy(midStateCopyHigh, my_states->high, STATE_LENGTH*sizeof(long));
 
@@ -151,9 +143,8 @@ void *find_nonce(void *states){
 
 	long scratchpadLow[STATE_LENGTH],scratchpadHigh[STATE_LENGTH],stateLow[STATE_LENGTH],stateHigh[STATE_LENGTH];
 
-	fprintf(stderr, "starting thread Index:%d Already Finished?:%d \n", my_states->threadIndex, finished);
-	while (!finished) {
-
+	bool skip;
+	while (!ctx->finished && !ctx->interrupted) {
 		increment(midStateCopyLow, midStateCopyHigh, (HASH_LENGTH / 3) * 2, HASH_LENGTH);
 		memcpy( stateLow, midStateCopyLow, STATE_LENGTH*sizeof(long));
 		memcpy( stateHigh, midStateCopyHigh, STATE_LENGTH*sizeof(long));
@@ -161,29 +152,29 @@ void *find_nonce(void *states){
 
 
 		for (bitIndex = 64; bitIndex-- > 0; ) {
-			 if(finished) {return 0;}
+			skip = false;
+			 if(ctx->finished) {return 0;}
 			for (i = my_states->minWeightMagnitude; i-- > 0; ) {
 				if ((((long)(stateLow[HASH_LENGTH - 1 - i] >> bitIndex)) & 1) != (((long)(stateHigh[HASH_LENGTH - 1 - i] >> bitIndex)) & 1)) {
-					goto NEXT_BIT_INDEX;
+					skip = true;
+					break;
 				}
 			}
+			if(skip) continue;
 
-
-			fprintf(stderr, "found it:%d \n", my_states->threadIndex);
 			pthread_mutex_lock(&my_states->ctx->new_thread_search);
-			if(finished) {
+			if(ctx->finished) {
 				pthread_mutex_unlock(&my_states->ctx->new_thread_search);
 				return 0;
 			}
-			finished = true;
+			ctx->finished = true;
 			for ( i = 0; i < HASH_LENGTH; i++) {
 				my_states->trits[TRANSACTION_LENGTH - HASH_LENGTH + i] = ((((long)(midStateCopyLow[i] >> bitIndex)) & 1) == 0) ? 1 : (((((long)(midStateCopyHigh[i] >> bitIndex)) & 1) == 0) ? -1 : 0);
-				nonceFound = true;
+				my_states->ctx->nonceFound = true;
 			}
 			pthread_mutex_unlock(&my_states->ctx->new_thread_search);
-			break;
-			NEXT_BIT_INDEX:
-			;
+			sched_yield();
+			return 0;
 		}
 	}
 	return 0;
