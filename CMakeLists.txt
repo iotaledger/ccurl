@@ -15,8 +15,8 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall")
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin) 
 SET (CTEST_BUILD_TARGET "RELEASE")
 
-enable_testing ()
-add_subdirectory (test)
+#enable_testing ()
+#add_subdirectory (test)
 add_subdirectory (src)
 
 
