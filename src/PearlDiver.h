@@ -14,6 +14,10 @@
 #define LOW_BITS 0b0000000000000000000000000000000000000000000000000000000000000000L
 
 typedef struct {
+	trit_t low[STATE_LENGTH];
+	trit_t high[STATE_LENGTH];
+} States;
+typedef struct {
 	volatile bool finished, interrupted, nonceFound;
 	pthread_mutex_t new_thread_search;
 	pthread_t *tid;
@@ -24,5 +28,6 @@ void interrupt(PearlDiver *ctx);
 bool search(PearlDiver *ctx, trit_t *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads);
 void pd_transform( long *const stateLow, long *const stateHigh, long *const scratchpadLow, long *const scratchpadHigh);
 void pd_increment(long *const midStateCopyLow, long *const midStateCopyHigh, const int fromIndex, const int toIndex);
+void pd_search_init(States *states, trit_t *transactionTrits);
 
 #endif

@@ -9,14 +9,13 @@
 #include <sys/wait.h>
 #include <sched.h>
 
-typedef struct States {
-	long *low;
-	long *high;
+typedef struct {
+	States *states;
 	long *trits;
 	int minWeightMagnitude;
 	int threadIndex;
 	PearlDiver *ctx;
-} States;
+} PDThread;
 
 
 void *find_nonce(void *states);
@@ -32,9 +31,7 @@ void interrupt(PearlDiver *ctx) {
 
 bool search(PearlDiver *ctx, long *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads) {
 
-	int i, j,k, thread_count;
-	int offset = 0;
-	long midStateLow[STATE_LENGTH], midStateHigh[STATE_LENGTH];
+	int k, thread_count;
 
 	if (length != TRANSACTION_LENGTH) {
 		return Invalid_transaction_trits_length;
@@ -47,45 +44,9 @@ bool search(PearlDiver *ctx, long *const transactionTrits, int length, const int
 	ctx->interrupted = false;
 	ctx->nonceFound = false;
 
-	{
-		for (i = HASH_LENGTH; i < STATE_LENGTH; i++) {
-
-			midStateLow[i] = HIGH_BITS;
-			midStateHigh[i] = HIGH_BITS;
-		}
-
-		long scratchpadLow[STATE_LENGTH],scratchpadHigh[STATE_LENGTH];
-
-		for (i = (TRANSACTION_LENGTH - HASH_LENGTH) / HASH_LENGTH; i-- > 0; ) {
-
-			for (j = 0; j < HASH_LENGTH; j++) {
-				switch (transactionTrits[offset++]) {
-					case 0: {
-							midStateLow[j] = HIGH_BITS;
-							midStateHigh[j] = HIGH_BITS;
-						} break;
-					case 1: {
-							midStateLow[j] = LOW_BITS;
-							midStateHigh[j] = HIGH_BITS;
-						} break;
-					default: {
-							 midStateLow[j] = HIGH_BITS;
-							 midStateHigh[j] = LOW_BITS;
-						 }
-				}
-			}
-
-			pd_transform(midStateLow, midStateHigh, scratchpadLow, scratchpadHigh);
-		}
-		midStateLow[0] = 0b1101101101101101101101101101101101101101101101101101101101101101L;
-		midStateHigh[0] = 0b1011011011011011011011011011011011011011011011011011011011011011L;
-		midStateLow[1] = 0b1111000111111000111111000111111000111111000111111000111111000111L;
-		midStateHigh[1] = 0b1000111111000111111000111111000111111000111111000111111000111111L;
-		midStateLow[2] = 0b0111111111111111111000000000111111111111111111000000000111111111L;
-		midStateHigh[2] = 0b1111111111000000000111111111111111111000000000111111111111111111L;
-		midStateLow[3] = 0b1111111111000000000000000000000000000111111111111111111111111111L;
-		midStateHigh[3] = 0b0000000000111111111111111111111111111111111111111111111111111111L;
-	}
+	States *states;
+	states = malloc(sizeof(States));
+	pd_search_init(states, transactionTrits);
 
 	if (numberOfThreads <= 0) {
 		numberOfThreads = sysconf(_SC_NPROCESSORS_ONLN) - 1;
@@ -106,36 +67,76 @@ bool search(PearlDiver *ctx, long *const transactionTrits, int length, const int
 
 	while (numberOfThreads-- > 0) {
 
-		States states = {
-			.low = midStateLow,
-			.high = midStateHigh,
+		PDThread pdthread = {
+			.states = states,
 			.trits = transactionTrits,
 			.minWeightMagnitude = minWeightMagnitude,
 			.threadIndex = numberOfThreads,
 			.ctx = ctx
 		};
-		pthread_create(&tid[numberOfThreads],NULL,&find_nonce,(void *)&states);
+		pthread_create(&tid[numberOfThreads],NULL,&find_nonce,(void *)&pdthread);
 	}
 
 	sched_yield();
-	
+
 	for(k = thread_count; k > 0; k--) 
 		pthread_join(tid[k-1], NULL);
 
 	return ctx->interrupted;
 }
 
-void *find_nonce(void *states){
+void pd_search_init(States *states, trit_t *transactionTrits) {
+	int i, j, offset = 0;
+	for (i = HASH_LENGTH; i < STATE_LENGTH; i++) {
+
+		states->low[i] = HIGH_BITS;
+		states->high[i] = HIGH_BITS;
+	}
+
+	long scratchpadLow[STATE_LENGTH],scratchpadHigh[STATE_LENGTH];
+
+	for (i = (TRANSACTION_LENGTH - HASH_LENGTH) / HASH_LENGTH; i-- > 0; ) {
+
+		for (j = 0; j < HASH_LENGTH; j++) {
+			switch (transactionTrits[offset++]) {
+				case 0: {
+						states->low[j] = HIGH_BITS;
+						states->high[j] = HIGH_BITS;
+					} break;
+				case 1: {
+						states->low[j] = LOW_BITS;
+						states->high[j] = HIGH_BITS;
+					} break;
+				default: {
+						 states->low[j] = HIGH_BITS;
+						 states->high[j] = LOW_BITS;
+					 }
+			}
+		}
+
+		pd_transform(states->low, states->high, scratchpadLow, scratchpadHigh);
+	}
+	states->low[0] = 0b1101101101101101101101101101101101101101101101101101101101101101L;
+	states->high[0] = 0b1011011011011011011011011011011011011011011011011011011011011011L;
+	states->low[1] = 0b1111000111111000111111000111111000111111000111111000111111000111L;
+	states->high[1] = 0b1000111111000111111000111111000111111000111111000111111000111111L;
+	states->low[2] = 0b0111111111111111111000000000111111111111111111000000000111111111L;
+	states->high[2] = 0b1111111111000000000111111111111111111000000000111111111111111111L;
+	states->low[3] = 0b1111111111000000000000000000000000000111111111111111111111111111L;
+	states->high[3] = 0b0000000000111111111111111111111111111111111111111111111111111111L;
+}
+
+void *find_nonce(void *date){
 	long midStateCopyLow[STATE_LENGTH],midStateCopyHigh[STATE_LENGTH];
 	int i,bitIndex;
-	States *my_states = (States *)states;
+	PDThread *my_thread= (PDThread *)date;
 
-	PearlDiver *ctx = my_states->ctx;
-	memcpy(midStateCopyLow, my_states->low, STATE_LENGTH*sizeof(long));
-	memcpy(midStateCopyHigh, my_states->high, STATE_LENGTH*sizeof(long));
+	PearlDiver *ctx = my_thread->ctx;
+	memcpy(midStateCopyLow, my_thread->states->low, STATE_LENGTH*sizeof(long));
+	memcpy(midStateCopyHigh, my_thread->states->high, STATE_LENGTH*sizeof(long));
 
 
-	for (i = my_states->threadIndex; i-- > 0; ) {
+	for (i = my_thread->threadIndex; i-- > 0; ) {
 		pd_increment(midStateCopyLow, midStateCopyHigh, HASH_LENGTH / 3, (HASH_LENGTH / 3) * 2);
 	}
 
@@ -151,8 +152,8 @@ void *find_nonce(void *states){
 
 		for (bitIndex = 64; bitIndex-- > 0; ) {
 			skip = false;
-			 if(ctx->finished) {return 0;}
-			for (i = my_states->minWeightMagnitude; i-- > 0; ) {
+			if(ctx->finished) {return 0;}
+			for (i = my_thread->minWeightMagnitude; i-- > 0; ) {
 				if ((((long)(stateLow[HASH_LENGTH - 1 - i] >> bitIndex)) & 1) != (((long)(stateHigh[HASH_LENGTH - 1 - i] >> bitIndex)) & 1)) {
 					skip = true;
 					break;
@@ -160,17 +161,17 @@ void *find_nonce(void *states){
 			}
 			if(skip) continue;
 
-			pthread_mutex_lock(&my_states->ctx->new_thread_search);
+			pthread_mutex_lock(&my_thread->ctx->new_thread_search);
 			if(ctx->finished) {
-				pthread_mutex_unlock(&my_states->ctx->new_thread_search);
+				pthread_mutex_unlock(&my_thread->ctx->new_thread_search);
 				return 0;
 			}
 			ctx->finished = true;
 			for ( i = 0; i < HASH_LENGTH; i++) {
-				my_states->trits[TRANSACTION_LENGTH - HASH_LENGTH + i] = ((((long)(midStateCopyLow[i] >> bitIndex)) & 1) == 0) ? 1 : (((((long)(midStateCopyHigh[i] >> bitIndex)) & 1) == 0) ? -1 : 0);
-				my_states->ctx->nonceFound = true;
+				my_thread->trits[TRANSACTION_LENGTH - HASH_LENGTH + i] = ((((long)(midStateCopyLow[i] >> bitIndex)) & 1) == 0) ? 1 : (((((long)(midStateCopyHigh[i] >> bitIndex)) & 1) == 0) ? -1 : 0);
+				my_thread->ctx->nonceFound = true;
 			}
-			pthread_mutex_unlock(&my_states->ctx->new_thread_search);
+			pthread_mutex_unlock(&my_thread->ctx->new_thread_search);
 			sched_yield();
 			return 0;
 		}
