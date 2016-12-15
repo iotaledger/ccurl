@@ -20,8 +20,6 @@ typedef struct States {
 
 
 void *find_nonce(void *states);
-static inline void transform( long *const stateLow, long *const stateHigh, long *const scratchpadLow, long *const scratchpadHigh);
-static void increment(long *const midStateCopyLow, long *const midStateCopyHigh, const int fromIndex, const int toIndex);
 
 void interrupt(PearlDiver *ctx) {
 
@@ -77,7 +75,7 @@ bool search(PearlDiver *ctx, long *const transactionTrits, int length, const int
 				}
 			}
 
-			transform(midStateLow, midStateHigh, scratchpadLow, scratchpadHigh);
+			pd_transform(midStateLow, midStateHigh, scratchpadLow, scratchpadHigh);
 		}
 		midStateLow[0] = 0b1101101101101101101101101101101101101101101101101101101101101101L;
 		midStateHigh[0] = 0b1011011011011011011011011011011011011011011011011011011011011011L;
@@ -138,17 +136,17 @@ void *find_nonce(void *states){
 
 
 	for (i = my_states->threadIndex; i-- > 0; ) {
-		increment(midStateCopyLow, midStateCopyHigh, HASH_LENGTH / 3, (HASH_LENGTH / 3) * 2);
+		pd_increment(midStateCopyLow, midStateCopyHigh, HASH_LENGTH / 3, (HASH_LENGTH / 3) * 2);
 	}
 
 	long scratchpadLow[STATE_LENGTH],scratchpadHigh[STATE_LENGTH],stateLow[STATE_LENGTH],stateHigh[STATE_LENGTH];
 
 	bool skip;
 	while (!ctx->finished && !ctx->interrupted) {
-		increment(midStateCopyLow, midStateCopyHigh, (HASH_LENGTH / 3) * 2, HASH_LENGTH);
+		pd_increment(midStateCopyLow, midStateCopyHigh, (HASH_LENGTH / 3) * 2, HASH_LENGTH);
 		memcpy( stateLow, midStateCopyLow, STATE_LENGTH*sizeof(long));
 		memcpy( stateHigh, midStateCopyHigh, STATE_LENGTH*sizeof(long));
-		transform(stateLow, stateHigh, scratchpadLow, scratchpadHigh);
+		pd_transform(stateLow, stateHigh, scratchpadLow, scratchpadHigh);
 
 
 		for (bitIndex = 64; bitIndex-- > 0; ) {
@@ -181,8 +179,7 @@ void *find_nonce(void *states){
 }
 
 
-static
-inline void transform( long *const stateLow, long *const stateHigh, long *const scratchpadLow, long *const scratchpadHigh) {
+void pd_transform( long *const stateLow, long *const stateHigh, long *const scratchpadLow, long *const scratchpadHigh) {
 
 	int scratchpadIndex = 0, round, stateIndex;
 	long alpha, beta, gamma, delta;
@@ -204,7 +201,7 @@ inline void transform( long *const stateLow, long *const stateHigh, long *const 
 	}
 
 }
-static void increment(long *const midStateCopyLow, long *const midStateCopyHigh, const int fromIndex, const int toIndex) {
+void pd_increment(long *const midStateCopyLow, long *const midStateCopyHigh, const int fromIndex, const int toIndex) {
 
 	int i;
 

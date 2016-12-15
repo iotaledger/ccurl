@@ -22,5 +22,7 @@ typedef struct {
 void init_pearldiver(PearlDiver *ctx);
 void interrupt(PearlDiver *ctx);
 bool search(PearlDiver *ctx, trit_t *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads);
+void pd_transform( long *const stateLow, long *const stateHigh, long *const scratchpadLow, long *const scratchpadHigh);
+void pd_increment(long *const midStateCopyLow, long *const midStateCopyHigh, const int fromIndex, const int toIndex);
 
 #endif
