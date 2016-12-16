@@ -18,7 +18,7 @@
 
 
 void runtests();
-void getRandomTrits (long *RandomTrits, int length);
+void getRandomTrits (trit_t *RandomTrits, int length);
 int init_suites(void) {return 0;}
 int clean_suites(void) {return 0;}
 
@@ -30,7 +30,7 @@ void test_pearl_diver_search(void)
 	PearlDiver pearl_diver;
 
 	int nonce_size = 1;
-	long trits[TRANSACTION_LENGTH];// = { trit_1 };
+	trit_t trits[TRANSACTION_LENGTH];// = { trit_1 };
 	getRandomTrits(trits, TRANSACTION_LENGTH);
 
 	clock_t start = clock(), diff;
@@ -45,7 +45,7 @@ void *dosearch(void *ctx) {
 	PearlDiver *pearl_diver = (PearlDiver *)ctx;
 
 	int nonce_size = 18;
-	long trits[TRANSACTION_LENGTH];// = { trit_1 };
+	trit_t trits[TRANSACTION_LENGTH];// = { trit_1 };
 	getRandomTrits(trits, TRANSACTION_LENGTH);
 
 	search(pearl_diver, trits, TRANSACTION_LENGTH, nonce_size, 32);
@@ -68,7 +68,7 @@ void test_pearl_diver_interrupt(void)
 	CU_ASSERT(pearl_diver.interrupted);
 }
 
-void getRandomTrits (long *RandomTrits, int length) {
+void getRandomTrits (trit_t *RandomTrits, int length) {
 	int i = 0;
 	srand(time(NULL));
 	while (i < length) {

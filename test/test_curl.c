@@ -29,71 +29,71 @@ void test_curl_absorb(void);
 
 
 void test_curl_absorb(void) {
-	long my_trits_1[STATE_LENGTH];
+	trit_t my_trits_1[STATE_LENGTH];
 
 	Curl curl;
        	init_curl(&curl);
 
 	int length_1 = STATE_LENGTH;
-	memcpy(my_trits_1, trits_in_2, length_1 * sizeof(long));
+	memcpy(my_trits_1, trits_in_2, length_1 * sizeof(trit_t));
 
 	for(int i=0; i<3; i++) {
 		absorb(&curl, my_trits_1, i*HASH_LENGTH,HASH_LENGTH);
 	}
 	squeeze(&curl, my_trits_1,0,length_1);
 	reset(&curl);
-	CU_ASSERT(memcmp(my_trits_1, trits_in_2, STATE_LENGTH * sizeof(long)) != 0);
-	CU_ASSERT(memcmp(my_trits_1, trits_out_2, STATE_LENGTH * sizeof(long)) == 0);
+	CU_ASSERT(memcmp(my_trits_1, trits_in_2, STATE_LENGTH * sizeof(trit_t)) != 0);
+	CU_ASSERT(memcmp(my_trits_1, trits_out_2, STATE_LENGTH * sizeof(trit_t)) == 0);
 
 	length_1 = STATE_LENGTH;
-	memcpy(my_trits_1, trits_in_1, length_1 * sizeof(long));
-	CU_ASSERT(memcmp(my_trits_1, trits_in_1, STATE_LENGTH * sizeof(long)) == 0);
+	memcpy(my_trits_1, trits_in_1, length_1 * sizeof(trit_t));
+	CU_ASSERT(memcmp(my_trits_1, trits_in_1, STATE_LENGTH * sizeof(trit_t)) == 0);
 
 	absorb(&curl, my_trits_1, HASH_LENGTH,HASH_LENGTH);
 	length_1 = STATE_LENGTH;
 	squeeze(&curl, my_trits_1,0,length_1);
 
-	CU_ASSERT(memcmp(my_trits_1, trits_out_1, length_1 * sizeof(long)) == 0);
+	CU_ASSERT(memcmp(my_trits_1, trits_out_1, length_1 * sizeof(trit_t)) == 0);
 }
 
 void test_curl_reset() {
 
-	signed long my_trits_2[length_2];
+	trit_t my_trits_2[length_2];
 
 	Curl curl;
        	init_curl(&curl);
 
-	memcpy(my_trits_2, trits_2, length_2 * sizeof(long));
+	memcpy(my_trits_2, trits_2, length_2 * sizeof(trit_t));
 
 	absorb(&curl, my_trits_2,0,length_2);
 	squeeze(&curl, my_trits_2,0,length_2);
-	CU_ASSERT(memcmp(my_trits_2, expect_2, length_2 * sizeof(long)) == 0);
+	CU_ASSERT(memcmp(my_trits_2, expect_2, length_2 * sizeof(trit_t)) == 0);
 
 	reset(&curl);
-	memcpy(my_trits_2, trits_2, length_2 * sizeof(long));
+	memcpy(my_trits_2, trits_2, length_2 * sizeof(trit_t));
 
 	absorb(&curl, my_trits_2,0,length_2);
 	squeeze(&curl, my_trits_2,0,length_2);
-	CU_ASSERT(memcmp(my_trits_2, expect_2, length_2 * sizeof(long)) == 0);
+	CU_ASSERT(memcmp(my_trits_2, expect_2, length_2 * sizeof(trit_t)) == 0);
 
 }
 
 void test_curl_noreset_fail() {
-	signed long my_trits_2[length_2];
+	trit_t my_trits_2[length_2];
 
 	Curl curl;
        	init_curl(&curl);
-	memcpy(my_trits_2, trits_2, length_2 * sizeof(long));
-	memcpy(my_trits_2, trits_2, length_2 * sizeof(long));
+	memcpy(my_trits_2, trits_2, length_2 * sizeof(trit_t));
+	memcpy(my_trits_2, trits_2, length_2 * sizeof(trit_t));
 
 	absorb(&curl, my_trits_2,0,length_2);
 	squeeze(&curl, my_trits_2,0,length_2);
-	CU_ASSERT(memcmp(my_trits_2, expect_2, length_2 * sizeof(long)) == 0);
+	CU_ASSERT(memcmp(my_trits_2, expect_2, length_2 * sizeof(trit_t)) == 0);
 
 	int length = HASH_LENGTH;
 	absorb(&curl, my_trits_2,0,length);
 	squeeze(&curl, my_trits_2,0,length);
-	CU_ASSERT_FALSE(memcmp(my_trits_2, expect_2, HASH_LENGTH * sizeof(long))==0);
+	CU_ASSERT_FALSE(memcmp(my_trits_2, expect_2, HASH_LENGTH * sizeof(trit_t))==0);
 }
 
 static CU_TestInfo tests[] = {

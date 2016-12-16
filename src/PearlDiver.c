@@ -11,7 +11,7 @@
 
 typedef struct {
 	States *states;
-	long *trits;
+	trit_t *trits;
 	int minWeightMagnitude;
 	int threadIndex;
 	PearlDiver *ctx;
@@ -29,7 +29,7 @@ void interrupt(PearlDiver *ctx) {
 	pthread_mutex_unlock(&ctx->new_thread_search);
 }
 
-bool search(PearlDiver *ctx, long *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads) {
+bool search(PearlDiver *ctx, trit_t *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads) {
 
 	int k, thread_count;
 
@@ -93,7 +93,7 @@ void pd_search_init(States *states, trit_t *transactionTrits) {
 		states->high[i] = HIGH_BITS;
 	}
 
-	long scratchpadLow[STATE_LENGTH],scratchpadHigh[STATE_LENGTH];
+	trit_t scratchpadLow[STATE_LENGTH],scratchpadHigh[STATE_LENGTH];
 
 	for (i = (TRANSACTION_LENGTH - HASH_LENGTH) / HASH_LENGTH; i-- > 0; ) {
 
@@ -127,26 +127,26 @@ void pd_search_init(States *states, trit_t *transactionTrits) {
 }
 
 void *find_nonce(void *date){
-	long midStateCopyLow[STATE_LENGTH],midStateCopyHigh[STATE_LENGTH];
+	trit_t midStateCopyLow[STATE_LENGTH],midStateCopyHigh[STATE_LENGTH];
 	int i,bitIndex;
 	PDThread *my_thread= (PDThread *)date;
 
 	PearlDiver *ctx = my_thread->ctx;
-	memcpy(midStateCopyLow, my_thread->states->low, STATE_LENGTH*sizeof(long));
-	memcpy(midStateCopyHigh, my_thread->states->high, STATE_LENGTH*sizeof(long));
+	memcpy(midStateCopyLow, my_thread->states->low, STATE_LENGTH*sizeof(trit_t));
+	memcpy(midStateCopyHigh, my_thread->states->high, STATE_LENGTH*sizeof(trit_t));
 
 
 	for (i = my_thread->threadIndex; i-- > 0; ) {
 		pd_increment(midStateCopyLow, midStateCopyHigh, HASH_LENGTH / 3, (HASH_LENGTH / 3) * 2);
 	}
 
-	long scratchpadLow[STATE_LENGTH],scratchpadHigh[STATE_LENGTH],stateLow[STATE_LENGTH],stateHigh[STATE_LENGTH];
+	trit_t scratchpadLow[STATE_LENGTH],scratchpadHigh[STATE_LENGTH],stateLow[STATE_LENGTH],stateHigh[STATE_LENGTH];
 
 	bool skip;
 	while (!ctx->finished && !ctx->interrupted) {
 		pd_increment(midStateCopyLow, midStateCopyHigh, (HASH_LENGTH / 3) * 2, HASH_LENGTH);
-		memcpy( stateLow, midStateCopyLow, STATE_LENGTH*sizeof(long));
-		memcpy( stateHigh, midStateCopyHigh, STATE_LENGTH*sizeof(long));
+		memcpy( stateLow, midStateCopyLow, STATE_LENGTH*sizeof(trit_t));
+		memcpy( stateHigh, midStateCopyHigh, STATE_LENGTH*sizeof(trit_t));
 		pd_transform(stateLow, stateHigh, scratchpadLow, scratchpadHigh);
 
 
@@ -154,7 +154,9 @@ void *find_nonce(void *date){
 			skip = false;
 			if(ctx->finished) {return 0;}
 			for (i = my_thread->minWeightMagnitude; i-- > 0; ) {
-				if ((((long)(stateLow[HASH_LENGTH - 1 - i] >> bitIndex)) & 1) != (((long)(stateHigh[HASH_LENGTH - 1 - i] >> bitIndex)) & 1)) {
+				//if ((((trit_t)(stateLow[HASH_LENGTH - 1 - i] >> bitIndex)) & 1) != (((trit_t)(stateHigh[HASH_LENGTH - 1 - i] >> bitIndex)) & 1)) {
+				if ((((trit_t)(stateLow[HASH_LENGTH - 1 - i] )) &  (1 << bitIndex)) 
+						!= (((trit_t)(stateHigh[HASH_LENGTH - 1 - i] )) & (1<< bitIndex))) {
 					skip = true;
 					break;
 				}
@@ -168,7 +170,7 @@ void *find_nonce(void *date){
 			}
 			ctx->finished = true;
 			for ( i = 0; i < HASH_LENGTH; i++) {
-				my_thread->trits[TRANSACTION_LENGTH - HASH_LENGTH + i] = ((((long)(midStateCopyLow[i] >> bitIndex)) & 1) == 0) ? 1 : (((((long)(midStateCopyHigh[i] >> bitIndex)) & 1) == 0) ? -1 : 0);
+				my_thread->trits[TRANSACTION_LENGTH - HASH_LENGTH + i] = ((((trit_t)(midStateCopyLow[i] >> bitIndex)) & 1) == 0) ? 1 : (((((trit_t)(midStateCopyHigh[i] >> bitIndex)) & 1) == 0) ? -1 : 0);
 				my_thread->ctx->nonceFound = true;
 			}
 			pthread_mutex_unlock(&my_thread->ctx->new_thread_search);
@@ -180,14 +182,14 @@ void *find_nonce(void *date){
 }
 
 
-void pd_transform( long *const stateLow, long *const stateHigh, long *const scratchpadLow, long *const scratchpadHigh) {
+void pd_transform( trit_t *const stateLow, trit_t *const stateHigh, trit_t *const scratchpadLow, trit_t *const scratchpadHigh) {
 
 	int scratchpadIndex = 0, round, stateIndex;
-	long alpha, beta, gamma, delta;
+	trit_t alpha, beta, gamma, delta;
 
 	for (round = 27; round-- > 0; ) {
-		memcpy( scratchpadLow, stateLow, STATE_LENGTH * sizeof(long));
-		memcpy( scratchpadHigh, stateHigh, STATE_LENGTH* sizeof(long));
+		memcpy( scratchpadLow, stateLow, STATE_LENGTH * sizeof(trit_t));
+		memcpy( scratchpadHigh, stateHigh, STATE_LENGTH* sizeof(trit_t));
 
 		for (stateIndex = 0; stateIndex < STATE_LENGTH; stateIndex++) {
 
@@ -202,7 +204,7 @@ void pd_transform( long *const stateLow, long *const stateHigh, long *const scra
 	}
 
 }
-void pd_increment(long *const midStateCopyLow, long *const midStateCopyHigh, const int fromIndex, const int toIndex) {
+void pd_increment(trit_t *const midStateCopyLow, trit_t *const midStateCopyHigh, const int fromIndex, const int toIndex) {
 
 	int i;
 

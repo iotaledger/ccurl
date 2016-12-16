@@ -3,6 +3,6 @@
 
 #define HASH_LENGTH 243
 #define STATE_LENGTH 3 * HASH_LENGTH
-typedef long trit_t;
+typedef long long trit_t;
 
 #endif

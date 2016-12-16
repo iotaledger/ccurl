@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 3.6)
 enable_language (C)
 find_package (Threads)
-project (iotaclminer)
+project (ccurl)
 
 #set(CMAKE_INSTALL_PREFIX "/usr")
 
