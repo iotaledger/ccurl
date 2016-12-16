@@ -18,5 +18,3 @@ SET (CTEST_BUILD_TARGET "RELEASE")
 #enable_testing ()
 #add_subdirectory (test)
 add_subdirectory (src)
-
-
