@@ -12,3 +12,6 @@ vgcore*
 lib/
 tags/
 build
+scripts/node_modules/
+scripts/nines
+.ycm*
