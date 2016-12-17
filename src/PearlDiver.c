@@ -29,7 +29,7 @@ void interrupt(PearlDiver *ctx) {
 	pthread_mutex_unlock(&ctx->new_thread_search);
 }
 
-bool search(PearlDiver *ctx, trit_t *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads) {
+bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads) {
 
 	int k, thread_count;
 
