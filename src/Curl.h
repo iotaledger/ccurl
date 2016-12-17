@@ -9,8 +9,6 @@
 #include <time.h>
 #include "Hash.h"
 
-
-
 #define NUMBER_OF_ROUNDS 27
 
 
@@ -20,8 +18,8 @@ typedef struct _Curl {
 
 void init_curl(Curl *ctx);
 
-void absorb(Curl *ctx, trit_t *const trits, int offset, int length);
-void squeeze(Curl *ctx, trit_t *const trits, int offset, int length);
-void reset(Curl *ctx);
+EXPORT void absorb(Curl *ctx, trit_t *const trits, int offset, int length);
+EXPORT void squeeze(Curl *ctx, trit_t *const trits, int offset, int length);
+EXPORT void reset(Curl *ctx);
 
 #endif

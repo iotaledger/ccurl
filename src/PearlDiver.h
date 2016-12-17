@@ -2,11 +2,6 @@
 #ifndef PEARLDIVER_H
 #define PEARLDIVER_H
 
-#if defined(WIN32) || defined(_WIN32)
-#define EXPORT __declspec(dllexport)
-#else
-#define EXPORT
-#endif
 
 #include <pthread.h>
 #include <stdbool.h>
@@ -28,12 +23,12 @@ typedef struct {
 	pthread_t *tid;
 } PearlDiver;
 
-void init_pearldiver(PearlDiver *ctx);
-void interrupt(PearlDiver *ctx);
-bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads);
-void pd_transform( trit_t *const stateLow, trit_t *const stateHigh, trit_t *const scratchpadLow, trit_t *const scratchpadHigh);
-void pd_increment(trit_t *const midStateCopyLow, trit_t *const midStateCopyHigh, const int fromIndex, const int toIndex);
-void pd_search_init(States *states, trit_t *transactionTrits);
+EXPORT void init_pearldiver(PearlDiver *ctx);
+EXPORT void interrupt(PearlDiver *ctx);
+EXPORT bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads);
+EXPORT void pd_transform( trit_t *const stateLow, trit_t *const stateHigh, trit_t *const scratchpadLow, trit_t *const scratchpadHigh);
+EXPORT void pd_increment(trit_t *const midStateCopyLow, trit_t *const midStateCopyHigh, const int fromIndex, const int toIndex);
+EXPORT void pd_search_init(States *states, trit_t *transactionTrits);
 EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude);
 
 #endif
