@@ -3,7 +3,7 @@ enable_language (C)
 find_package (Threads)
 project (ccurl)
 
-#set(CMAKE_INSTALL_PREFIX "/usr")
+set(CMAKE_INSTALL_PREFIX "/usr")
 
 file(GLOB SRC src/*.c)
 set (SOURCES ${SRC})
