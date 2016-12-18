@@ -1,11 +1,5 @@
-#include "acunit/i.h"
-#ifdef __APPLE__
-#include "CUnit/CUnit.h"
-#include "CUnit/Basic.h"
-#else
-#include "BCUnit/BCUnit.h"
-#include "BCUnit/Basic.h"
-#endif
+//#include "acunit/i.h"
+#include "cunit_include.h"
 #include "../src/lib/Hash.h"
 #include "../src/lib/Curl.h"
 #include "random_trits.h"
@@ -108,4 +102,6 @@ static CU_SuiteInfo suites[] = {
 	CU_SUITE_INFO_NULL,
 };
 
-ADD_SUITE(suites);
+int main() {
+	return run_tests(suites);
+}

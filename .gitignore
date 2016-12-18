@@ -15,3 +15,4 @@ scripts/node_modules/
 scripts/nines
 .ycm*
 libold/
+*.cl.swp.h

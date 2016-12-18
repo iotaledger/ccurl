@@ -1,3 +1,3 @@
-[submodule "test/acunit"]
-	path = test/acunit
-	url = https://github.com/paulhandy/AutoCUnit.git
+#[submodule "test/acunit"]
+	#path = test/acunit
+	#url = https://github.com/paulhandy/AutoCUnit.git
