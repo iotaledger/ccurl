@@ -16,3 +16,5 @@ scripts/nines
 .ycm*
 libold/
 *.cl.swp.h
+*.cl.h
+*.h.h

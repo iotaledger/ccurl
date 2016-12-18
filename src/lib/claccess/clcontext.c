@@ -144,9 +144,9 @@ static void kernel_init_buffers (CLContext *ctx) {
 					k = ctx->max_memory[i] / ctx->kernel.buffer[j].size;
 					ctx->num_cores[i] = k;
 					memsize = k * ctx->kernel.buffer[j].size;
-					fprintf(stderr, "resizing number of cores to %d...\n", k); // ctx->max_memory[i]);
+					//fprintf(stderr, "resizing number of cores to %d...\n", k); // ctx->max_memory[i]);
 				}
-				fprintf(stderr, "size found: %ld, size allowed, %ld...\n", memsize, ctx->max_memory[i]);
+				//fprintf(stderr, "size found: %ld, size allowed, %ld...\n", memsize, ctx->max_memory[i]);
 			}
 			maxmemsize += memsize;
 			if(maxmemsize >= ctx->max_memory[i]) {

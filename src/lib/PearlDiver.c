@@ -170,7 +170,10 @@ void *find_nonce(void *date){
 			}
 			ctx->finished = true;
 			for ( i = 0; i < HASH_LENGTH; i++) {
-				my_thread->trits[TRANSACTION_LENGTH - HASH_LENGTH + i] = ((((trit_t)(midStateCopyLow[i] >> bitIndex)) & 1) == 0) ? 1 : (((((trit_t)(midStateCopyHigh[i] >> bitIndex)) & 1) == 0) ? -1 : 0);
+				my_thread->trits[TRANSACTION_LENGTH - HASH_LENGTH + i] = 
+					(((trit_t)(midStateCopyLow[i] ) & (1<< bitIndex)) == 0) ? 
+					1 : ((((trit_t)(midStateCopyHigh[i] ) & 
+									(1<< bitIndex)) == 0) ? -1 : 0);
 				my_thread->ctx->nonceFound = true;
 			}
 			pthread_mutex_unlock(&my_thread->ctx->new_thread_search);
