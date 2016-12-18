@@ -6,8 +6,8 @@
 #include "BCUnit/BCUnit.h"
 #include "BCUnit/Basic.h"
 #endif
-#include "../src/Hash.h"
-#include "../src/Curl.h"
+#include "../src/lib/Hash.h"
+#include "../src/lib/Curl.h"
 #include "random_trits.h"
 #include <stdio.h>
 #include <string.h>

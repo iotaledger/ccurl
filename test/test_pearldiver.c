@@ -1,6 +1,6 @@
 #include "acunit/i.h"
-#include "../src/Hash.h"
-#include "../src/PearlDiver.h"
+#include "../src/lib/Hash.h"
+#include "../src/lib/PearlDiver.h"
 //#include "random_trits.h"
 
 #ifdef __APPLE__
