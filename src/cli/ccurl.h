@@ -1,5 +1,5 @@
 
-#include "Hash.h"
+#include "../lib/Hash.h"
 #include <stdint.h>
 
 static const trit_t iotacurl_tryte2trits_tbl[27][3] = {
