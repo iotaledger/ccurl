@@ -4,7 +4,8 @@
 
 //#define HASH_LENGTH 243
 #define TRYTE_SPACE 27
-#define MIN_TRYTE_VALUE  -13, MAX_TRYTE_VALUE = 13
+#define MIN_TRYTE_VALUE  -13
+#define MAX_TRYTE_VALUE = 13
 #define RADIX  3
 #define MAX_TRIT_VALUE  (RADIX - 1) / 2
 #define MIN_TRIT_VALUE  -MAX_TRIT_VALUE
@@ -127,14 +128,15 @@ int tryteValue(trit_t *const trits, const int offset) {
 	return trits[offset] + trits[offset + 1] * 3 + trits[offset + 2] * 9;
 }
 
-#define increment( trits, size) {          \
-	for (i = 0; i < size; i++) {           \
-		if (++trits[i] > MAX_TRIT_VALUE) { \
-			trits[i] = MIN_TRIT_VALUE;     \
-		} else {                           \
-			break;                         \
-		}                                  \
-	}                                      \
+static void increment( trit_t *trits, int size) {
+	int i;
+	for (i = 0; i < size; i++) {
+		if (++trits[i] > MAX_TRIT_VALUE) {
+			trits[i] = MIN_TRIT_VALUE;
+		} else {
+			break;
+		}
+	}
 }
 
 void init_converter() {
@@ -150,6 +152,7 @@ void init_converter() {
 		increment(trits, NUMBER_OF_TRITS_IN_A_TRYTE);
 	}
 }
+
 
 
 

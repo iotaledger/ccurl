@@ -22,7 +22,8 @@ void trytes2trits(trit_t *trits, const char *trytes, const size_t len) {
 }
 
 void trits2trytes(char *trytes, const trit_t *trits, const size_t len) {
-	for(size_t i=0; i<len; i+=3) {
+	size_t i;
+	for(i=0; i<len; i+=3) {
 		int j = trits[i];
 		if(i+1 < len) {
 			j += 3 * trits[i+1];
@@ -35,6 +36,7 @@ void trits2trytes(char *trytes, const trit_t *trits, const size_t len) {
 		}
 		trytes[i/3] = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"[j];
 	}
+	trytes[i/3] = 0;
 }
 
 EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {

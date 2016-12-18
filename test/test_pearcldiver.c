@@ -18,7 +18,9 @@
 typedef long trit_t;
 
 static int init_suite(void) {
+	fprintf(stderr, "I: initializing converter...");
 	init_converter();
+	fprintf(stderr, "done.\n");
 	//pdcl = malloc(sizeof(PearCLDiver));
 	return 0;
 }
@@ -59,14 +61,15 @@ static void test_search(void) {
 
 	//memcpy(trits,rand_trits,TRANSACTION_LENGTH);
 	begin = clock();
-	for(mwm=1; mwm<5; mwm++) {
+	for(mwm=1; mwm<HASH_LENGTH; mwm++) {
+		//fprintf(stderr, "Starting mwm %d\n", mwm);
 		pearcl_search(&pdcl, trits, TRANSACTION_LENGTH, mwm);
 		CU_ASSERT(pdcl.pd.nonceFound);
 		CU_ASSERT_FATAL(is_valid_hash(trits));
 	}
 	end = clock();
 	trits2trytes(trytes, trits, TRANSACTION_LENGTH);
-	puts(trytes);
+	//puts(trytes);
 	time_per_cycle = (double)(end - begin) / CLOCKS_PER_SEC;
 	fprintf(stderr, "time_per_cycle: %f\n", time_per_cycle);
 }
