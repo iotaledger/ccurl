@@ -13,7 +13,6 @@ set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall")
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin) 
 SET (CTEST_BUILD_TARGET "RELEASE")
 
-#add_subdirectory (src/lib)
 
 #### OPENCL FILES
 
@@ -38,5 +37,6 @@ file(GLOB HEADERS src/lib/*.h)
 install(FILES ${HEADERS} DESTINATION include)
 
 ### TESTING
-enable_testing ()
-add_subdirectory (test)
+#enable_testing ()
+#add_subdirectory (test)
+add_subdirectory (src/cli)
