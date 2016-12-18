@@ -34,9 +34,8 @@ install(TARGETS ${LIBRARY_NAME}
 	RUNTIME DESTINATION bin)
 
 # Install library headers
-file(GLOB HEADERS src/lib/hash/*.h)
+file(GLOB HEADERS src/lib/*.h)
 install(FILES ${HEADERS} DESTINATION include)
-
 
 ### TESTING
 enable_testing ()
