@@ -1,5 +1,5 @@
 #include "ccurl.h"
-#include "PearlDiver.h"
+#include "../lib/PearlDiver.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
