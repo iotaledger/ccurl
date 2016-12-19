@@ -76,7 +76,9 @@ void cl_transform (
 void cl_check (
 		__constant size_t *minWeightMagnitude,
 		__global trit_t *states,
-		__local volatile size_t *found
+		__local volatile size_t *bitIndex,
+		__local volatile unsigned long *found,
+		__local volatile unsigned long *mask
 		) {
 	__private size_t id = get_local_id(0)*3 ; 
 	__private size_t i, j,k;
@@ -85,29 +87,26 @@ void cl_check (
 			  midHigh = midLow + STATE_LENGTH,
 			  low = midHigh + STATE_LENGTH, 
 			  high = low + STATE_LENGTH;
-	//if(id == 0 && gid == 0) printf("From Check 0, Hello!\n");
+	if(id ==0) *found |= *mask;
 #pragma unroll
 	for(i = 0; i < 64; i++ ) {
-		if(id == 0) *found = 0;
+		if(id == 0) *bitIndex = i;
 		barrier(CLK_LOCAL_MEM_FENCE);
 #pragma unroll
 		for (k = 0; k < 3; k++) {
 			j = id + k;
-			if(*found !=0) break;
 			if (j >= HASH_LENGTH - *minWeightMagnitude && 
 					((trit_t)states[low + j] & (1 << i)) != 
 					((trit_t)states[high + j] & (1 << i))) {
 				barrier(CLK_LOCAL_MEM_FENCE);
-				*found = -1;
+				*found &= ~*mask;
 			}
 		}
 		barrier(CLK_LOCAL_MEM_FENCE);
-		if(*found == 0) {
-			if(id == 0) *found = j;
+		if(*found & *mask != 0) {
 			return;
 		}
 	}
-	*found = -1;
 }
 
 void cl_finalize (

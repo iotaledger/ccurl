@@ -43,18 +43,19 @@ void init_pearcl(PearCLDiver *pdcl) {
 }
 
 void *pearcl_find(void *data) {
-	PDCLThread *thread = (PDCLThread *)data;
-	PearCLDiver *pdcl = thread->pdcl;
-	size_t local_work_size, global_work_size, global_offset;
-	local_work_size = HASH_LENGTH; 
-	global_work_size = local_work_size* 
-		(pdcl->cl.num_cores[thread->index])* 
-		pdcl->cl.num_multiple[thread->index];
-	global_offset = local_work_size;
 	unsigned long found = 0;
 	char finished = 0;
 	cl_event ev;
-	trit_t states[STATE_LENGTH*2];
+	PDCLThread *thread;
+	PearCLDiver *pdcl;
+	size_t local_work_size, global_offset,global_work_size;
+	thread = (PDCLThread *)data;
+	pdcl = thread->pdcl;
+	local_work_size = HASH_LENGTH; 
+	global_work_size = local_work_size * (pdcl->cl.num_cores[thread->index]) * 
+		pdcl->cl.num_multiple[thread->index];
+	global_offset = local_work_size;
+	//trit_t states[STATE_LENGTH*2];
 
 	clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index], 
 			pdcl->cl.buffers[thread->index][1], CL_TRUE, 0, sizeof(long), 
@@ -98,9 +99,11 @@ void *pearcl_find(void *data) {
 					pdcl->cl.buffers[thread->index][2], CL_TRUE, 0, 
 					sizeof(char), &finished, 1, &ev1, NULL),
 				"E: reading finished bool failed.\n");
+		/*
 		check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
 					pdcl->cl.buffers[thread->index][3], CL_TRUE, sizeof(trit_t)*STATE_LENGTH*6, sizeof(trit_t)*STATE_LENGTH*2,
 					states, 0, NULL, NULL), "E: could not read states.\n");
+					*/
 		//fprintf(stderr, "\nFinished in %d tries: f%d \n",i, finished);
 	} 
 	while ( finished == 0 && !pdcl->pd.finished);

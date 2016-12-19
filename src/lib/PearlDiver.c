@@ -69,7 +69,7 @@ bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, cons
 
 		PDThread pdthread = {
 			.states = states,
-			.trits = transactionTrits,
+			.trits = transactionTrits + TRANSACTION_LENGTH - HASH_LENGTH,
 			.minWeightMagnitude = minWeightMagnitude,
 			.threadIndex = numberOfThreads,
 			.ctx = ctx
@@ -130,7 +130,10 @@ void *find_nonce(void *date){
 	trit_t midStateCopyLow[STATE_LENGTH],midStateCopyHigh[STATE_LENGTH];
 	int i,bitIndex;
 	PDThread *my_thread= (PDThread *)date;
+	trit_t *trits = my_thread->trits;
 
+	memset(midStateCopyLow, 0, STATE_LENGTH*sizeof(trit_t));
+	memset(midStateCopyHigh, 0, STATE_LENGTH*sizeof(trit_t));
 	PearlDiver *ctx = my_thread->ctx;
 	memcpy(midStateCopyLow, my_thread->states->low, STATE_LENGTH*sizeof(trit_t));
 	memcpy(midStateCopyHigh, my_thread->states->high, STATE_LENGTH*sizeof(trit_t));
@@ -141,6 +144,10 @@ void *find_nonce(void *date){
 	}
 
 	trit_t scratchpadLow[STATE_LENGTH],scratchpadHigh[STATE_LENGTH],stateLow[STATE_LENGTH],stateHigh[STATE_LENGTH];
+	memset(stateLow, 0, STATE_LENGTH*sizeof(trit_t));
+	memset(stateHigh, 0, STATE_LENGTH*sizeof(trit_t));
+	memset(scratchpadLow, 0, STATE_LENGTH*sizeof(trit_t));
+	memset(scratchpadHigh, 0, STATE_LENGTH*sizeof(trit_t));
 
 	bool skip;
 	while (!ctx->finished && !ctx->interrupted) {
@@ -154,11 +161,15 @@ void *find_nonce(void *date){
 			skip = false;
 			if(ctx->finished) {return 0;}
 			for (i = my_thread->minWeightMagnitude; i-- > 0; ) {
-				//if ((((trit_t)(stateLow[HASH_LENGTH - 1 - i] >> bitIndex)) & 1) != (((trit_t)(stateHigh[HASH_LENGTH - 1 - i] >> bitIndex)) & 1)) {
+				if ((((trit_t)(stateLow[HASH_LENGTH - 1 - i] >> bitIndex)) & 1)
+						!= (((trit_t)(stateHigh[HASH_LENGTH - 1 - i] >> bitIndex)) & 1)) {
+					goto NEXT_BIT_INDEX;
+					/*
 				if ((((trit_t)(stateLow[HASH_LENGTH - 1 - i] )) &  (1 << bitIndex)) 
 						!= (((trit_t)(stateHigh[HASH_LENGTH - 1 - i] )) & (1<< bitIndex))) {
-					skip = true;
-					break;
+						*/
+					//skip = true;
+					//break;
 				}
 			}
 			if(skip) continue;
@@ -170,15 +181,17 @@ void *find_nonce(void *date){
 			}
 			ctx->finished = true;
 			for ( i = 0; i < HASH_LENGTH; i++) {
-				my_thread->trits[TRANSACTION_LENGTH - HASH_LENGTH + i] = 
-					(((trit_t)(midStateCopyLow[i] ) & (1<< bitIndex)) == 0) ? 
-					1 : ((((trit_t)(midStateCopyHigh[i] ) & 
-									(1<< bitIndex)) == 0) ? -1 : 0);
+				//my_thread->trits[TRANSACTION_LENGTH - HASH_LENGTH + i] = 
+				trits[i] = 
+					((((trit_t)(midStateCopyLow[i] >> bitIndex)) & 1) == 0) ? 
+					1 : (((((trit_t)(midStateCopyHigh[i] >> bitIndex)) & 1) == 0) ? -1 : 0);
 				my_thread->ctx->nonceFound = true;
 			}
 			pthread_mutex_unlock(&my_thread->ctx->new_thread_search);
 			sched_yield();
 			return 0;
+NEXT_BIT_INDEX:
+			continue;
 		}
 	}
 	return 0;

@@ -13,7 +13,7 @@
 
 
 typedef struct _Curl {
-	trit_t *state;
+	trit_t state[STATE_LENGTH];
 } Curl;
 
 void init_curl(Curl *ctx);

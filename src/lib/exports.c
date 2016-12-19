@@ -1,6 +1,8 @@
 #include "PearlDiver.h"
+#include "util/converter.h"
 #include <stdlib.h>
 
+/*
 static const trit_t iotacurl_tryte2trits_tbl[27][3] = {
 	{ 0,  0,  0}, { 1,  0,  0}, {-1,  1,  0},
 	{ 0,  1,  0}, { 1,  1,  0}, {-1, -1,  1},
@@ -38,16 +40,21 @@ void trits2trytes(char *trytes, const trit_t *trits, const size_t len) {
 	}
 	trytes[i/3] = 0;
 }
+*/
 
 EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
+	init_converter();
 	char *buf = malloc(sizeof(char)*TRYTE_LENGTH);
-	trit_t trits[TRANSACTION_LENGTH];
+	trit_t *trits = trits_from_trytes(trytes, TRYTE_LENGTH);
+	//trit_t trits[TRANSACTION_LENGTH];
 
-	trytes2trits(trits, trytes, TRYTE_LENGTH);
+	//trytes2trits(trits, trytes, TRYTE_LENGTH);
 	PearlDiver pearl_diver;
 	pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
-	trits2trytes(buf, trits, TRANSACTION_LENGTH);
+	//trits2trytes(buf, trits, TRANSACTION_LENGTH);
 
+	buf = trytes_from_trits(trits, TRANSACTION_LENGTH);
 	buf[TRYTE_LENGTH] = 0;
+	free(trits);
 	return buf;
 }

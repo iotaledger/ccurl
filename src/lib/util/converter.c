@@ -1,5 +1,6 @@
 #include "converter.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 //#define HASH_LENGTH 243
@@ -29,7 +30,6 @@
 trit_t BYTE_TO_TRITS_MAPPINGS[HASH_LENGTH][NUMBER_OF_TRITS_IN_A_BYTE];/*[HASH_LENGTH] = (trit_t *[]){ BLANK_BYTE_MAPPINGS };*/
 trit_t TRYTE_TO_TRITS_MAPPINGS[TRYTE_SPACE][NUMBER_OF_TRITS_IN_A_TRYTE];/*[TRYTE_SPACE] = (trit_t *[]){ BLANK_TRYTE_MAPPINGS };*/
 
-
 static const char *TRYTE_ALPHABET = TRYTE_STRING;
 
 trit_t longValue(trit_t *const trits, const int offset, const int size) {
@@ -56,10 +56,10 @@ char *bytes_3(trit_t *const trits, const int offset, const int size) {
 	return bytes;
 }
 
-void getTrits(const char * bytes, trit_t *const trits, int length) {
+void getTrits(const char * bytes, int bytelength, trit_t *const trits, int length) {
 
 	int offset = 0;
-	for (int i = 0; i < strlen(bytes) && offset < length; i++) {
+	for (int i = 0; i < bytelength && offset < length; i++) {
 		memcpy(trits + offset,
 				BYTE_TO_TRITS_MAPPINGS[
 				bytes[i] < 0 ? (bytes[i] +  HASH_LENGTH/* length of what? first? BYTE_TO_TRITS_MAPPINGS.length */) 
@@ -76,10 +76,9 @@ void getTrits(const char * bytes, trit_t *const trits, int length) {
 	}
 }
 
-trit_t *trits(const char *trytes) {
-
-	trit_t *trits = malloc(strlen(trytes) * NUMBER_OF_TRITS_IN_A_TRYTE * sizeof(trit_t));
-	for (int i = 0; i < strlen(trytes); i++) {
+trit_t *trits_from_trytes(const char *trytes, int length) {
+	trit_t *trits = malloc(length * NUMBER_OF_TRITS_IN_A_TRYTE * sizeof(trit_t));
+	for (int i = 0; i < length; i++) {
 		memcpy(trits+ i * NUMBER_OF_TRITS_IN_A_TRYTE, 
 				TRYTE_TO_TRITS_MAPPINGS[strchr(TRYTE_ALPHABET,trytes[i])-TRYTE_ALPHABET], 
 				sizeof(trit_t)*NUMBER_OF_TRITS_IN_A_TRYTE);
@@ -117,7 +116,7 @@ char *trytes_3(trit_t *const trits, const int offset, const int size) {
 	for (int i = 0; i < length; i++) {
 		int j = trits[offset + i * 3] + trits[offset + i * 3 + 1] * 3 + trits[offset + i * 3 + 2] * 9;
 		if (j < 0) {
-			j += strlen(TRYTE_ALPHABET);
+			j += 27;
 		}
 		trytes[i] = TRYTE_ALPHABET[j];
 	}
@@ -141,13 +140,14 @@ static void increment( trit_t *trits, int size) {
 
 void init_converter() {
     trit_t trits[NUMBER_OF_TRITS_IN_A_BYTE];
+	memset(trits, 0, NUMBER_OF_TRITS_IN_A_BYTE*sizeof(trit_t));
 	for (int i = 0; i < HASH_LENGTH; i++) {
-		memcpy(BYTE_TO_TRITS_MAPPINGS[i], trits, NUMBER_OF_TRITS_IN_A_BYTE * sizeof(trit_t));
+		memcpy(&(BYTE_TO_TRITS_MAPPINGS[i]), trits, NUMBER_OF_TRITS_IN_A_BYTE * sizeof(trit_t));
 		//BYTE_TO_TRITS_MAPPINGS[i] = mytrits;/*Arrays.copyOf(trits, NUMBER_OF_TRITS_IN_A_BYTE);*/
 		increment(trits, NUMBER_OF_TRITS_IN_A_BYTE);
 	}
 	for (int i = 0; i < TRYTE_SPACE; i++) {
-		memcpy(TRYTE_TO_TRITS_MAPPINGS[i], trits, NUMBER_OF_TRITS_IN_A_TRYTE * sizeof(trit_t));
+		memcpy(&(TRYTE_TO_TRITS_MAPPINGS[i]), trits, NUMBER_OF_TRITS_IN_A_TRYTE * sizeof(trit_t));
 		//TRYTE_TO_TRITS_MAPPINGS[i] = mytrits; /*Arrays.copyOf(trits, NUMBER_OF_TRITS_IN_A_TRYTE);*/
 		increment(trits, NUMBER_OF_TRITS_IN_A_TRYTE);
 	}
