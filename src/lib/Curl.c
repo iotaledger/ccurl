@@ -19,13 +19,13 @@ static const trit_t TRUTH_TABLE[9] = { __TRUTH_TABLE };
 void transform(Curl *ctx);
 
 void init_curl(Curl *ctx) {
-	ctx->state = malloc(sizeof(trit_t) * STATE_LENGTH);
-	memset(ctx->state,0,STATE_LENGTH);
+	//ctx->state = malloc(sizeof(trit_t) * STATE_LENGTH);
+	memset(ctx->state,0,STATE_LENGTH * sizeof(trit_t));
 }
 int i = 0;
 void absorb(Curl *ctx, trit_t *const trits, int offset, int length) {
 	do {
-		memcpy(ctx->state, trits+offset, (length < HASH_LENGTH? length: HASH_LENGTH) * sizeof(trit_t));
+		memcpy(ctx->state, trits+offset, (length < HASH_LENGTH? length : HASH_LENGTH ) * sizeof(trit_t));
 		transform(ctx);
 		offset += HASH_LENGTH;
 	} while ((length -= HASH_LENGTH) > 0);
@@ -33,7 +33,8 @@ void absorb(Curl *ctx, trit_t *const trits, int offset, int length) {
 
 void squeeze(Curl *ctx, trit_t *trits, int offset, int length) {
 	do {
-		memcpy(trits+offset,  ctx->state, (length < HASH_LENGTH? length: HASH_LENGTH) * sizeof(trit_t));
+		//memcpy(trits+offset,  ctx->state, (length < HASH_LENGTH? length: HASH_LENGTH) * sizeof(trit_t));
+		memcpy(&(trits[offset]), ctx->state, (length < HASH_LENGTH? length : HASH_LENGTH ) * sizeof(trit_t));
 		transform(ctx);
 		offset += HASH_LENGTH;
 	} while ((length -= HASH_LENGTH) > 0);
