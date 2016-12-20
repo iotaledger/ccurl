@@ -41,7 +41,7 @@ trit_t longValue(trit_t *const trits, const int offset, const int size) {
 	return value;
 }
 
-char *bytes_3(trit_t *const trits, const int offset, const int size) {
+char *bytes_from_trits(trit_t *const trits, const int offset, const int size) {
 	int length = (size + NUMBER_OF_TRITS_IN_A_BYTE - 1) / NUMBER_OF_TRITS_IN_A_BYTE;
 	char *bytes = (char *)malloc(sizeof(char) * length);
 	for (int i = 0; i < length; i++) {
@@ -109,7 +109,7 @@ void copyTrits(trit_t const value, trit_t *const destination, const int offset, 
 	}
 }
 
-char *trytes_3(trit_t *const trits, const int offset, const int size) {
+char *trytes_from_trits(trit_t *const trits, const int offset, const int size) {
 
 	const int length = (size + NUMBER_OF_TRITS_IN_A_TRYTE - 1) / NUMBER_OF_TRITS_IN_A_TRYTE;
 	char *trytes = malloc(sizeof(char) * length);
