@@ -10,7 +10,7 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	PearlDiver pearl_diver;
 	pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
 
-	buf = trytes_from_trits(trits, TRANSACTION_LENGTH);
+	buf = trytes_from_trits(trits, 0, TRANSACTION_LENGTH);
 	buf[TRYTE_LENGTH] = 0;
 	free(trits);
 	return buf;

@@ -1,4 +1,3 @@
-//#include "acunit/i.h"
 #include "cunit_include.h"
 #include "../src/lib/Hash.h"
 #include "../src/lib/Curl.h"
@@ -124,7 +123,7 @@ void test_curl_hash_works() {
 
 	absorb(&curl, mytrits, 0, TRANSACTION_LENGTH);
 	squeeze(&curl, myhash, 0, HASH_LENGTH);
-	char *hashtrytes = trytes_from_trits(myhash, HASH_LENGTH);
+	char *hashtrytes = trytes_from_trits(myhash, 0, HASH_LENGTH);
 
 	/*
 	fprintf(stderr, "outtrits\n");
