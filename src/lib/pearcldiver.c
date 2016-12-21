@@ -11,9 +11,9 @@
 #define GROUP_SIZE 256
 
 typedef struct {
-	States *states;
+	States states;
 	long *trits;
-	size_t minWeightMagnitude;
+	size_t min_weight_magnitude;
 	size_t index;
 	PearCLDiver  *pdcl;
 } PDCLThread;
@@ -21,121 +21,157 @@ typedef struct {
 void init_pearcl(PearCLDiver *pdcl) {
 	unsigned char *src[] = (unsigned char*[]){ pearl_h, pearl_cl};
 	size_t size[] = (size_t []){ pearl_h_len, pearl_cl_len };
-	char *names[] = (char *[]){"init", "search"};//, "transform", "check", "finalize"};
+	char *names[] = (char *[]){"init", "search", "finalize"};
 
 	if(!pdcl) {
 		pdcl = malloc(sizeof(PearCLDiver));
 	}
 
 	pdcl->cl.kernel.num_src = 2;
-	pdcl->cl.kernel.num_kernels = 2;
-	pdcl->cl.kernel.num_buffers = 7; 
-	pdcl->cl.kernel.buffer[0] = (BufferInfo){sizeof(trit_t)*HASH_LENGTH, CL_MEM_WRITE_ONLY};   // trit hash //
-	pdcl->cl.kernel.buffer[1] = (BufferInfo){sizeof(long), CL_MEM_READ_WRITE};                 // found //
-	pdcl->cl.kernel.buffer[2] = (BufferInfo){sizeof(char), CL_MEM_READ_WRITE};                 // finished //
-	pdcl->cl.kernel.buffer[3] = (BufferInfo){sizeof(trit_t)*STATE_LENGTH*4, CL_MEM_READ_WRITE, 2}; // states //
-	pdcl->cl.kernel.buffer[4] = (BufferInfo){sizeof(size_t), CL_MEM_READ_ONLY};                // minweightmagnitude //
-	pdcl->cl.kernel.buffer[5] = (BufferInfo){sizeof(long), CL_MEM_READ_WRITE, 1 };             // mask //
-	pdcl->cl.kernel.buffer[6] = (BufferInfo){sizeof(size_t), CL_MEM_READ_WRITE, 1 };           // bitIndex //
+	pdcl->cl.kernel.num_kernels = 3;
 	pd_init_cl(&(pdcl->cl), src, size, names);
-
-	//pdcl->cl.kernel.buffer[5] = (BufferInfo){sizeof(size_t)*3*2, CL_MEM_READ_ONLY, 1};                // indices //
 }
 
 void *pearcl_find(void *data) {
-	unsigned long found = 0;
-	char finished = 0;
+	size_t local_work_size, 
+		   global_work_size,
+		   num_groups,
+		   found_index,
+		   i;
+	char found = 0;
 	cl_event ev;
 	PDCLThread *thread;
 	PearCLDiver *pdcl;
-	size_t local_work_size, global_offset,global_work_size;
 	thread = (PDCLThread *)data;
 	pdcl = thread->pdcl;
+	num_groups = 1;//(pdcl->cl.num_cores[thread->index]) * pdcl->cl.num_multiple[thread->index];
 	local_work_size = HASH_LENGTH; 
-	global_work_size = local_work_size * (pdcl->cl.num_cores[thread->index]) * 
-		pdcl->cl.num_multiple[thread->index];
-	global_offset = local_work_size;
-	//trit_t states[STATE_LENGTH*2];
+	global_work_size = local_work_size * num_groups;
+	char bit_indeces[num_groups];
+	size_t write_difference;
+	trit_t mid_state_low[STATE_LENGTH];
+	trit_t mid_state_high[STATE_LENGTH];
+	trit_t state_low[STATE_LENGTH];
+	trit_t state_high[STATE_LENGTH];
+	trit_t trit_hash[HASH_LENGTH];
+	trit_t nonce_probe[num_groups];
 
-	clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index], 
-			pdcl->cl.buffers[thread->index][1], CL_TRUE, 0, sizeof(long), 
-			&found, 0, NULL, NULL);
+	check_clerror(
 	clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
-			pdcl->cl.buffers[thread->index][2], CL_TRUE, 0, sizeof(char), 
-			&finished, 0, NULL, NULL);
+			pdcl->cl.buffers[thread->index][1], CL_TRUE, 0, 
+			STATE_LENGTH * sizeof(trit_t), thread->states.low, 0, NULL, NULL),
+	"E: failed to write mid state low");
+	check_clerror(
 	clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
-			pdcl->cl.buffers[thread->index][3], CL_TRUE, 0, 
-			STATE_LENGTH * sizeof(trit_t), thread->states->low, 0, NULL, NULL);
+			pdcl->cl.buffers[thread->index][2], CL_TRUE, 0, 
+			STATE_LENGTH * sizeof(trit_t), thread->states.high, 0, NULL, NULL),
+	"E: failed to write mid state high");
+	check_clerror(
 	clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
-			pdcl->cl.buffers[thread->index][3], CL_TRUE, 
-			STATE_LENGTH * sizeof(trit_t), STATE_LENGTH * sizeof(trit_t),
-			thread->states->high, 0, NULL, NULL);
-	clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
-			pdcl->cl.buffers[thread->index][4], CL_TRUE, 0, 
-			STATE_LENGTH * sizeof(trit_t), &(thread->minWeightMagnitude), 0, 
-			NULL, NULL);
+			pdcl->cl.buffers[thread->index][5], CL_TRUE, 0, 
+			pdcl->cl.kernel.buffer[5].size, &(thread->min_weight_magnitude), 0, 
+			NULL, NULL),
+	"E: failed to write min_weight_magnitude");
 
-	check_clerror(clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index], 
-				pdcl->cl.clkernel[thread->index][0], 1, &(thread->index), // &global_offset
+	check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
+				pdcl->cl.buffers[thread->index][2], CL_TRUE,
+				0, HASH_LENGTH* sizeof(trit_t), mid_state_high,
+				0, NULL, NULL),
+			"E: reading transaction hash failed.\n");
+	check_clerror(
+			clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index], 
+				pdcl->cl.clkernel[thread->index][0], 1, NULL,
 				&global_work_size,&local_work_size, 0, NULL,&ev), 
 			"E: running init kernel failed.\n");
+	check_clerror(
+			clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
+				pdcl->cl.buffers[thread->index][6], CL_TRUE, 0, sizeof(char),
+				&found, 1, &ev, NULL), "E: could not read init errors.\n");
 	check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
-				pdcl->cl.buffers[thread->index][2], CL_TRUE, 0, sizeof(char),
-				&finished, 1, &ev, NULL), "E: could not read init errors.\n");
-	if(finished != 0) {
-		fprintf(stderr, "E: Index out of range.\n");
-		exit(1);
-	}
-	int i = 0;
-	do {
-		i++;
+				pdcl->cl.buffers[thread->index][2], CL_TRUE,
+				0, STATE_LENGTH* sizeof(trit_t), mid_state_high,
+				0, NULL, NULL),
+			"E: reading transaction hash failed.\n");
+	write_difference = memcmp(thread->states.high, mid_state_high, sizeof(trit_t)*STATE_LENGTH);
+	int tries = 0;
+	while( found == 0 && !pdcl->pd.finished) {
+		tries++;
 		cl_event ev1;
-
 		check_clerror(clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index], 
-					pdcl->cl.clkernel[thread->index][1], 1, &(thread->index),
+					pdcl->cl.clkernel[thread->index][1], 1, NULL,
 					&global_work_size,&local_work_size, 0, NULL, &ev1), 
 				"E: running search kernel failed.\n");
 		check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
-					pdcl->cl.buffers[thread->index][2], CL_TRUE, 0, 
-					sizeof(char), &finished, 1, &ev1, NULL),
+					pdcl->cl.buffers[thread->index][6], CL_TRUE, 0, 
+					sizeof(char), &found, 1, &ev1, NULL),
 				"E: reading finished bool failed.\n");
-		/*
 		check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
-					pdcl->cl.buffers[thread->index][3], CL_TRUE, sizeof(trit_t)*STATE_LENGTH*6, sizeof(trit_t)*STATE_LENGTH*2,
-					states, 0, NULL, NULL), "E: could not read states.\n");
-					*/
-		//fprintf(stderr, "\nFinished in %d tries: f%d \n",i, finished);
-	} 
-	while ( finished == 0 && !pdcl->pd.finished);
-		//fprintf(stderr, "\nFinished in %d tries: f%d \n",i, finished);
-		if(finished > 0) {
-			/*
-			check_clerror(clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index], 
-						pdcl->cl.clkernel[thread->index][2],
-						1, &(thread->index),&global_work_size,&local_work_size, 0, 
-						NULL,&ev), "E: running finalize kernel failed.\n");
-						*/
-			pthread_mutex_lock(&pdcl->pd.new_thread_search);
-			pdcl->pd.nonceFound = true;
+					pdcl->cl.buffers[thread->index][0], CL_TRUE,
+					0, HASH_LENGTH* sizeof(trit_t), trit_hash,
+					0, NULL, NULL),
+				"E: reading transaction hash failed.\n");
+		check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
+					pdcl->cl.buffers[thread->index][1], CL_TRUE,
+					0, STATE_LENGTH* sizeof(trit_t), mid_state_low,
+					0, NULL, NULL),
+				"E: reading transaction hash failed.\n");
+		check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
+					pdcl->cl.buffers[thread->index][2], CL_TRUE,
+					0, STATE_LENGTH* sizeof(trit_t), mid_state_high,
+					0, NULL, NULL),
+				"E: reading transaction hash failed.\n");
+		check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
+					pdcl->cl.buffers[thread->index][3], CL_TRUE,
+					0, STATE_LENGTH* sizeof(trit_t), state_low,
+					0, NULL, NULL),
+				"E: reading transaction hash failed.\n");
+		check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
+					pdcl->cl.buffers[thread->index][4], CL_TRUE,
+					0, STATE_LENGTH* sizeof(trit_t), state_high,
+					0, NULL, NULL),
+				"E: reading transaction hash failed.\n");
+		pd_increment(thread->states.low, thread->states.high, (HASH_LENGTH/2)*3, HASH_LENGTH);
+		write_difference = 
+			memcmp(thread->states.high, mid_state_high, sizeof(trit_t)*STATE_LENGTH)
+			+ memcmp(thread->states.low, mid_state_low, sizeof(trit_t)*STATE_LENGTH);
+		if(tries == 20126 || found != 0) {
 			check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
-						pdcl->cl.buffers[thread->index][0], CL_TRUE,
-						0, 
-						HASH_LENGTH* sizeof(trit_t), thread->trits, 1, &ev, NULL),
+						pdcl->cl.buffers[thread->index][7], CL_TRUE,
+						0, num_groups * sizeof(trit_t), nonce_probe,
+						0, NULL, NULL),
 					"E: reading transaction hash failed.\n");
-			//char trytes[HASH_LENGTH/3];
-			//trits2trytes(trytes,thread->trits,HASH_LENGTH);
-			//fprintf(stderr, "Fount hash: %s\n", trytes);
-			pthread_mutex_unlock(&pdcl->pd.new_thread_search);
 		}
+	} 
+	if(found > 0) {
+		check_clerror(clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index], 
+					pdcl->cl.clkernel[thread->index][2], 1, NULL,
+					&local_work_size,&local_work_size, 0, NULL, &ev), 
+				"E: running search kernel failed.\n");
+		pthread_mutex_lock(&pdcl->pd.new_thread_search);
+		if(pdcl->pd.nonceFound) return 0;
+		pdcl->pd.nonceFound = true;
+		check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
+					pdcl->cl.buffers[thread->index][0], CL_TRUE,
+					0, HASH_LENGTH* sizeof(trit_t), trit_hash,
+					1, &ev, NULL),
+				"E: reading transaction hash failed.\n");
+		memcpy(thread->trits + TRANSACTION_LENGTH - HASH_LENGTH, trit_hash, HASH_LENGTH*sizeof(trit_t));
+		fprintf(stderr, "\nFound index: %d\n", (int)found);
+		for(i = 0; i < HASH_LENGTH; i++) {
+			fprintf(stderr, "%ld, ", trit_hash[i]);
+		}
+		fprintf(stderr, "\n");
+		pthread_mutex_unlock(&pdcl->pd.new_thread_search);
+	}
 
-		return 0;
+	return 0;
 }
 
 bool pearcl_search(
 		PearCLDiver *pdcl,
 		long *const trits,
 		size_t length,
-		size_t minWeightMagnitude
+		size_t min_weight_magnitude
 		) {
 	int k, thread_count;
 	int numberOfThreads = pdcl->cl.num_devices;
@@ -143,24 +179,33 @@ bool pearcl_search(
 	if (length != TRANSACTION_LENGTH) {
 		return Invalid_transaction_trits_length;
 	}
-	if (minWeightMagnitude > HASH_LENGTH) {
+	if (min_weight_magnitude > HASH_LENGTH) {
 		return Invalid_min_weight_magnitude;
 	}
-	trit_t hashTrits[HASH_LENGTH];
+
+	pdcl->cl.kernel.num_buffers = 8; 
+	pdcl->cl.kernel.buffer[0] = (BufferInfo){sizeof(trit_t)*HASH_LENGTH, CL_MEM_WRITE_ONLY};  // trit_hash //
+	pdcl->cl.kernel.buffer[1] = (BufferInfo){sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2}; // mid_state_low   //
+	pdcl->cl.kernel.buffer[2] = (BufferInfo){sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2}; // mid_state_high  //
+	pdcl->cl.kernel.buffer[3] = (BufferInfo){sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2}; // state_low //
+	pdcl->cl.kernel.buffer[4] = (BufferInfo){sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2}; // state_high//
+	pdcl->cl.kernel.buffer[5] = (BufferInfo){sizeof(size_t), CL_MEM_READ_ONLY};                		// minweightmagnitude //
+	pdcl->cl.kernel.buffer[6] = (BufferInfo){sizeof(char), CL_MEM_READ_WRITE};                 		// found //
+	pdcl->cl.kernel.buffer[7] = (BufferInfo){sizeof(trit_t), CL_MEM_READ_WRITE, 2};           // nonce_probe //
+	//pdcl->cl.kernel.buffer[8] = (BufferInfo){sizeof(size_t), CL_MEM_READ_WRITE, 1};                         // increment end//
+
+	kernel_init_buffers (&(pdcl->cl));
 
 	pdcl->pd.finished = false;
 	pdcl->pd.interrupted = false;
 	pdcl->pd.nonceFound = false;
 
 	States states;
-	memset(&states,0,sizeof(States));
+	//memset(&states,0,sizeof(States));
 	pd_search_init(&states, trits);
 
-	if (numberOfThreads <= 0) {
-		numberOfThreads = sysconf(_SC_NPROCESSORS_ONLN) - 1;
-		if (numberOfThreads < 1)
-			numberOfThreads = 1;
-	}
+	if (numberOfThreads == 0)
+		return 1;
 
 	pthread_mutex_init(&pdcl->pd.new_thread_search, NULL);
 	//pthread_cond_init(&cond_search, NULL);
@@ -175,9 +220,9 @@ bool pearcl_search(
 	numberOfThreads = 1;
 	while (numberOfThreads-- > 0) {
 		PDCLThread pdthread = {
-			.states = &states,
-			.trits = hashTrits,
-			.minWeightMagnitude = minWeightMagnitude,
+			.states = states,
+			.trits = trits,
+			.min_weight_magnitude = min_weight_magnitude,
 			.index = numberOfThreads,
 			.pdcl = pdcl
 		};
@@ -190,9 +235,25 @@ bool pearcl_search(
 	for(k = thread_count; k > 0; k--) {
 		pthread_join(tid[k-1], NULL);
 	}
-	if(pdcl->pd.nonceFound) {
-		memcpy(trits+TRANSACTION_LENGTH-HASH_LENGTH,hashTrits,HASH_LENGTH*sizeof(trit_t));
-	}
 
 	return pdcl->pd.interrupted;
 }
+		/*
+		check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
+					pdcl->cl.buffers[thread->index][3], CL_TRUE,
+					0, 
+					sizeof(bit_indeces), bit_indeces, 1, &ev, NULL),
+				"E: reading transaction hash failed.\n");
+		for(i = 0; i < num_groups; i++) {
+			if(bit_indeces[i] != -1) {
+				found_index = i;
+				break;
+			}
+		}
+		*/
+	/*
+	trit_t hashTrits[HASH_LENGTH]; //from above
+	if(pdcl->pd.nonceFound) {
+		memcpy(trits+TRANSACTION_LENGTH-HASH_LENGTH,hashTrits,HASH_LENGTH*sizeof(trit_t));
+	}
+	*/

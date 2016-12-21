@@ -1,51 +1,90 @@
-__constant size_t bit_size_of_long_long = sizeof(long)*8;
+/*
+ * PearlDiver
+ *
+ * Host copies state out to states
+ * Host runs init kernel
+ * 	kernel copes states to their array space
+ * Host runs search kernel
+ * 	search kernel searches sizeof(size_t) times for a nonce
+ * 		If a nonce is found, it sets the bit index to the group's array
+ *
+ * 		successful kernel writes trits out to stateLow space ( midLow +
+ * 		STATELENGTH*4)
+ *
+ * 		successful kernel sets finished to 1
+ * Host reads finished variable
+ * 	If finished is not 1, then host runs the search kernel again
+ * Host reads bit index array, chooses the first group that has a bit index
+ * array greater than or equal to 0
+ *
+ * Host reads trit hash (HASH_LENGTH) from that kernel's stateLow space
+ *
+ */
 
-void increment(__global trit_t *states, int from, int to) {
-	__private size_t id = get_local_id(0)*3 ;
-	__private size_t gid = get_global_id(0) / HASH_LENGTH;
-	__private size_t midLow = gid*STATE_LENGTH*4,
-			  midHigh = midLow + STATE_LENGTH;
-	size_t i,j;
+//__constant size_t bit_size_of_long_long = sizeof(long)*8;
+
+void set_ids(__private size_t *id, __private size_t *gid) {
+	*id = get_local_id(0)*3;
+	*gid = get_global_id(0)/HASH_LENGTH;
+}
+
+void cl_find_end(
+		__global trit_t *mid_low,
+		__private size_t id,
+		__local size_t *end,
+		__private int from,
+		__private int to
+		) {
+	int i,j;
+	if(id == 0) {
+		*end = to;
+		for(i=from; i < to; i++) {
+			if(mid_low[j] == LOW_BITS ) {
+				*end = i;
+				break;
+			}
+		}
+	}
+	barrier(CLK_LOCAL_MEM_FENCE);
+}
+void cl_increment(
+		__global trit_t *mid_low,
+		__global trit_t *mid_high,
+		int from,
+		int to, 
+		__private size_t id 
+		) {
+	__private size_t i,j;
+	barrier(CLK_LOCAL_MEM_FENCE);
 #pragma unroll
 	for(i=0; i<3; i++) {
 		j = id + i;
-		if( j >= from || j < to) {
-			if (states[midLow + j] == LOW_BITS) {
-				states[midLow + j] = HIGH_BITS;
-				states[midHigh +j] = LOW_BITS;
+		if( j >= from && j < to) {
+			if (mid_low[j] == LOW_BITS) {
+				mid_low[j] = HIGH_BITS;
+				mid_high[j] = LOW_BITS;
 			} else {
-				if (states[midHigh +j] == LOW_BITS) {
-					states[midHigh +j] = HIGH_BITS;
+				if (mid_high[j] == LOW_BITS) {
+					mid_high[j] = HIGH_BITS;
 				} else {
-					states[midLow + j] = LOW_BITS;
+					mid_low[j] = LOW_BITS;
 				}
 			}
 		}
 	}
+	barrier(CLK_LOCAL_MEM_FENCE);
 }
 
 void cl_transform (
-		__global trit_t *states
+		__global trit_t *state_low,
+		__global trit_t *state_high
 		) {
-	size_t i, j,round;
-	__private size_t id = get_local_id(0)*3;
-	__private size_t gid = get_global_id(0)/HASH_LENGTH;// get_global_offset(0);
+	__private size_t id, gid;
+	set_ids(&id, &gid);
+
+	int i, j,round, l1, l2;
 	__private trit_t alpha, beta, gamma, delta;
-	__private size_t midLow = gid*STATE_LENGTH*4,
-			  midHigh = midLow + STATE_LENGTH,
-			  low = midHigh + STATE_LENGTH, 
-			  high = low + STATE_LENGTH;
-	increment(states,(HASH_LENGTH / 3) * 2,HASH_LENGTH);
-	__private trit_t scratchpadLow[3];
-	__private trit_t scratchpadHigh[3];
-	__private size_t l1,l2;
-	//barrier(CLK_LOCAL_MEM_FENCE);
-#pragma unroll
-	for (i = 0; i < 3; i++) {
-		j = id + i;
-		states[low + j] = states[midLow + j];
-		states[high + j] = states[midHigh + j];
-	}
+	__private trit_t scratchpadLow[3], scratchpadHigh[3];
 
 #pragma unroll
 	for (round = 27; round-- > 0; ) {
@@ -53,12 +92,12 @@ void cl_transform (
 #pragma unroll
 		for (i = 0; i < 3; i++) {
 			j = id + i;
-			l1 = j == 0? 0:(((j - 1)>>1)+1)*HALF_LENGTH - ((j-1)>>1);
-			l2 = ((j>>1)+1)*HALF_LENGTH - (j>>1);
-			alpha = states[low + l1];
-			beta = states[high + l1];
-			gamma = states[high + l2];
-			delta = (alpha | (~gamma)) & (states[low + l2] ^ beta);
+			l1 = j == 0? 0:(((j - 1)%2)+1)*HALF_LENGTH - ((j-1)>>1);
+			l2 = ((j%2)+1)*HALF_LENGTH - ((j)>>1);
+			alpha = state_low[l1];
+			beta = state_high[l1];
+			gamma = state_high[l2];
+			delta = (alpha | (~gamma)) & (state_low[l2] ^ beta);
 
 			scratchpadLow[i] = ~delta;
 			scratchpadHigh[i] = (alpha ^ gamma) | delta;
@@ -67,303 +106,133 @@ void cl_transform (
 #pragma unroll
 		for (i = 0; i < 3; i++) {
 			j = id + i;
-			states[low + j] = scratchpadLow[i];
-			states[high + j] = scratchpadHigh[i];
+			state_low[j] = scratchpadLow[i];
+			state_high[j] = scratchpadHigh[i];
 		}
 	}
 }
 
-void cl_check (
-		__constant size_t *minWeightMagnitude,
-		__global trit_t *states,
-		__local volatile size_t *bitIndex,
-		__local volatile unsigned long *found,
-		__local volatile unsigned long *mask
+void check_nonce(
+		__global trit_t *state_low,
+		__global trit_t *state_high,
+		__constant size_t *min_weight_magnitude,
+		__global trit_t *nonce_probe
 		) {
-	__private size_t id = get_local_id(0)*3 ; 
-	__private size_t i, j,k;
-	__private size_t gid = get_global_id(0);
-	__private size_t midLow = gid*STATE_LENGTH*4,
-			  midHigh = midLow + STATE_LENGTH,
-			  low = midHigh + STATE_LENGTH, 
-			  high = low + STATE_LENGTH;
-	if(id ==0) *found |= *mask;
-#pragma unroll
-	for(i = 0; i < 64; i++ ) {
-		if(id == 0) *bitIndex = i;
-		barrier(CLK_LOCAL_MEM_FENCE);
-#pragma unroll
-		for (k = 0; k < 3; k++) {
-			j = id + k;
-			if (j >= HASH_LENGTH - *minWeightMagnitude && 
-					((trit_t)states[low + j] & (1 << i)) != 
-					((trit_t)states[high + j] & (1 << i))) {
-				barrier(CLK_LOCAL_MEM_FENCE);
-				*found &= ~*mask;
-			}
-		}
-		barrier(CLK_LOCAL_MEM_FENCE);
-		if(*found & *mask != 0) {
-			return;
+	__private size_t nonce_start, nonce_offset, j, k;
+	*nonce_probe = HIGH_BITS;
+	for(j = HASH_LENGTH - *min_weight_magnitude - 1; j < HASH_LENGTH; j++) {
+		*nonce_probe &= ~(state_low[j] ^ state_high[j]);
+		if(*nonce_probe == 0)
+		{
+			break;
 		}
 	}
 }
 
-void cl_finalize (
-			__global trit_t *trits,
-			__global volatile char *finished,
-			__global volatile unsigned long *found,
-			__global trit_t *states,
-			__local unsigned long *mask,
-			__local volatile size_t *bitIndex
+__kernel void finalize (
+		__global trit_t *trit_hash,
+		__global trit_t *mid_low,
+		__global trit_t *mid_high,
+		__global trit_t *state_low,
+		__global trit_t *state_high,
+		__constant size_t *min_weight_magnitude,
+		__global volatile char *found,
+		__global trit_t *nonce_probe//,__local size_t *increment_end
+		
 		) {
-	__private size_t j,k;
-	__private size_t id = get_local_id(0)*3;
-	__private size_t gid = get_global_id(0)/HASH_LENGTH;
-	__private size_t midLow = gid*STATE_LENGTH*4,
-			  midHigh = midLow + STATE_LENGTH,
-			  low = midHigh + STATE_LENGTH, 
-			  high = low + STATE_LENGTH;
-	if(!*found & *mask || (*found << (bit_size_of_long_long - gid)) != 0)
-		return;
-	//if(id == 0 && gid == 0) printf("From Finalize 0, Hello!\n");
+	__private size_t i,j,k, id, gid, start;
+	set_ids(&id, &gid);
+	gid = *found - 1;
+	start = gid * STATE_LENGTH;
+	if(id == 0 && nonce_probe[gid] > 0) {
+		printf("No Zero NONCE!\n");
+		printf("nonce probe: %ld\n", nonce_probe[gid]);
+		printf("start: %d\n", (int)start);
+	}
 #pragma unroll
 	for(k = 0; k < 3; k++) {
 		j = id + k;
-		if(j < HASH_LENGTH)
-			trits[j] = (states[midLow + j] & (1<< *bitIndex)) == 0 ? 
-				1 : (states[midHigh + j] & (1<< *bitIndex)) == 0 ? -1 : 0;
+		if(j < HASH_LENGTH) {
+			trit_hash[j] = (mid_low[start+j] & nonce_probe[gid]) == 0 ? 
+				1 : (mid_high[start+j] & nonce_probe[gid]) == 0 ? -1 : 0;
+		}
 	}
-	if(id == 0) {
-		*finished = 1;
+}
+
+__kernel void search (
+		__global trit_t *trit_hash,
+		__global trit_t *mid_low,
+		__global trit_t *mid_high,
+		__global trit_t *state_low,
+		__global trit_t *state_high,
+		__constant size_t *min_weight_magnitude,
+		__global volatile char *found,
+		__global trit_t *nonce_array//,__local size_t *increment_end
+		) {
+	__private size_t i,j,k, id, gid, start;
+	__local size_t end;
+	set_ids(&id, &gid);
+	start = gid * STATE_LENGTH;
+#pragma unroll
+	for(i = 0; i < (size_t)1; i++) { 
+		if(*found != 0){
+			break;
+		}
+		cl_find_end(mid_low + start, id, &end, (HASH_LENGTH / 3) * 2, HASH_LENGTH);
+		cl_increment(mid_low + start, mid_high + start,
+				(HASH_LENGTH / 3) * 2, end + 1, id);
+#pragma unroll
+		for (j = 0; j < 3; j++) {
+			k = id + i;
+			state_low[start + k] = mid_low[start + k];
+			state_high[start + k] = mid_high[start + k];
+		}
+
+		cl_transform(state_low + start, state_high + start);
+		barrier(CLK_LOCAL_MEM_FENCE);
+		if(id == 0) {
+			check_nonce(state_low + start, state_high + start, min_weight_magnitude, &(nonce_array[gid]));
+		}
+		barrier(CLK_LOCAL_MEM_FENCE);
+		if (nonce_array[gid] != 0){
+			if(id == 0 && *found == 0) {
+				*found = 1 + gid;
+			}
+			break;
+		}
 	}
 }
 
 __kernel void init (
-		__global trit_t *trits,
-		__global unsigned long *found,
-		__global char *finished,
-		__global trit_t *states,
-		__constant size_t *minWeightMagnitude,
-		//__local size_t *indices,
-		__local unsigned long *mask,
-		__local size_t *bitIndex
+		__global trit_t *trit_hash,
+		__global trit_t *mid_low,
+		__global trit_t *mid_high,
+		__global trit_t *state_low,
+		__global trit_t *state_high,
+		__constant size_t *min_weight_magnitude,
+		__global volatile char *found,
+		__global trit_t *nonce_probe//,__local size_t *increment_end
 		) {
-	__private int my_id = get_local_id(0);
-	if(my_id >= HASH_LENGTH) return;
-	size_t i, j;
-	__private size_t id = my_id*3;
-	__private size_t gid = get_global_id(0)/HASH_LENGTH;
-	__private size_t midLow = gid*STATE_LENGTH*4,
-			  midHigh = midLow + STATE_LENGTH,
-			  low = midHigh + STATE_LENGTH, 
-			  high = low + STATE_LENGTH;
+	__private size_t i, j, id, gid, offset;
+	__local size_t end;
+	set_ids(&id, &gid);
+	offset = gid * STATE_LENGTH;
 
-#pragma unroll
-	for(i = 0; i < 3; i++) {
-		j = id + i;
-		states[midLow + j] = states[j]; //midstatelow
-		states[midHigh + j] = states[j + STATE_LENGTH]; //midstatehigh
+	if(id==0 && gid == 0) {
+		*found = 0;
 	}
+
+	if(gid != 0) {
+#pragma unroll
+		for(i = 0; i < 3; i++) {
+			j = id + i;
+			mid_low[offset + j] = mid_low[j];
+			mid_high[offset + j] = mid_high[j];
+		}
+	}
+	cl_find_end(mid_low + offset, id, &end, HASH_LENGTH / 3, (HASH_LENGTH / 3) * 2);
 	for (i = gid; i-- > 0; ) {
-		increment (states, HASH_LENGTH / 3, (HASH_LENGTH / 3) * 2);
-	}
-
-	if(id == 0) {
-		*mask = 1;
-		*mask <<= gid;
-		//printf("\nMask for gid %d: %#010x", gid, *mask);
+		cl_increment(mid_low + offset, mid_high + offset, 
+				HASH_LENGTH / 3, end + 1, id);
 	}
 }
-	/*
-#pragma unroll
-	for(i = 0; i < 3; i++) {
-		j = id + i;
-		indices[j*2]   = j == 0? 0:(((j - 1)>>1)+1)*HALF_LENGTH - ((j-1)>>1);
-		indices[j*2+1] = ((j>>1)+1)*HALF_LENGTH - (j>>1);
-		if(indices[j*2] >= STATE_LENGTH || indices[j*2+1] >=STATE_LENGTH) {
-			*found = 2;
-			return;
-		}
-	}
-	*/
-
-	__kernel void search (
-			__global trit_t *trits,
-			__global volatile unsigned long *found,
-			__global char *finished,
-			__global trit_t *states,
-			__constant size_t *minWeightMagnitude,
-			//__local size_t *indices,
-			__local unsigned long *mask,
-			__local volatile size_t *bitIndex
-			) {
-		__private size_t i,j,k, id, gid, midLow, midHigh, low, high;
-		id = get_local_id(0)*3;
-		gid = get_global_id(0)/HASH_LENGTH;
-		midLow = gid*STATE_LENGTH*4;
-		midHigh = midLow + STATE_LENGTH;
-		low = midHigh + STATE_LENGTH; 
-		high = low + STATE_LENGTH;
-		__local trit_t scratchpadLow[STATE_LENGTH]; 
-		__local trit_t scratchpadHigh[STATE_LENGTH];
-		//if(id == 0) printf("\nMask for gid in search %d: %#010x", gid, *mask);
-#pragma unroll
-		for(i = 0; i < sizeof(size_t); i++) { 
-			if(*found != 0) return;
-			cl_transform(states);
-			cl_check(minWeightMagnitude, states, bitIndex);
-			barrier(CLK_LOCAL_MEM_FENCE);
-			if (*bitIndex != -1){
-				if(id == 0) {
-					*found |= *mask;
-				}
-				break;
-			}
-		}
-		barrier(CLK_GLOBAL_MEM_FENCE);
-		cl_finalize(trits, finished, found, states, mask, bitIndex);
-	}
-
-
-
-/*
-
-__kernel void transform (
-		__global trit_t *trits,
-		__global unsigned long *found,
-		__global char *finished,
-		__global trit_t *states,
-		__constant size_t *minWeightMagnitude,
-		__local size_t *indices,
-		__local unsigned long *mask,
-		__local size_t *bitIndex
-		) {
-	__private size_t my_id = get_local_id(0);
-	if(my_id >= HASH_LENGTH) return;
-	cl_transform(states);
-
-	/ *
-	   size_t i, j,round;
-	   __private size_t id = my_id*3;
-	   __private size_t gid = get_global_id(0)/HASH_LENGTH;
-	   __private size_t midLow = gid*STATE_LENGTH*4,
-	   midHigh = midLow + STATE_LENGTH,
-	   low = midHigh + STATE_LENGTH, 
-	   high = low + STATE_LENGTH;
-	//if(id == 0 && gid == 0) printf("hello from trans kernel\n");
-	__local trit_t scratchpadLow[STATE_LENGTH]; 
-	__local trit_t scratchpadHigh[STATE_LENGTH];
-	__private trit_t alpha, beta, gamma, delta;
-
-	increment (states,(HASH_LENGTH / 3) * 2,HASH_LENGTH);
-
-	barrier(CLK_LOCAL_MEM_FENCE);
-
-#pragma unroll
-for (i = 0; i < 3; i++) {
-j = id + i;
-states[low + j] = states[midLow + j];
-states[high + j] = states[midHigh + j];
-}
-
-	// transform //
-#pragma unroll
-for (round = 27; round-- > 0; ) {
-barrier(CLK_LOCAL_MEM_FENCE);
-#pragma unroll
-for (i = 0; i < 3; i++) {
-j = id + i;
-scratchpadLow [j] = states[low + j];
-scratchpadHigh[j] = states[high + j];
-}
-barrier(CLK_LOCAL_MEM_FENCE);
-#pragma unroll
-for (i = 0; i < 3; i++) {
-j = id + i;
-alpha = scratchpadLow[indices[2*j]];
-beta = scratchpadHigh[indices[2*j]];
-gamma = scratchpadHigh[indices[2*j+1]];
-delta = (alpha | (~gamma)) & (scratchpadLow[indices[2*j+1]] ^ beta);
-
-states[low + j] = ~delta;
-states[high + j] = (alpha ^ gamma) | delta;
-}
-}
-* /
-}
-__kernel void check (
-		__global trit_t *trits,
-		__global volatile unsigned long *found,
-		__global char *finished,
-		__global trit_t *states,
-		__constant size_t *minWeightMagnitude,
-		__local size_t *indices,
-		__local unsigned long *mask,
-		__local volatile size_t *bitIndex
-		) {
-	__private size_t my_id = get_local_id(0);
-	if(my_id >= HASH_LENGTH) return;
-	__private size_t id = my_id*3 ; 
-	__private size_t gid = get_global_id(0)/HASH_LENGTH;
-	__private size_t midLow = gid*STATE_LENGTH*4,
-			  midHigh = midLow + STATE_LENGTH,
-			  low = midHigh + STATE_LENGTH, 
-			  high = low + STATE_LENGTH;
-
-	__private int i, j,k;
-	__local bool skip;
-	//if(id == 0 && get_global_id(0) == 0) printf("hello from check kernel\n");
-#pragma unroll
-	for(i = 0; i < 64; i++ ) {
-		if(id == 0) {
-			skip = false;
-			*found |= *mask;
-		}
-		barrier(CLK_LOCAL_MEM_FENCE);
-#pragma unroll
-		for (k = 0; k < 3; k++) {
-			j = id + k;
-			//printf("I've CHeckin IT! %#010x:%ld\n", id, get_global_id(0));
-			if (j >= HASH_LENGTH - *minWeightMagnitude && 
-					((trit_t)states[low + j] & (1 << i)) != 
-					((trit_t)states[high + j] & (1 << i))) {
-				*found &= ~*mask;
-				skip = true;
-			}
-		}
-		//barrier(CLK_LOCAL_MEM_FENCE);
-		barrier(CLK_GLOBAL_MEM_FENCE);
-		if(!skip){
-			//if(){
-			if(id == 0 && *found & *mask) {
-				*finished = 1;
-				//printf("Bitindex: %d\n", i);
-				*bitIndex = i;
-			}
-			break;
-		}
-		//barrier(CLK_LOCAL_MEM_FENCE);
-		}
-	}
-	__kernel void finalize (
-			__global trit_t *trits,
-			__global unsigned long *found,
-			__global char *finished,
-			__global trit_t *states,
-			__constant size_t *minWeightMagnitude,
-			__local size_t *indices,
-			__local unsigned long *mask,
-			__local size_t *bitIndex
-			) {
-		__private size_t my_id = get_local_id(0);
-		if(my_id >= HASH_LENGTH) return;
-		cl_finalize(trits, finished, found, states, mask, bitIndex);
-	}
-*/
-/*
-   __local trit_t *midStateLow, states[(gid+0)*STATE_LENGTH*4]
-   __local trit_t *midStateHigh,states[(gid+1)*STATE_LENGTH*4]
-   __local trit_t *stateLow,    states[(gid+2)*STATE_LENGTH*4]
-   __local trit_t *stateHigh,   states[(gid+3)*STATE_LENGTH*4]
-   */

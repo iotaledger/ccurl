@@ -107,6 +107,7 @@ static void get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 
 	for(i=0; i< ctx->num_devices; i++) {
 		errno = clBuildProgram(ctx->programs[i], 0, NULL, NULL, NULL, NULL);
+		//errno = clBuildProgram(ctx->programs[i], ctx->num_devices, devices, "-g", NULL, NULL);
 		char *build_log = malloc(0xFFFF);
 		size_t log_size;
 		clGetProgramBuildInfo(ctx->programs[i], devices[i], 
@@ -129,7 +130,7 @@ static void create_kernel (CLContext *ctx,char **names) {
 	}
 }
 
-static void kernel_init_buffers (CLContext *ctx) {
+void kernel_init_buffers (CLContext *ctx) {
 	int i, j, k;
 	cl_ulong memsize;
 	cl_int errno;
@@ -163,11 +164,12 @@ static void kernel_init_buffers (CLContext *ctx) {
 					check_clerror(clSetKernelArg(ctx->clkernel[i][k], j, 
 								sizeof(cl_mem), NULL), 
 							"Failed to execute clSetKernelArg for local %d:%d",
-							i, j);
+							(int)i, (int)j);
 				} else {
 					check_clerror(clSetKernelArg(ctx->clkernel[i][k], j, 
 								sizeof(cl_mem),(void *)&(ctx->buffers[i][j])),
-							"Failed to execute clSetKernelArg for %d:%d",i,j);
+							"Failed to execute clSetKernelArg for %d:%d", 
+							(int)i,(int)j);
 				}
 			}
 		}
@@ -177,7 +179,6 @@ static void kernel_init_buffers (CLContext *ctx) {
 
 int init_kernel(CLContext *ctx, char **names) {
 	create_kernel(ctx, names);
-	kernel_init_buffers(ctx);
 	return 0;
 }
 

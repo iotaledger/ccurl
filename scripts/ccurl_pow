@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 var ffi = require('ffi')
 
-var libccurl = ffi.Library('/usr/lib/libccurl', {
+var libccurl = ffi.Library('libccurl', {
   ccurl_pow : [ 'string', [ 'string', 'int'] ]
 })
 

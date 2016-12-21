@@ -49,7 +49,7 @@ void test_pearl_diver_search(void)
 	mytrits = trits_from_trytes(real_transaction, TRYTE_LENGTH);
 
 	start = clock();
-	pd_search(&pearl_diver, mytrits, TRANSACTION_LENGTH, nonce_size, 1);
+	pd_search(&pearl_diver, mytrits, TRANSACTION_LENGTH, nonce_size,  1);
 	diff = clock() - start;
 
 	trans = trytes_from_trits(mytrits, 0, TRANSACTION_LENGTH);
@@ -58,6 +58,7 @@ void test_pearl_diver_search(void)
 	absorb(&curl, mytrits, 0, TRANSACTION_LENGTH);
 	squeeze(&curl, hash_trits, 0, HASH_LENGTH);
 
+	printf("\nTime taken: %ldms\n", diff* 1000 / CLOCKS_PER_SEC);
 	hash = trytes_from_trits(hash_trits, 0, HASH_LENGTH);
 	CU_ASSERT(test_last_n_nines(hash, HASH_LENGTH/3, nonce_size/3));
 	free(mytrits);

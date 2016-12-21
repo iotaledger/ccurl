@@ -18,3 +18,4 @@ libold/
 *.cl.swp.h
 *.cl.h
 *.h.h
+scripts/libccurl.so

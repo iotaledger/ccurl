@@ -25,11 +25,12 @@ typedef struct {
 
 EXPORT void init_pearldiver(PearlDiver *ctx);
 EXPORT void interrupt(PearlDiver *ctx);
-EXPORT bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads);
+EXPORT bool pd_search(PearlDiver *ctx, trit_t *const transaction_trits, int length, const int min_weight_magnitude, int numberOfThreads);
 EXPORT void pd_transform( trit_t *const stateLow, trit_t *const stateHigh, trit_t *const scratchpadLow, trit_t *const scratchpadHigh);
 EXPORT void pd_increment(trit_t *const midStateCopyLow, trit_t *const midStateCopyHigh, const int fromIndex, const int toIndex);
-EXPORT void pd_search_init(States *states, trit_t *transactionTrits);
-EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude);
+EXPORT void pd_search_init(States *states, trit_t *transaction_trits);
+EXPORT char *ccurl_pow(char *trytes, int min_weight_magnitude);
+EXPORT char *ccurl_digest_transaction(char *trytes);
 /*
 void trytes2trits(trit_t *trits, const char *trytes, const size_t len);
 void trits2trytes(char *trytes, const trit_t *trits, const size_t len);
