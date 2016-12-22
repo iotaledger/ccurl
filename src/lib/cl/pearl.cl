@@ -91,7 +91,6 @@ void check(
 		*nonce_probe &= ~(state->low[i] ^ state->high[i]);
 		if(*nonce_probe == 0) return;
 	}
-	printf("i have a nonce, and it is: gid:%d %ld\n", (int)gid, *nonce_probe);
 	if(*nonce_probe != 0) *found = gid + 1;
 }
 
@@ -172,14 +171,5 @@ __kernel void finalize (
 			trit_hash[j] = (states[gid].mid_low[j] & nonce_probe[gid]) == 0 ? 
 				1 : (states[gid].mid_high[j] & nonce_probe[gid]) == 0 ? -1 : 0;
 		}
-	}
-	
-	if(id == 0) {
-		printf("gpu has:\n");
-		for(i = 0; i < HASH_LENGTH; i++) {
-			printf("%ld, ", trit_hash[i]);
-		}
-		printf("\n End of gpu trits");
-		printf("\n Nonce is: %ld", nonce_probe[gid]);
 	}
 }

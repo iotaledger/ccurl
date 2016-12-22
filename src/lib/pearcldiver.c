@@ -102,11 +102,6 @@ void *pearcl_find(void *data) {
 					0, HASH_LENGTH* sizeof(trit_t), thread->trits,
 					1, &ev, NULL),
 				"E: reading transaction hash failed.\n");
-		fprintf(stderr, "My hash\n");
-		for(int l = 0; l < HASH_LENGTH; l++) {
-			fprintf(stderr, "%ld, ", thread->trits[l]);
-		}
-		fprintf(stderr, "\nend of my hash");
 		pthread_mutex_unlock(&pdcl->pd.new_thread_search);
 	}
 
