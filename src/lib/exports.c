@@ -30,7 +30,7 @@ EXPORT char *ccurl_digest_transaction(char *trytes) {
 	size_t length = strlen(trytes);
 	trit_t digest[HASH_LENGTH];
 
-	absorb(&curl, trits_from_trytes(trytes, length), 0, length);
+	absorb(&curl, trits_from_trytes(trytes, length), 0, length*3);
 	squeeze(&curl, digest, 0, HASH_LENGTH);
 
 	return trytes_from_trits(digest, 0, HASH_LENGTH);

@@ -171,10 +171,7 @@ void *find_nonce(void *date){
 	memset(stateHigh, 0, STATE_LENGTH*sizeof(trit_t));
 	memset(scratchpadLow, 0, STATE_LENGTH*sizeof(trit_t));
 	memset(scratchpadHigh, 0, STATE_LENGTH*sizeof(trit_t));
-	int tries = 0;
-	fprintf(stderr, "Hello from thread %d\n", my_thread->threadIndex);
 	while (!ctx->finished && !ctx->interrupted) {
-		tries++;
 		pd_increment(midStateCopyLow, midStateCopyHigh, (HASH_LENGTH / 3) * 2, HASH_LENGTH);
 		memcpy( stateLow, midStateCopyLow, STATE_LENGTH*sizeof(trit_t));
 		memcpy( stateHigh, midStateCopyHigh, STATE_LENGTH*sizeof(trit_t));
@@ -183,7 +180,6 @@ void *find_nonce(void *date){
 		if((nonce_probe = is_found_fast(stateLow,	stateHigh, 
 					my_thread->min_weight_magnitude)) == 0)
 			continue;
-		fprintf(stderr, "\nTries: %d\n",tries);
 		pthread_mutex_lock(&my_thread->ctx->new_thread_search);
 		if(ctx->finished) {
 			pthread_mutex_unlock(&my_thread->ctx->new_thread_search);

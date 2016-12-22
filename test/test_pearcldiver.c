@@ -1,4 +1,5 @@
 #include "../src/lib/pearcldiver.h"
+#include "../src/lib/ccurl.h"
 #include "../src/lib/PearlDiver.h"
 #include "../src/lib/util/converter.h"
 #include "../src/lib/Curl.h"

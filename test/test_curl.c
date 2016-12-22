@@ -1,4 +1,5 @@
 #include "cunit_include.h"
+#include "../src/lib/ccurl.h"
 #include "../src/lib/Hash.h"
 #include "../src/lib/Curl.h"
 #include "../src/lib/util/converter.h"
@@ -110,39 +111,26 @@ void test_curl_hash_works() {
 
 	trit_t myhash[HASH_LENGTH];
 
-	/*
-	fprintf(stderr, "in trytes:\n");
-	puts(nocl_pd_trans);
-	fprintf(stderr, "\nto trits: \n[");
-	for(int i=0; i< TRANSACTION_LENGTH; i++) {
-		fprintf(stderr, "%ld", mytrits[i]);
-		if(i != 8018) fprintf(stderr, ", ");
-	}
-	fprintf(stderr, "]\n");
-	*/
-
 	absorb(&curl, mytrits, 0, TRANSACTION_LENGTH);
 	squeeze(&curl, myhash, 0, HASH_LENGTH);
 	char *hashtrytes = trytes_from_trits(myhash, 0, HASH_LENGTH);
-
-	/*
-	fprintf(stderr, "outtrits\n");
-	puts(hashtrytes);
-	fprintf(stderr, "\nexpecting:\n");
-	puts(nocl_pd_hash);
-	fprintf(stderr, "\n");
-	*/
 
 	CU_ASSERT(strcmp(hashtrytes, nocl_pd_hash) == 0);
 	free(hashtrytes);
 	free(mytrits);
 }
 
+void test_export_hash_trytes(void) {
+	CU_ASSERT(strcmp(ccurl_digest_transaction(nocl_pd_trans), nocl_pd_hash) == 0);
+}
+
+
 static CU_TestInfo tests[] = {
 	{"Curl Absorb Test", test_curl_absorb},
 	{"Curl Reset Test", test_curl_reset},
 	{"Curl NoReset Fail Test", test_curl_noreset_fail},
 	{"Curl Hash Fail Test", test_curl_hash_works},
+	{"Curl export digest test", test_export_hash_trytes},
 	CU_TEST_INFO_NULL,
 };
 

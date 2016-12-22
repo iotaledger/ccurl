@@ -1,4 +1,5 @@
 //#include "acunit/i.h"
+#include "../src/lib/ccurl.h"
 #include "../src/lib/Hash.h"
 #include "../src/lib/PearlDiver.h"
 #include "../src/lib/Curl.h"
