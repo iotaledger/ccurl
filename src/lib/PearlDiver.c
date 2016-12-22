@@ -12,7 +12,7 @@
 typedef struct {
 	States *states;
 	trit_t *trits;
-	int minWeightMagnitude;
+	int min_weight_magnitude;
 	int threadIndex;
 	PearlDiver *ctx;
 } PDThread;
@@ -29,14 +29,14 @@ void interrupt(PearlDiver *ctx) {
 	pthread_mutex_unlock(&ctx->new_thread_search);
 }
 
-bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, const int minWeightMagnitude, int numberOfThreads) {
+bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, const int min_weight_magnitude, int numberOfThreads) {
 
 	int k, thread_count;
 
 	if (length != TRANSACTION_LENGTH) {
 		return Invalid_transaction_trits_length;
 	}
-	if (minWeightMagnitude < 0 || minWeightMagnitude > HASH_LENGTH) {
+	if (min_weight_magnitude < 0 || min_weight_magnitude > HASH_LENGTH) {
 		return Invalid_min_weight_magnitude;
 	}
 
@@ -70,7 +70,7 @@ bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, cons
 		PDThread pdthread = {
 			.states = states,
 			.trits = transactionTrits + TRANSACTION_LENGTH - HASH_LENGTH,
-			.minWeightMagnitude = minWeightMagnitude,
+			.min_weight_magnitude = min_weight_magnitude,
 			.threadIndex = numberOfThreads,
 			.ctx = ctx
 		};
@@ -89,8 +89,8 @@ void pd_search_init(States *states, trit_t *transactionTrits) {
 	int i, j, offset = 0;
 	for (i = HASH_LENGTH; i < STATE_LENGTH; i++) {
 
-		states->low[i] = HIGH_BITS;
-		states->high[i] = HIGH_BITS;
+		states->mid_low[i] = HIGH_BITS;
+		states->mid_high[i] = HIGH_BITS;
 	}
 
 	trit_t scratchpadLow[STATE_LENGTH],scratchpadHigh[STATE_LENGTH];
@@ -100,43 +100,66 @@ void pd_search_init(States *states, trit_t *transactionTrits) {
 		for (j = 0; j < HASH_LENGTH; j++) {
 			switch (transactionTrits[offset++]) {
 				case 0: {
-						states->low[j] = HIGH_BITS;
-						states->high[j] = HIGH_BITS;
-					} break;
+							states->mid_low[j] = HIGH_BITS;
+							states->mid_high[j] = HIGH_BITS;
+						} break;
 				case 1: {
-						states->low[j] = LOW_BITS;
-						states->high[j] = HIGH_BITS;
-					} break;
+							states->mid_low[j] = LOW_BITS;
+							states->mid_high[j] = HIGH_BITS;
+						} break;
 				default: {
-						 states->low[j] = HIGH_BITS;
-						 states->high[j] = LOW_BITS;
-					 }
+							 states->mid_low[j] = HIGH_BITS;
+							 states->mid_high[j] = LOW_BITS;
+						 }
 			}
 		}
 
-		pd_transform(states->low, states->high, scratchpadLow, scratchpadHigh);
+		pd_transform(states->mid_low, states->mid_high, scratchpadLow, scratchpadHigh);
 	}
-	states->low[0] = 0b1101101101101101101101101101101101101101101101101101101101101101L;
-	states->high[0] = 0b1011011011011011011011011011011011011011011011011011011011011011L;
-	states->low[1] = 0b1111000111111000111111000111111000111111000111111000111111000111L;
-	states->high[1] = 0b1000111111000111111000111111000111111000111111000111111000111111L;
-	states->low[2] = 0b0111111111111111111000000000111111111111111111000000000111111111L;
-	states->high[2] = 0b1111111111000000000111111111111111111000000000111111111111111111L;
-	states->low[3] = 0b1111111111000000000000000000000000000111111111111111111111111111L;
-	states->high[3] = 0b0000000000111111111111111111111111111111111111111111111111111111L;
+	states->mid_low[0] = 0b1101101101101101101101101101101101101101101101101101101101101101L;
+	states->mid_high[0] = 0b1011011011011011011011011011011011011011011011011011011011011011L;
+	states->mid_low[1] = 0b1111000111111000111111000111111000111111000111111000111111000111L;
+	states->mid_high[1] = 0b1000111111000111111000111111000111111000111111000111111000111111L;
+	states->mid_low[2] = 0b0111111111111111111000000000111111111111111111000000000111111111L;
+	states->mid_high[2] = 0b1111111111000000000111111111111111111000000000111111111111111111L;
+	states->mid_low[3] = 0b1111111111000000000000000000000000000111111111111111111111111111L;
+	states->mid_high[3] = 0b0000000000111111111111111111111111111111111111111111111111111111L;
+}
+
+int is_found(trit_t *low, trit_t *high, int index, int min_weight_magnitude) {
+	int i;
+	for (i = min_weight_magnitude; i-- > 0; ) {
+		if ((((trit_t)(low[HASH_LENGTH - 1 - i] )) &  (1 << index)) 
+				!= (((trit_t)(high[HASH_LENGTH - 1 - i] )) & (1<< index))) {
+			return 0;
+		}
+	}
+	return 1;
+}
+
+int is_found_fast(trit_t *low, trit_t *high, int min_weight_magnitude) {
+	int i;
+	trit_t lastMeasurement = HIGH_BITS; /* (low[index] >> bitIndex & 1) != (high[index] >> bitIndex & 1) */
+	for (i = min_weight_magnitude; i-- > 0; ) {
+		lastMeasurement &= ~(low[HASH_LENGTH - 1 - i] ^ high[HASH_LENGTH - 1 - i]);
+		if(lastMeasurement == 0) {
+			return 0;
+		}
+	}
+	return lastMeasurement;
 }
 
 void *find_nonce(void *date){
 	trit_t midStateCopyLow[STATE_LENGTH],midStateCopyHigh[STATE_LENGTH];
-	int i,bitIndex;
+	int i,bit_index, nonce_probe;
 	PDThread *my_thread= (PDThread *)date;
 	trit_t *trits = my_thread->trits;
 
 	memset(midStateCopyLow, 0, STATE_LENGTH*sizeof(trit_t));
 	memset(midStateCopyHigh, 0, STATE_LENGTH*sizeof(trit_t));
 	PearlDiver *ctx = my_thread->ctx;
-	memcpy(midStateCopyLow, my_thread->states->low, STATE_LENGTH*sizeof(trit_t));
-	memcpy(midStateCopyHigh, my_thread->states->high, STATE_LENGTH*sizeof(trit_t));
+	memcpy(midStateCopyLow, my_thread->states->mid_low, STATE_LENGTH*sizeof(trit_t));
+	memcpy(midStateCopyHigh, my_thread->states->mid_high, STATE_LENGTH*sizeof(trit_t));
 
 
 	for (i = my_thread->threadIndex; i-- > 0; ) {
@@ -148,55 +171,38 @@ void *find_nonce(void *date){
 	memset(stateHigh, 0, STATE_LENGTH*sizeof(trit_t));
 	memset(scratchpadLow, 0, STATE_LENGTH*sizeof(trit_t));
 	memset(scratchpadHigh, 0, STATE_LENGTH*sizeof(trit_t));
-
-	bool skip;
+	int tries = 0;
+	fprintf(stderr, "Hello from thread %d\n", my_thread->threadIndex);
 	while (!ctx->finished && !ctx->interrupted) {
+		tries++;
 		pd_increment(midStateCopyLow, midStateCopyHigh, (HASH_LENGTH / 3) * 2, HASH_LENGTH);
 		memcpy( stateLow, midStateCopyLow, STATE_LENGTH*sizeof(trit_t));
 		memcpy( stateHigh, midStateCopyHigh, STATE_LENGTH*sizeof(trit_t));
 		pd_transform(stateLow, stateHigh, scratchpadLow, scratchpadHigh);
 
-
-		for (bitIndex = 64; bitIndex-- > 0; ) {
-			skip = false;
-			if(ctx->finished) {return 0;}
-			for (i = my_thread->minWeightMagnitude; i-- > 0; ) {
-				if ((((trit_t)(stateLow[HASH_LENGTH - 1 - i] >> bitIndex)) & 1)
-						!= (((trit_t)(stateHigh[HASH_LENGTH - 1 - i] >> bitIndex)) & 1)) {
-					goto NEXT_BIT_INDEX;
-					/*
-				if ((((trit_t)(stateLow[HASH_LENGTH - 1 - i] )) &  (1 << bitIndex)) 
-						!= (((trit_t)(stateHigh[HASH_LENGTH - 1 - i] )) & (1<< bitIndex))) {
-						*/
-					//skip = true;
-					//break;
-				}
-			}
-			if(skip) continue;
-
-			pthread_mutex_lock(&my_thread->ctx->new_thread_search);
-			if(ctx->finished) {
-				pthread_mutex_unlock(&my_thread->ctx->new_thread_search);
-				return 0;
-			}
-			ctx->finished = true;
-			for ( i = 0; i < HASH_LENGTH; i++) {
-				//my_thread->trits[TRANSACTION_LENGTH - HASH_LENGTH + i] = 
-				trits[i] = 
-					((((trit_t)(midStateCopyLow[i] >> bitIndex)) & 1) == 0) ? 
-					1 : (((((trit_t)(midStateCopyHigh[i] >> bitIndex)) & 1) == 0) ? -1 : 0);
-				my_thread->ctx->nonceFound = true;
-			}
-			pthread_mutex_unlock(&my_thread->ctx->new_thread_search);
-			sched_yield();
-			return 0;
-NEXT_BIT_INDEX:
+		if((nonce_probe = is_found_fast(stateLow,	stateHigh, 
+					my_thread->min_weight_magnitude)) == 0)
 			continue;
+		fprintf(stderr, "\nTries: %d\n",tries);
+		pthread_mutex_lock(&my_thread->ctx->new_thread_search);
+		if(ctx->finished) {
+			pthread_mutex_unlock(&my_thread->ctx->new_thread_search);
+			return 0;
 		}
+		ctx->finished = true;
+		for ( i = 0; i < HASH_LENGTH; i++) {
+			trits[i] = 
+				(((trit_t)(midStateCopyLow[i] ) & nonce_probe) == 0) ? 
+				1 : ((((trit_t)(midStateCopyHigh[i] ) & nonce_probe) == 0) ? -1 : 0);
+		}
+		my_thread->ctx->nonceFound = true;
+		pthread_mutex_unlock(&my_thread->ctx->new_thread_search);
+		sched_yield();
+		return 0;
+						
 	}
 	return 0;
 }
-
 
 void pd_transform( trit_t *const stateLow, trit_t *const stateHigh, trit_t *const scratchpadLow, trit_t *const scratchpadHigh) {
 
@@ -246,3 +252,28 @@ void pd_increment(trit_t *const midStateCopyLow, trit_t *const midStateCopyHigh,
 		}
 	}
 }
+	/*
+	   bool skip;
+	   */
+/*
+   for (i = my_thread->min_weight_magnitude; i-- > 0; ) {
+   if ((((trit_t)(stateLow[HASH_LENGTH - 1 - i] >> bitIndex)) & 1)
+   != (((trit_t)(stateHigh[HASH_LENGTH - 1 - i] >> bitIndex)) & 1)) {
+   goto NEXT_BIT_INDEX;
+   if ((((trit_t)(stateLow[HASH_LENGTH - 1 - i] )) &  (1 << bitIndex)) 
+   != (((trit_t)(stateHigh[HASH_LENGTH - 1 - i] )) & (1<< bitIndex))) {
+   skip = true;
+   break;
+   }
+   }
+   */
+/*
+   my_thread->trits[TRANSACTION_LENGTH - HASH_LENGTH + i] = 
+   ((((trit_t)(midStateCopyLow[i] >> bitIndex)) & 1) == 0) ? 
+1 : (((((trit_t)(midStateCopyHigh[i] >> bitIndex)) & 1) == 0) ? -1 : 0);
+*/
+/*
+NEXT_BIT_INDEX:
+continue;
+*/
+
