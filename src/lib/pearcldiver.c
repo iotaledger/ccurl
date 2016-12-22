@@ -3,7 +3,6 @@
 //#include "Curl.h"
 #include "claccess/clcontext.h"
 //#include "util/converter.h"
-#include "pearl.h.h"
 #include "pearl.cl.h"
 #include <unistd.h>
 #include <time.h>
