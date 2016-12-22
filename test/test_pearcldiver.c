@@ -42,7 +42,7 @@ static void test_search(void) {
 	PearCLDiver pdcl;
 	Curl curl;
 	clock_t start,diff;
-	int nonce_size = 18;
+	int nonce_size = 13;
 	char *digest, *trans;
 
 	trit_t *mytrits, hash_trits[HASH_LENGTH];

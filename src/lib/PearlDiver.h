@@ -14,6 +14,8 @@
 #define LOW_BITS 0b0000000000000000000000000000000000000000000000000000000000000000L
 
 typedef struct {
+	trit_t mid_low[STATE_LENGTH];
+	trit_t mid_high[STATE_LENGTH];
 	trit_t low[STATE_LENGTH];
 	trit_t high[STATE_LENGTH];
 } States;

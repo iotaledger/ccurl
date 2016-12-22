@@ -49,9 +49,8 @@ void test_pearl_diver_search(void)
 	mytrits = trits_from_trytes(real_transaction, TRYTE_LENGTH);
 
 	start = clock();
-	pd_search(&pearl_diver, mytrits, TRANSACTION_LENGTH, nonce_size,  1);
+	pd_search(&pearl_diver, mytrits, TRANSACTION_LENGTH, nonce_size, 8);
 	diff = clock() - start;
-
 	trans = trytes_from_trits(mytrits, 0, TRANSACTION_LENGTH);
 	hash = trytes_from_trits(mytrits + TRANSACTION_LENGTH - HASH_LENGTH, 0, HASH_LENGTH);
 	init_curl(&curl);

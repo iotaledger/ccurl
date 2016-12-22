@@ -89,8 +89,8 @@ void pd_search_init(States *states, trit_t *transactionTrits) {
 	int i, j, offset = 0;
 	for (i = HASH_LENGTH; i < STATE_LENGTH; i++) {
 
-		states->low[i] = HIGH_BITS;
-		states->high[i] = HIGH_BITS;
+		states->mid_low[i] = HIGH_BITS;
+		states->mid_high[i] = HIGH_BITS;
 	}
 
 	trit_t scratchpadLow[STATE_LENGTH],scratchpadHigh[STATE_LENGTH];
@@ -100,30 +100,30 @@ void pd_search_init(States *states, trit_t *transactionTrits) {
 		for (j = 0; j < HASH_LENGTH; j++) {
 			switch (transactionTrits[offset++]) {
 				case 0: {
-							states->low[j] = HIGH_BITS;
-							states->high[j] = HIGH_BITS;
+							states->mid_low[j] = HIGH_BITS;
+							states->mid_high[j] = HIGH_BITS;
 						} break;
 				case 1: {
-							states->low[j] = LOW_BITS;
-							states->high[j] = HIGH_BITS;
+							states->mid_low[j] = LOW_BITS;
+							states->mid_high[j] = HIGH_BITS;
 						} break;
 				default: {
-							 states->low[j] = HIGH_BITS;
-							 states->high[j] = LOW_BITS;
+							 states->mid_low[j] = HIGH_BITS;
+							 states->mid_high[j] = LOW_BITS;
 						 }
 			}
 		}
 
-		pd_transform(states->low, states->high, scratchpadLow, scratchpadHigh);
+		pd_transform(states->mid_low, states->mid_high, scratchpadLow, scratchpadHigh);
 	}
-	states->low[0] = 0b1101101101101101101101101101101101101101101101101101101101101101L;
-	states->high[0] = 0b1011011011011011011011011011011011011011011011011011011011011011L;
-	states->low[1] = 0b1111000111111000111111000111111000111111000111111000111111000111L;
-	states->high[1] = 0b1000111111000111111000111111000111111000111111000111111000111111L;
-	states->low[2] = 0b0111111111111111111000000000111111111111111111000000000111111111L;
-	states->high[2] = 0b1111111111000000000111111111111111111000000000111111111111111111L;
-	states->low[3] = 0b1111111111000000000000000000000000000111111111111111111111111111L;
-	states->high[3] = 0b0000000000111111111111111111111111111111111111111111111111111111L;
+	states->mid_low[0] = 0b1101101101101101101101101101101101101101101101101101101101101101L;
+	states->mid_high[0] = 0b1011011011011011011011011011011011011011011011011011011011011011L;
+	states->mid_low[1] = 0b1111000111111000111111000111111000111111000111111000111111000111L;
+	states->mid_high[1] = 0b1000111111000111111000111111000111111000111111000111111000111111L;
+	states->mid_low[2] = 0b0111111111111111111000000000111111111111111111000000000111111111L;
+	states->mid_high[2] = 0b1111111111000000000111111111111111111000000000111111111111111111L;
+	states->mid_low[3] = 0b1111111111000000000000000000000000000111111111111111111111111111L;
+	states->mid_high[3] = 0b0000000000111111111111111111111111111111111111111111111111111111L;
 }
 
 int is_found(trit_t *low, trit_t *high, int index, int min_weight_magnitude) {
@@ -158,8 +158,8 @@ void *find_nonce(void *date){
 	memset(midStateCopyLow, 0, STATE_LENGTH*sizeof(trit_t));
 	memset(midStateCopyHigh, 0, STATE_LENGTH*sizeof(trit_t));
 	PearlDiver *ctx = my_thread->ctx;
-	memcpy(midStateCopyLow, my_thread->states->low, STATE_LENGTH*sizeof(trit_t));
-	memcpy(midStateCopyHigh, my_thread->states->high, STATE_LENGTH*sizeof(trit_t));
+	memcpy(midStateCopyLow, my_thread->states->mid_low, STATE_LENGTH*sizeof(trit_t));
+	memcpy(midStateCopyHigh, my_thread->states->mid_high, STATE_LENGTH*sizeof(trit_t));
 
 
 	for (i = my_thread->threadIndex; i-- > 0; ) {
@@ -172,6 +172,7 @@ void *find_nonce(void *date){
 	memset(scratchpadLow, 0, STATE_LENGTH*sizeof(trit_t));
 	memset(scratchpadHigh, 0, STATE_LENGTH*sizeof(trit_t));
 	int tries = 0;
+	fprintf(stderr, "Hello from thread %d\n", my_thread->threadIndex);
 	while (!ctx->finished && !ctx->interrupted) {
 		tries++;
 		pd_increment(midStateCopyLow, midStateCopyHigh, (HASH_LENGTH / 3) * 2, HASH_LENGTH);
@@ -182,6 +183,7 @@ void *find_nonce(void *date){
 		if((nonce_probe = is_found_fast(stateLow,	stateHigh, 
 					my_thread->min_weight_magnitude)) == 0)
 			continue;
+		fprintf(stderr, "\nTries: %d\n",tries);
 		pthread_mutex_lock(&my_thread->ctx->new_thread_search);
 		if(ctx->finished) {
 			pthread_mutex_unlock(&my_thread->ctx->new_thread_search);
