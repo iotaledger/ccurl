@@ -43,7 +43,7 @@ static void test_search(void) {
 	Curl curl;
 	clock_t start,diff;
 	int nonce_size = 18;
-	char *hash, *trans;
+	char *digest, *trans;
 
 	trit_t *mytrits, hash_trits[HASH_LENGTH];
 
@@ -52,27 +52,28 @@ static void test_search(void) {
 	init_curl(&curl);
 	mytrits = trits_from_trytes(real_transaction, TRYTE_LENGTH);
 	
-	puts(trytes_from_trits(mytrits+TRANSACTION_LENGTH-HASH_LENGTH, 0, HASH_LENGTH));
+	//puts(trytes_from_trits(mytrits+TRANSACTION_LENGTH-HASH_LENGTH, 0, HASH_LENGTH));
 
 	start = clock();
 	pearcl_search(&pdcl, mytrits, TRANSACTION_LENGTH, nonce_size);
 	diff = clock() - start;
 
-	printf("I took this many seconds: %ld", diff / CLOCKS_PER_SEC);
+	//printf("I took this many seconds: %ld", diff / CLOCKS_PER_SEC);
 	trans = trytes_from_trits(mytrits, 0, TRANSACTION_LENGTH);
-	hash = trytes_from_trits(mytrits + TRANSACTION_LENGTH - HASH_LENGTH, 0, HASH_LENGTH);
+	//hash = trytes_from_trits(mytrits + TRANSACTION_LENGTH - HASH_LENGTH, 0, HASH_LENGTH);
+	
 
 	absorb(&curl, mytrits, 0, TRANSACTION_LENGTH);
 	squeeze(&curl, hash_trits, 0, HASH_LENGTH);
 
-	hash = trytes_from_trits(hash_trits, 0, HASH_LENGTH);
+	digest = trytes_from_trits(hash_trits, 0, HASH_LENGTH);
 
-	puts(hash);
-	CU_ASSERT_FATAL(test_last_n_nines(hash, HASH_LENGTH/3, nonce_size/3));
+	puts(trans);
+	puts(digest);
+	CU_ASSERT_FATAL(test_last_n_nines(digest, HASH_LENGTH/3, nonce_size/3));
 
 	free(mytrits);
-	free(hash);
-	free(trans);
+	free(digest);
 }
 
 static CU_TestInfo tests[] = {

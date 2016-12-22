@@ -99,7 +99,7 @@ void *pearcl_find(void *data) {
 		pdcl->pd.nonceFound = true;
 		check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
 					pdcl->cl.buffers[thread->index][0], CL_TRUE,
-					0, HASH_LENGTH* sizeof(trit_t), thread->trits,
+					0, HASH_LENGTH* sizeof(trit_t), &(thread->trits[TRANSACTION_LENGTH - HASH_LENGTH]),
 					1, &ev, NULL),
 				"E: reading transaction hash failed.\n");
 		pthread_mutex_unlock(&pdcl->pd.new_thread_search);
@@ -144,7 +144,6 @@ bool pearcl_search(
 		return 1;
 
 	pthread_mutex_init(&pdcl->pd.new_thread_search, NULL);
-	//pthread_cond_init(&cond_search, NULL);
 	if (pthread_mutex_lock(&pdcl->pd.new_thread_search) != 0) {
 		return 1;
 	}
@@ -157,7 +156,7 @@ bool pearcl_search(
 	while (numberOfThreads-- > 0) {
 		PDCLThread pdthread = {
 			.states = states,
-			.trits = trits + TRANSACTION_LENGTH - HASH_LENGTH,
+			.trits = trits,
 			.min_weight_magnitude = min_weight_magnitude,
 			.index = numberOfThreads,
 			.pdcl = pdcl
@@ -174,22 +173,3 @@ bool pearcl_search(
 
 	return pdcl->pd.interrupted;
 }
-/*
-   check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
-   pdcl->cl.buffers[thread->index][3], CL_TRUE,
-   0, 
-   sizeof(bit_indeces), bit_indeces, 1, &ev, NULL),
-   "E: reading transaction hash failed.\n");
-   for(i = 0; i < num_groups; i++) {
-   if(bit_indeces[i] != -1) {
-   found_index = i;
-   break;
-   }
-   }
-   */
-/*
-   trit_t hashTrits[HASH_LENGTH]; //from above
-   if(pdcl->pd.nonceFound) {
-   memcpy(trits+TRANSACTION_LENGTH-HASH_LENGTH,hashTrits,HASH_LENGTH*sizeof(trit_t));
-   }
-   */
