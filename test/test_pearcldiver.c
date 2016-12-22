@@ -19,20 +19,15 @@ static const char *real_trans_w_hash = "9999999999999999999999999999999999999999
 typedef long trit_t;
 
 static int init_suite(void) {
-	//fprintf(stderr, "I: initializing converter...");
 	init_converter();
-	//fprintf(stderr, "done.\n");
-	//pdcl = malloc(sizeof(PearCLDiver));
 	return 0;
 }
 static int clean_suite(void) {
-	//free(pdcl);
 	return 0;
 }
 static void init_cl_test(void) {
 }
 static void teardown_cl_test(void) {
-	//memset(pdcl,0,sizeof(PearCLDiver));
 }
 
 bool test_last_n_nines(char *hash, int length, int numNines) {
@@ -43,18 +38,11 @@ bool test_last_n_nines(char *hash, int length, int numNines) {
 	return true;
 }
 
-/*
-static void test_init_kernel(void) {
-	PearCLDiver pdcl;
-	init_pearcl(&pdcl);
-}
-*/
-
 static void test_search(void) {
 	PearCLDiver pdcl;
 	Curl curl;
 	clock_t start,diff;
-	int nonce_size = 13;
+	int nonce_size = 18;
 	char *hash, *trans;
 
 	trit_t *mytrits, hash_trits[HASH_LENGTH];
