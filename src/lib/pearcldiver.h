@@ -11,7 +11,7 @@ typedef struct {
 	size_t num_groups;
 } PearCLDiver;
 
-void init_pearcl(PearCLDiver *pd);
+int init_pearcl(PearCLDiver *pd);
 bool pearcl_search(PearCLDiver *pdcl, long *const trits, size_t length, size_t min_weight_magnitude);
 
 #endif /* _PEARCLDIVER_H_ */

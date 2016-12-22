@@ -1,7 +1,9 @@
 #include "PearlDiver.h"
+#include "pearcldiver.h"
 #include "Curl.h"
 #include "util/converter.h"
 #include <stdlib.h>
+#include <stdio.h>
 
 EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	init_converter();
@@ -9,7 +11,12 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	trit_t *trits = trits_from_trytes(trytes, TRYTE_LENGTH);
 
 	PearlDiver pearl_diver;
-	pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
+	PearCLDiver pdcl;
+	if(init_pearcl(&pdcl) == 0) {
+		pearcl_search(&pdcl, trits, TRANSACTION_LENGTH, minWeightMagnitude);
+	} else {
+		pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
+	}
 
 	buf = trytes_from_trits(trits, 0, TRANSACTION_LENGTH);
 	buf[TRYTE_LENGTH] = 0;
@@ -20,9 +27,10 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 EXPORT char *ccurl_digest_transaction(char *trytes) {
 	init_converter();
 	Curl curl;
+	size_t length = strlen(trytes);
 	trit_t digest[HASH_LENGTH];
 
-	absorb(&curl, trits_from_trytes(trytes, TRYTE_LENGTH), 0, TRANSACTION_LENGTH);
+	absorb(&curl, trits_from_trytes(trytes, length), 0, length);
 	squeeze(&curl, digest, 0, HASH_LENGTH);
 
 	return trytes_from_trits(digest, 0, HASH_LENGTH);

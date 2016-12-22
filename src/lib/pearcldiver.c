@@ -20,7 +20,7 @@ typedef struct {
 	PearCLDiver  *pdcl;
 } PDCLThread;
 
-void init_pearcl(PearCLDiver *pdcl) {
+int init_pearcl(PearCLDiver *pdcl) {
 	unsigned char *src[] = (unsigned char*[]){ pearl_cl};
 	size_t size[] = (size_t []){ pearl_cl_len };
 	char *names[] = (char *[]){"init", "search", "finalize"};
@@ -32,6 +32,10 @@ void init_pearcl(PearCLDiver *pdcl) {
 	pdcl->cl.kernel.num_src = 1;
 	pdcl->cl.kernel.num_kernels = 3;
 	pd_init_cl(&(pdcl->cl), src, size, names);
+
+	if(pdcl->cl.num_devices > 0)
+		return 0;
+	return 1;
 }
 
 void *pearcl_find(void *data) {
