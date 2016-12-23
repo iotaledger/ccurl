@@ -13,8 +13,10 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	PearlDiver pearl_diver;
 	PearCLDiver pdcl;
 	if(init_pearcl(&pdcl) == 0) {
+		fprintf(stderr, "GPU Hashing...");
 		pearcl_search(&pdcl, trits, TRANSACTION_LENGTH, minWeightMagnitude);
 	} else {
+		fprintf(stderr, "CPU Hashing...");
 		pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
 	}
 

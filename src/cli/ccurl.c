@@ -1,4 +1,6 @@
-#include "ccurl.h"
+#include "../lib/ccurl.h"
+//#include "ccurl.h"
+#include "../lib/Hash.h"
 #include "../lib/PearlDiver.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -35,6 +37,7 @@ int get_stdin(char *str, int len) {
 	return i;
 }
 
+/*
 void trytes2trits(trit_t *trits, const char *trytes, const size_t len) {
 	for(size_t i=0; i<len; i++) {
 		size_t idx = (trytes[i]=='9' ? 0 : trytes[i]-'A'+1);
@@ -59,11 +62,12 @@ void trits2trytes(char *trytes, const trit_t *trits, const size_t len) {
 		trytes[i/3] = "9ABCDEFGHIJKLMNOPQRSTUVWXYZ"[j];
 	}
 }
+*/
 
 int main(int argc, char *argv[]) {
 	char buf[TRYTE_LENGTH];
-	trit_t trits[TRANSACTION_LENGTH];
-	PearlDiver pearl_diver;
+	//trit_t trits[TRANSACTION_LENGTH];
+	//PearlDiver pearl_diver;
 	long minWeightMagnitude;
 
 	if(argc < 2 ) {
@@ -93,15 +97,15 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 
-	trytes2trits(trits, buf, TRYTE_LENGTH);
+	printf("%s",ccurl_pow(buf, minWeightMagnitude));
+	//trytes2trits(trits, buf, TRYTE_LENGTH);
 
-	fprintf(stderr, "Starting...");
-	//search(&pearl_diver, trits, TRANSACTION_LENGTH, (int)minWeightMagnitude, -1); //use all threads
-	pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, (int)minWeightMagnitude, 1);
+	//fprintf(stderr, "Starting...");
+	//pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, (int)minWeightMagnitude, 1);
 
-	trits2trytes(buf, trits, TRANSACTION_LENGTH);
+	//trits2trytes(buf, trits, TRANSACTION_LENGTH);
 
-	*(buf + TRYTE_LENGTH) = 0;
-	printf("%s",buf);
+	//*(buf + TRYTE_LENGTH) = 0;
+	//printf("%s",buf);
 	return 0;
 }
