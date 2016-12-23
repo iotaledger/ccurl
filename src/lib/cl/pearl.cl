@@ -6,13 +6,33 @@
 
 typedef long trit_t;
 
+void increment(__global trit_t *mid_low,
+		__global trit_t *mid_high,
+		__private size_t from_index,
+		__private size_t to_index);
+void copy_mid_to_state(
+		__global trit_t *mid_low,
+		__global trit_t *mid_high,
+		__global trit_t *state_low,
+		__global trit_t *state_high,
+		__private size_t id);
+void transform(__global trit_t *state_low,
+		__global trit_t *state_high,
+		__private size_t id);
+void check(__global trit_t *state_low,
+		__global trit_t *state_high,
+		__global volatile char *found,
+		__constant size_t *min_weight_magnitude,
+		__global trit_t *nonce_probe,
+		__private size_t gr_id);
+
 void increment(
 		__global trit_t *mid_low,
 		__global trit_t *mid_high,
 		__private size_t from_index,
 		__private size_t to_index
 		) {
-	int i;
+	size_t i;
 	for (i = from_index; i < to_index; i++) {
 		if (mid_low[i] == (trit_t)LOW_BITS) {
 			mid_low[i] = (trit_t)HIGH_BITS;
@@ -135,7 +155,7 @@ __kernel void search (
 		__global volatile char *found,
 		__global trit_t *nonce_probe
 		) {
-	__private size_t i,j,k, id, gid, gr_id;
+	__private size_t i, id, gid, gr_id;
 	id = get_local_id(0) * 3;
 	gr_id = get_global_id(0)/HASH_LENGTH;
 	gid = gr_id*STATE_LENGTH;
@@ -172,7 +192,7 @@ __kernel void finalize (
 	id = get_local_id(0) * 3;
 	gr_id = get_global_id(0)/HASH_LENGTH;
 	gid = gr_id*STATE_LENGTH;
-	if(gr_id != *found - 1) return;
+	if(gr_id != (size_t)(*found - 1)) return;
 	if(nonce_probe[gr_id] == 0 ) return;
 #pragma unroll
 	for(i = 0; i < 3; i++) {
