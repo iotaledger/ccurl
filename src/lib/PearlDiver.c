@@ -151,7 +151,7 @@ int is_found_fast(trit_t *low, trit_t *high, int min_weight_magnitude) {
 
 void *find_nonce(void *date){
 	trit_t midStateCopyLow[STATE_LENGTH],midStateCopyHigh[STATE_LENGTH];
-	int i,bit_index, nonce_probe;
+	int i,nonce_probe;
 	PDThread *my_thread= (PDThread *)date;
 	trit_t *trits = my_thread->trits;
 

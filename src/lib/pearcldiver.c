@@ -41,9 +41,7 @@ int init_pearcl(PearCLDiver *pdcl) {
 void *pearcl_find(void *data) {
 	size_t local_work_size, 
 		   global_work_size,
-		   num_groups,
-		   found_index,
-		   i;
+		   num_groups;
 	char found = 0;
 	cl_event ev;
 	PDCLThread *thread;
@@ -54,11 +52,6 @@ void *pearcl_find(void *data) {
 	local_work_size = HASH_LENGTH; 
 	global_work_size = local_work_size * num_groups;
 
-	trit_t mid_low[STATE_LENGTH];
-	trit_t state_low[STATE_LENGTH];
-	trit_t scratchpad_low[STATE_LENGTH];
-	trit_t scratchpad_high[STATE_LENGTH];
-	trit_t hash[HASH_LENGTH];
 
 	check_clerror(
 			clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
@@ -86,11 +79,8 @@ void *pearcl_find(void *data) {
 			clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
 				pdcl->cl.buffers[thread->index][6], CL_TRUE, 0, sizeof(char),
 				&found, 1, &ev, NULL), "E: could not read init errors.\n");
-	int tries = 0;
 	while( found == 0 && !pdcl->pd.finished) {
-		tries++;
 		cl_event ev1;
-		int c1, c2;
 		check_clerror(clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index], 
 					pdcl->cl.clkernel[thread->index][1], 1, NULL,
 					&global_work_size,&local_work_size, 0, NULL, &ev1), 
@@ -122,7 +112,7 @@ void *pearcl_find(void *data) {
 
 bool pearcl_search(
 		PearCLDiver *pdcl,
-		long *const trits,
+		trit_t *const trits,
 		size_t length,
 		size_t min_weight_magnitude
 		) {
