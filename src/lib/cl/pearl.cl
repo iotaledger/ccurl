@@ -140,7 +140,7 @@ __kernel void search (
 	gr_id = get_global_id(0)/HASH_LENGTH;
 	gid = gr_id*STATE_LENGTH;
 
-	for(i = 0; i < 2048; i++) {
+	for(i = 0; i < HASH_LENGTH; i++) {
 		if(id == 0) increment(&(mid_low[gid]), &(mid_high[gid]), (HASH_LENGTH/3)*2, HASH_LENGTH);
 
 		barrier(CLK_LOCAL_MEM_FENCE);
