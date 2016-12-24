@@ -31,16 +31,13 @@ int init_pearcl(PearCLDiver *pdcl) {
 
 	pdcl->cl.kernel.num_src = 1;
 	pdcl->cl.kernel.num_kernels = 3;
-	pd_init_cl(&(pdcl->cl), src, size, names);
-
-	if(pdcl->cl.num_devices > 0)
-		return 0;
-	return 1;
+	return pd_init_cl(&(pdcl->cl), src, size, names);
 }
 
 void *pearcl_find(void *data) {
 	size_t local_work_size, 
 		   global_work_size,
+		   global_offset = 0,
 		   num_groups;
 	char found = 0;
 	cl_event ev;
@@ -48,11 +45,25 @@ void *pearcl_find(void *data) {
 	PearCLDiver *pdcl;
 	thread = (PDCLThread *)data;
 	pdcl = thread->pdcl;
-	num_groups = (pdcl->cl.num_cores[thread->index]) * pdcl->cl.num_multiple[thread->index];
-	local_work_size = HASH_LENGTH; 
+	num_groups = (pdcl->cl.num_cores[thread->index]);// * pdcl->cl.num_multiple[thread->index];
+	local_work_size = STATE_LENGTH;
+	while(local_work_size > pdcl->cl.num_multiple[thread->index]) {
+		local_work_size /= 3;
+	}
+	/*
+	local_work_size = STATE_LENGTH < pdcl->cl.num_multiple[thread->index]?
+		STATE_LENGTH : pdcl->cl.num_multiple[thread->index];
+	local_work_size =  STATE_LENGTH / 
+		(STATE_LENGTH / pdcl->cl.num_multiple[thread->index] +
+		(STATE_LENGTH % pdcl->cl.num_multiple[thread->index] == 0 ? 0 : 1));
+	local_work_size += (STATE_LENGTH % pdcl->cl.num_multiple[thread->index] == 0 ? 0 : 1);
+		*/
+	//local_work_size = HASH_LENGTH; 
 	global_work_size = local_work_size * num_groups;
 
-
+	for(int i=0; i < thread->index; i++) {
+		global_offset += pdcl->cl.num_cores[i];
+	}
 	check_clerror(
 			clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
 				pdcl->cl.buffers[thread->index][1], CL_TRUE, 0, 
@@ -72,8 +83,8 @@ void *pearcl_find(void *data) {
 
 	check_clerror(
 			clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index], 
-				pdcl->cl.clkernel[thread->index][0], 1, NULL,
-				&global_work_size,&local_work_size, 0, NULL,&ev), 
+				pdcl->cl.clkernel[thread->index][0], 1, &global_offset,
+				&global_work_size, &local_work_size, 0, NULL,&ev), 
 			"E: running init kernel failed.\n");
 	check_clerror(
 			clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
@@ -96,9 +107,9 @@ void *pearcl_find(void *data) {
 					&global_work_size,&local_work_size, 0, NULL, &ev), 
 				"E: running search kernel failed.\n");
 		pthread_mutex_lock(&pdcl->pd.new_thread_search);
-
 		if(pdcl->pd.nonceFound) return 0;
 		pdcl->pd.nonceFound = true;
+		pdcl->pd.finished = true;
 		check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
 					pdcl->cl.buffers[thread->index][0], CL_TRUE,
 					0, HASH_LENGTH* sizeof(trit_t), &(thread->trits[TRANSACTION_LENGTH - HASH_LENGTH]),
@@ -157,9 +168,10 @@ bool pearcl_search(
 	pthread_t tid[numberOfThreads];
 	thread_count = numberOfThreads;
 
-	numberOfThreads = 1;
+	//numberOfThreads = 1;
+	PDCLThread pdthreads[numberOfThreads];
 	while (numberOfThreads-- > 0) {
-		PDCLThread pdthread = {
+		pdthreads[numberOfThreads] = (PDCLThread){
 			.states = states,
 			.trits = trits,
 			.min_weight_magnitude = min_weight_magnitude,
@@ -167,7 +179,7 @@ bool pearcl_search(
 			.pdcl = pdcl
 		};
 		pthread_create(&tid[numberOfThreads], NULL, &pearcl_find, 
-				(void *)&pdthread);
+				(void *)&(pdthreads[numberOfThreads]));
 	}
 
 	sched_yield();

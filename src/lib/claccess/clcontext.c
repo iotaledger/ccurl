@@ -15,40 +15,40 @@ static void pfn_notify(
 		){
 	fprintf(stderr, "W: caught an error in ocl_pfn_notify:\nW: %s", errinfo);
 }
-void check_clerror(cl_int err, char *comment, ...) {
+int check_clerror(cl_int err, char *comment, ...) {
 	if(err == CL_SUCCESS) {
-		return;
+		return 0;
 	}
 	printf("E: OpenCL implementation returned an error: %d\n", err);
 	va_list args;
 	vprintf(comment, args);
 	printf("\n\n");
-	exit(1);
+	return 1;
 }
 
-static void get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
+static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	/* List devices for each platforms.*/ 
 	size_t i;
 	cl_uint num_platforms;
 	cl_int errno;
 	ctx->num_devices = 0;
 	cl_device_id devices[CLCONTEXT_MAX_DEVICES];
-	cl_platform_id platforms[MAX_PLATFORMS];
 
-	check_clerror(clGetPlatformIDs(MAX_PLATFORMS, platforms, &num_platforms),
-			"Failed to execute clGetPlatformIDs.");
-	if(num_platforms > MAX_PLATFORMS) {
-		fprintf(stderr, "W: The number of platforms available on your system \
-				exceeds MAX_PLATFORMS. Consider increasing MAX_PLATFORMS.\n");
-		num_platforms = MAX_PLATFORMS;
+	if(clGetPlatformIDs(0, NULL, &num_platforms) != CL_SUCCESS) {
+		fprintf(stderr, "Cannot get the number of OpenCL platforms available.\n");
+		return 1;
 	}
+	cl_platform_id platforms[num_platforms];
+	clGetPlatformIDs(num_platforms, platforms, NULL);
 	for(i=0; i< num_platforms; i++) {
 		cl_uint pf_num_devices;
-		check_clerror(
-				clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, 
+		//if(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, 
+		if(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 
 					CLCONTEXT_MAX_DEVICES-ctx->num_devices,
-					&devices[ctx->num_devices], &pf_num_devices),
-				"Failed to execute clGetDeviceIDs for platform id = %zd.", i);
+					&devices[ctx->num_devices], &pf_num_devices) != CL_SUCCESS) {
+			fprintf(stderr, "E: Failed to get Opencl Device IDs for platform %zu.\n", i);
+			return 1;
+		}
 		if(pf_num_devices > CLCONTEXT_MAX_DEVICES-ctx->num_devices) {
 			fprintf(stderr, "W: The number of devices available on your system \
 					exceeds CLCONTEXT_MAX_DEVICES. Consider increasing \
@@ -76,8 +76,8 @@ static void get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 				"Failed to execute clGetDeviceInfo for %zu", i);
 
 		if(clGetDeviceInfo(devices[i], 
-					CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
-					sizeof(cl_uint), &(ctx->num_multiple[i]), NULL) 
+					 CL_DEVICE_MAX_WORK_GROUP_SIZE,// wrong CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
+					sizeof(size_t), &(ctx->num_multiple[i]), NULL) 
 					!= CL_SUCCESS) {
 				ctx->num_multiple[i] = 1;
 				}
@@ -97,7 +97,7 @@ static void get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 				"Failed to execute clCreateCommandQueueWithProperties.");
 	}
 
-	if(ctx->kernel.num_src == 0) return;
+	if(ctx->kernel.num_src == 0) return 1;
 	for(i=0; i< ctx->num_devices; i++) {
 		ctx->programs[i] = clCreateProgramWithSource(ctx->clctx[i], 
 				ctx->kernel.num_src, (const char**)src, size, &errno);
@@ -107,7 +107,6 @@ static void get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 
 	for(i=0; i< ctx->num_devices; i++) {
 		errno = clBuildProgram(ctx->programs[i], 0, NULL, NULL, NULL, NULL);
-		//errno = clBuildProgram(ctx->programs[i], ctx->num_devices, devices, "-g", NULL, NULL);
 		char *build_log = malloc(0xFFFF);
 		size_t log_size;
 		clGetProgramBuildInfo(ctx->programs[i], devices[i], 
@@ -115,9 +114,10 @@ static void get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		free(build_log);
 		check_clerror(errno, "Failed to execute clBuildProgram");
 	}
+	return 0;
 }
 
-static void create_kernel (CLContext *ctx,char **names) {
+static int create_kernel (CLContext *ctx,char **names) {
 	// Create kernel.
 	cl_int errno;
 	size_t i, j;
@@ -125,9 +125,12 @@ static void create_kernel (CLContext *ctx,char **names) {
 		for(j=0;j< ctx->kernel.num_kernels; j++) {
 			ctx->clkernel[i][j] = clCreateKernel(ctx->programs[i], names[j], 
 					&errno);
-			check_clerror(errno, "Failed to execute clCreateKernel");
+			if(errno != CL_SUCCESS)
+				return 1;
+			//check_clerror(errno, "Failed to execute clCreateKernel");
 		}
 	}
+	return 0;
 }
 
 void kernel_init_buffers (CLContext *ctx) {
@@ -178,12 +181,11 @@ void kernel_init_buffers (CLContext *ctx) {
 
 
 int init_kernel(CLContext *ctx, char **names) {
-	create_kernel(ctx, names);
-	return 0;
+	return create_kernel(ctx, names);
 }
 
 
-void pd_init_cl(
+int pd_init_cl(
 		CLContext *ctx,
 		unsigned char **src,
 		size_t *size, 
@@ -192,8 +194,10 @@ void pd_init_cl(
 	if(!ctx) {
 		ctx = malloc(sizeof(CLContext));
 	}
-	get_devices(ctx, src, size);
-	init_kernel(ctx, names);
+	if(get_devices(ctx, src, size) != 0) {
+		return 1;
+	}
+	return init_kernel(ctx, names);
 }
 
 void destroy_cl(CLContext *ctx) {

@@ -65,16 +65,17 @@ bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, cons
 	pthread_t tid[numberOfThreads];
 	thread_count = numberOfThreads;
 
+	PDThread pdthreads[numberOfThreads];
 	while (numberOfThreads-- > 0) {
 
-		PDThread pdthread = {
+		pdthreads[numberOfThreads] = (PDThread){
 			.states = states,
 			.trits = transactionTrits + TRANSACTION_LENGTH - HASH_LENGTH,
 			.min_weight_magnitude = min_weight_magnitude,
 			.threadIndex = numberOfThreads,
 			.ctx = ctx
 		};
-		pthread_create(&tid[numberOfThreads],NULL,&find_nonce,(void *)&pdthread);
+		pthread_create(&tid[numberOfThreads],NULL,&find_nonce,(void *)&(pdthreads[numberOfThreads]));
 	}
 
 	sched_yield();

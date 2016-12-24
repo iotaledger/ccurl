@@ -9,7 +9,8 @@ set(CMAKE_INSTALL_PREFIX "/usr")
 
 set (LIBRARY_NAME ccurl)
 
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall -g -O0 ")
+#set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall -g -O0")
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall")
 #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -g -O0 -Wno-unused-function")
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin) 
