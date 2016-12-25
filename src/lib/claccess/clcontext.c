@@ -47,7 +47,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 					CLCONTEXT_MAX_DEVICES-ctx->num_devices,
 					&devices[ctx->num_devices], &pf_num_devices) != CL_SUCCESS) {
 			fprintf(stderr, "E: Failed to get Opencl Device IDs for platform %zu.\n", i);
-			return 1;
+			continue;
 		}
 		if(pf_num_devices > CLCONTEXT_MAX_DEVICES-ctx->num_devices) {
 			fprintf(stderr, "W: The number of devices available on your system \
@@ -57,7 +57,8 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		}
 		ctx->num_devices += pf_num_devices;
 	}
-
+	if(ctx->num_devices == 0)
+		return 1;
 
 	/* Create OpenCL context. */
 	for(i=0; i< ctx->num_devices; i++) {
