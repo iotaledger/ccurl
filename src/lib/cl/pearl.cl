@@ -68,7 +68,7 @@ void copy_mid_to_state(
 		__private size_t l_size,
 		__private size_t n_trits
 		) {
-	int i, j;
+	size_t i, j;
 	for(i = 0; i < n_trits; i++) {
 		j = id + i*l_size;
 		state_low[j] = mid_low[j];
@@ -83,8 +83,8 @@ void transform(
 		__private size_t l_size,
 		__private size_t n_trits
 		) {
-	__private int round, i, j, t1, t2;
-	__private trit_t alpha, beta, gamma, delta, sp_low[12], sp_high[12];
+	__private size_t round, i, j, t1, t2;
+	__private trit_t alpha, beta, gamma, delta, sp_low[3], sp_high[3];
 	for(round = 0; round < 27; round++) {
 		for(i = 0; i < n_trits; i++) {
 			j = id + i*l_size;
@@ -190,7 +190,7 @@ __kernel void search (
 		__global volatile char *found,
 		__global trit_t *nonce_probe
 		) {
-	__private size_t i, id, gid, gr_id, l_size, l_rem, n_trits;
+	__private size_t i, id, gid, gr_id, l_size, n_trits;
 	setup_ids(&id, &gid, &gr_id, &l_size, &n_trits);
 
 	for(i = 0; i < 64; i++) {
