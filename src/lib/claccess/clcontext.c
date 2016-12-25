@@ -42,8 +42,8 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	clGetPlatformIDs(num_platforms, platforms, NULL);
 	for(i=0; i< num_platforms; i++) {
 		cl_uint pf_num_devices;
-		//if(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, 
-		if(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 
+		if(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, 
+		//if(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 
 					CLCONTEXT_MAX_DEVICES-ctx->num_devices,
 					&devices[ctx->num_devices], &pf_num_devices) != CL_SUCCESS) {
 			fprintf(stderr, "E: Failed to get Opencl Device IDs for platform %zu.\n", i);
@@ -127,13 +127,12 @@ static int create_kernel (CLContext *ctx,char **names) {
 					&errno);
 			if(errno != CL_SUCCESS)
 				return 1;
-			//check_clerror(errno, "Failed to execute clCreateKernel");
 		}
 	}
 	return 0;
 }
 
-void kernel_init_buffers (CLContext *ctx) {
+int kernel_init_buffers (CLContext *ctx) {
 	int i, j, k;
 	cl_ulong memsize;
 	cl_int errno;
@@ -155,28 +154,34 @@ void kernel_init_buffers (CLContext *ctx) {
 			maxmemsize += memsize;
 			if(maxmemsize >= ctx->max_memory[i]) {
 				fprintf(stderr, " You too much has memories! \n");
-				exit(1);
+				return 1;
 			}
 
 			ctx->buffers[i][j] = clCreateBuffer(ctx->clctx[i], 
 					ctx->kernel.buffer[j].flags, memsize, NULL, &errno);
-			check_clerror(errno, "Failed to execute clCreateBuffer for %d:%d",
-					i, j);
+			if(check_clerror(errno, "Failed to execute clCreateBuffer for %d:%d",
+					i, j))
+				return 1;
 			for(k=0;k< ctx->kernel.num_kernels;k++) {
 				if((ctx->kernel.buffer[j].init_flag & 1) != 0) {
-					check_clerror(clSetKernelArg(ctx->clkernel[i][k], j, 
-								sizeof(cl_mem), NULL), 
-							"Failed to execute clSetKernelArg for local %d:%d",
+					if (clSetKernelArg(ctx->clkernel[i][k], j, 
+								sizeof(cl_mem), NULL) != CL_SUCCESS) {
+						fprintf(stderr, "Failed to execute clSetKernelArg for local %d:%d",
 							(int)i, (int)j);
+						return 1;
+					}
 				} else {
-					check_clerror(clSetKernelArg(ctx->clkernel[i][k], j, 
-								sizeof(cl_mem),(void *)&(ctx->buffers[i][j])),
-							"Failed to execute clSetKernelArg for %d:%d", 
+					if(clSetKernelArg(ctx->clkernel[i][k], j, sizeof(cl_mem),
+								(void *)&(ctx->buffers[i][j])) != CL_SUCCESS) {
+							fprintf(stderr, "Failed to execute clSetKernelArg for %d:%d", 
 							(int)i,(int)j);
+							return 1;
+					}
 				}
 			}
 		}
 	}
+	return 0;
 }
 
 

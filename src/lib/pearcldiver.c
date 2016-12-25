@@ -147,7 +147,10 @@ bool pearcl_search(
 	pdcl->cl.kernel.buffer[6] = (BufferInfo){sizeof(char), CL_MEM_READ_WRITE};                 		// found //
 	pdcl->cl.kernel.buffer[7] = (BufferInfo){sizeof(trit_t), CL_MEM_READ_WRITE, 2};           // nonce_probe //
 
-	kernel_init_buffers (&(pdcl->cl));
+	if(kernel_init_buffers (&(pdcl->cl)) != 0) {
+		fprintf(stderr, "Could not init kernel buffers. \n");
+		return true;
+	}
 
 	pdcl->pd.finished = false;
 	pdcl->pd.interrupted = false;

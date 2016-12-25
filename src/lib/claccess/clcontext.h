@@ -47,7 +47,7 @@ typedef struct {
 
 
 
-void kernel_init_buffers (CLContext *ctx);
+int kernel_init_buffers (CLContext *ctx);
 void init_cl(CLContext *ctx);
 //void pd_init_cl(CLContext *ctx, unsigned char *const *src, size_t *size,const char **names);
 int pd_init_cl(CLContext *ctx, unsigned char **src, size_t *size,char **names);
