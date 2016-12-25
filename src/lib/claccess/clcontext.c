@@ -13,7 +13,7 @@ static void pfn_notify(
 		size_t cb,
 		void *user_data
 		){
-	fprintf(stderr, "W: caught an error in ocl_pfn_notify:\nW: %s", errinfo);
+	//fprintf(stderr, "W: caught an error in ocl_pfn_notify:\nW: %s", errinfo);
 }
 int check_clerror(cl_int err, char *comment, ...) {
 	if(err == CL_SUCCESS) {
@@ -35,7 +35,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	cl_device_id devices[CLCONTEXT_MAX_DEVICES];
 
 	if(clGetPlatformIDs(0, NULL, &num_platforms) != CL_SUCCESS) {
-		fprintf(stderr, "Cannot get the number of OpenCL platforms available.\n");
+		//fprintf(stderr, "Cannot get the number of OpenCL platforms available.\n");
 		return 1;
 	}
 	cl_platform_id platforms[num_platforms];
@@ -46,13 +46,15 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		//if(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 
 					CLCONTEXT_MAX_DEVICES-ctx->num_devices,
 					&devices[ctx->num_devices], &pf_num_devices) != CL_SUCCESS) {
-			fprintf(stderr, "W: Failed to get Opencl Device IDs for platform %zu.\n", i);
+			//fprintf(stderr, "W: Failed to get Opencl Device IDs for platform %zu.\n", i);
 			continue;
 		}
 		if(pf_num_devices > CLCONTEXT_MAX_DEVICES-ctx->num_devices) {
+		/*
 			fprintf(stderr, "W: The number of devices available on your system \
 					exceeds CLCONTEXT_MAX_DEVICES. Consider increasing \
 					CLCONTEXT_MAX_DEVICES.\n");
+					*/
 			pf_num_devices = CLCONTEXT_MAX_DEVICES - ctx->num_devices;
 		}
 		ctx->num_devices += pf_num_devices;
@@ -154,7 +156,7 @@ int kernel_init_buffers (CLContext *ctx) {
 			}
 			maxmemsize += memsize;
 			if(maxmemsize >= ctx->max_memory[i]) {
-				fprintf(stderr, " You too much has memories! \n");
+				//fprintf(stderr, " You too much has memories! \n");
 				return 1;
 			}
 
@@ -167,15 +169,13 @@ int kernel_init_buffers (CLContext *ctx) {
 				if((ctx->kernel.buffer[j].init_flag & 1) != 0) {
 					if (clSetKernelArg(ctx->clkernel[i][k], j, 
 								sizeof(cl_mem), NULL) != CL_SUCCESS) {
-						fprintf(stderr, "Failed to execute clSetKernelArg for local %d:%d",
-							(int)i, (int)j);
+						//fprintf(stderr, "Failed to execute clSetKernelArg for local %d:%d", (int)i, (int)j);
 						return 1;
 					}
 				} else {
 					if(clSetKernelArg(ctx->clkernel[i][k], j, sizeof(cl_mem),
 								(void *)&(ctx->buffers[i][j])) != CL_SUCCESS) {
-							fprintf(stderr, "Failed to execute clSetKernelArg for %d:%d", 
-							(int)i,(int)j);
+							//fprintf(stderr, "Failed to execute clSetKernelArg for %d:%d", (int)i,(int)j);
 							return 1;
 					}
 				}
