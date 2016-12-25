@@ -46,7 +46,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		//if(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 
 					CLCONTEXT_MAX_DEVICES-ctx->num_devices,
 					&devices[ctx->num_devices], &pf_num_devices) != CL_SUCCESS) {
-			fprintf(stderr, "E: Failed to get Opencl Device IDs for platform %zu.\n", i);
+			fprintf(stderr, "W: Failed to get Opencl Device IDs for platform %zu.\n", i);
 			continue;
 		}
 		if(pf_num_devices > CLCONTEXT_MAX_DEVICES-ctx->num_devices) {

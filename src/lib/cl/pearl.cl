@@ -193,7 +193,7 @@ __kernel void search (
 	__private size_t i, id, gid, gr_id, l_size, n_trits;
 	setup_ids(&id, &gid, &gr_id, &l_size, &n_trits);
 
-	for(i = 0; i < 64; i++) {
+	for(i = 0; i < 16; i++) {
 		if(id == 0) increment(&(mid_low[gid]), &(mid_high[gid]), (HASH_LENGTH/3)*2, HASH_LENGTH);
 
 		barrier(CLK_LOCAL_MEM_FENCE);
