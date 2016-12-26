@@ -5,7 +5,6 @@
 #include <string.h>
 #include <pthread.h>
 #include <unistd.h>
-#include <sys/wait.h>
 #include <time.h>
 #include "Hash.h"
 
