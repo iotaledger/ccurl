@@ -221,7 +221,7 @@ __kernel void finalize (
 		__global volatile char *found,
 		__global trit_t *nonce_probe
 		) {
-	__private size_t i,j, id, gid, gr_id, l_size, l_rem, n_trits;
+	__private size_t i,j, id, gid, gr_id, l_size, n_trits;
 	setup_ids(&id, &gid, &gr_id, &l_size, &n_trits);
 
 	if(gr_id != (size_t)(*found - 1)) return;
