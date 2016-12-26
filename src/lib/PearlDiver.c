@@ -1,6 +1,5 @@
 #include "Hash.h"
 #include "PearlDiver.h"
-#include <pthread.h>
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>

@@ -6,6 +6,14 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef _WIN32
+#include "Winsock2.h"
+#else
+#include <sys/select.h>
+#endif
+
+
+
 #define TRYTE_LENGTH 2673
 
 #define HINTS "### CCURL ###\nUsage:\n\tccurl-cli <MinWeightMagnitude> [TRYTES (length: %d)] \n\techo TRYTES | ccurl-cli <MinWeightMagnitude>\n"

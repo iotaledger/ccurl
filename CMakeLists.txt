@@ -10,8 +10,11 @@ set(CMAKE_INSTALL_PREFIX "/usr")
 set (LIBRARY_NAME ccurl)
 
 #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall -g -O0")
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall")
-#set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -g -O0 -Wno-unused-function")
+if (WIN32)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+else()
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall")
+endif()
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin) 
 SET (CTEST_BUILD_TARGET "RELEASE")
@@ -41,10 +44,16 @@ set (SOURCES ${SRC})
 add_library (${LIBRARY_NAME} SHARED ${SOURCES} ${COMPILED_RESOURCES})
 target_link_libraries(${LIBRARY_NAME} ${OPENCL_LIBRARIES})
 
-set_target_properties (${LIBRARY_NAME} PROPERTIES 
-	LIBRARY_OUTPUT_DIRECTORY lib
-	LINK_FLAGS -lpthread
-	)
+if (WIN32)
+    set_target_properties (${LIBRARY_NAME} PROPERTIES 
+        LIBRARY_OUTPUT_DIRECTORY lib
+        )
+else()
+    set_target_properties (${LIBRARY_NAME} PROPERTIES 
+        LIBRARY_OUTPUT_DIRECTORY lib
+        LINK_FLAGS -lpthread
+        )
+endif()
 
 install(TARGETS ${LIBRARY_NAME} 
 	LIBRARY DESTINATION lib
