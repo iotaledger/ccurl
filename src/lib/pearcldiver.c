@@ -12,7 +12,11 @@
 #include <sched.h>
 #endif
 
-#define GROUP_SIZE 256
+//#define GROUP_SIZE 256
+
+#ifndef PD_NUM_SRC
+#define PD_NUM_SRC 1
+#endif /*PD_NUM_SRC*/
 
 typedef struct {
 	States states;
@@ -23,13 +27,17 @@ typedef struct {
 } PDCLThread;
 
 int init_pearcl(PearCLDiver *pdcl) {
+	/*
 #ifdef _WIN32
 	unsigned char **src = (unsigned char**) { pearl_cl };
 	size_t *size = (size_t *) { pearl_cl_len };
 #else
-	unsigned char **src = (unsigned char*[]) { pearl_cl };
-	size_t *size = (size_t []) { pearl_cl_len };
+	//unsigned char **src = (unsigned char*[]) { pearl_cl };
+	//size_t *size = (size_t []) { pearl_cl_len };
 #endif
+*/
+	unsigned char *src[PD_NUM_SRC] = { pearl_cl };
+	size_t size[PD_NUM_SRC] = { pearl_cl_len };
 	char **names = (char *[]) { "init", "search", "finalize" };
 
 	if (!pdcl) {
