@@ -83,7 +83,7 @@ bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, cons
 		return 1;
 	}
 	pthread_mutex_unlock(&ctx->new_thread_search);
-	pthread_t tid = malloc(numberOfThreads * sizeof(pthread_t));
+	pthread_t *tid = malloc(numberOfThreads * sizeof(pthread_t));
 #endif
 	thread_count = numberOfThreads;
 

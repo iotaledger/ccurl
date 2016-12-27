@@ -23,8 +23,13 @@ typedef struct {
 } PDCLThread;
 
 int init_pearcl(PearCLDiver *pdcl) {
+#ifdef _WIN32
 	unsigned char **src = (unsigned char**) { pearl_cl };
 	size_t *size = (size_t *) { pearl_cl_len };
+#else
+	unsigned char **src = (unsigned char*[]) { pearl_cl };
+	size_t *size = (size_t []) { pearl_cl_len };
+#endif
 	char **names = (char *[]) { "init", "search", "finalize" };
 
 	if (!pdcl) {
@@ -186,7 +191,7 @@ bool pearcl_search(
 		return 1;
 	}
 	pthread_mutex_unlock(&pdcl->pd.new_thread_search);
-	pthread_t tid = malloc(numberOfThreads * sizeof(pthread_t));
+	pthread_t *tid = malloc(numberOfThreads * sizeof(pthread_t));
 #endif
 	thread_count = numberOfThreads;
 
