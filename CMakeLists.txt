@@ -1,7 +1,8 @@
 cmake_minimum_required (VERSION 3.6)
 enable_language (C)
 find_package (Threads)
-find_library (OPENCL_LIBRARIES OpenCL)
+#find_library (OPENCL_LIBRARIES OpenCL)
+find_package (OpenCL)
 project (ccurl)
 
 set(CMAKE_INSTALL_PREFIX "/usr")

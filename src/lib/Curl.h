@@ -3,8 +3,6 @@
 #define CURL_H
 #include <stdlib.h>
 #include <string.h>
-#include <pthread.h>
-#include <unistd.h>
 #include <time.h>
 #include "Hash.h"
 
