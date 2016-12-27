@@ -46,7 +46,7 @@ char *bytes_from_trits(trit_t *const trits, const int offset, const int size) {
 	char *bytes = (char *)malloc(sizeof(char) * length);
 	for (int i = 0; i < length; i++) {
 
-		int value = 0;
+		trit_t value = 0;
 		for (int j = (size - i * NUMBER_OF_TRITS_IN_A_BYTE) < 5 ? (size - i * NUMBER_OF_TRITS_IN_A_BYTE) : NUMBER_OF_TRITS_IN_A_BYTE; j-- > 0; ) {
 			value = value * RADIX + trits[offset + i * NUMBER_OF_TRITS_IN_A_BYTE + j];
 		}
@@ -114,7 +114,7 @@ char *trytes_from_trits(trit_t *const trits, const int offset, const int size) {
 	const int length = (size + NUMBER_OF_TRITS_IN_A_TRYTE - 1) / NUMBER_OF_TRITS_IN_A_TRYTE;
 	char *trytes = malloc(sizeof(char) * length);
 	for (int i = 0; i < length; i++) {
-		int j = trits[offset + i * 3] + trits[offset + i * 3 + 1] * 3 + trits[offset + i * 3 + 2] * 9;
+		trit_t j = trits[offset + i * 3] + trits[offset + i * 3 + 1] * 3 + trits[offset + i * 3 + 2] * 9;
 		if (j < 0) {
 			j += 27;
 		}
@@ -123,7 +123,7 @@ char *trytes_from_trits(trit_t *const trits, const int offset, const int size) {
 	return trytes;
 }
 
-int tryteValue(trit_t *const trits, const int offset) {
+trit_t tryteValue(trit_t *const trits, const int offset) {
 	return trits[offset] + trits[offset + 1] * 3 + trits[offset + 2] * 9;
 }
 

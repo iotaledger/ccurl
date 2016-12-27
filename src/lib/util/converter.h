@@ -11,7 +11,7 @@ int indexOf(char *values, char find);
 trit_t *trits_from_trytes(const char *trytes, int length);
 void copyTrits(trit_t const value, trit_t *const destination, const int offset, const int size);
 char *trytes_from_trits(trit_t *const trits, const int offset, const int size);
-int tryteValue(trit_t *const trits, const int offset);
+trit_t tryteValue(trit_t *const trits, const int offset);
 void init_converter();
 
 /*
