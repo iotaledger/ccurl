@@ -2,18 +2,15 @@
 #include <stdio.h>
 #include <string.h>
 
-/*
-#define DEBUG
-*/
+//#define _CL_ALL_
 
-
-static void pfn_notify(
+static void CL_CALLBACK pfn_notify(
 		const char *errinfo, 
 		const void *private_info,
 		size_t cb,
 		void *user_data
 		){
-	//fprintf(stderr, "W: caught an error in ocl_pfn_notify:\nW: %s", errinfo);
+	fprintf(stderr, "W: ocl_pfn_notify:\nW: %s", errinfo);
 }
 int check_clerror(cl_int err, char *comment, ...) {
 	if(err == CL_SUCCESS) {
@@ -32,18 +29,23 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	cl_uint num_platforms;
 	cl_int errno;
 	ctx->num_devices = 0;
+	cl_platform_id *platforms;
 	cl_device_id devices[CLCONTEXT_MAX_DEVICES];
 
 	if(clGetPlatformIDs(0, NULL, &num_platforms) != CL_SUCCESS) {
 		//fprintf(stderr, "Cannot get the number of OpenCL platforms available.\n");
 		return 1;
 	}
-	cl_platform_id platforms[num_platforms];
+	//cl_platform_id platforms[num_platforms];
+	platforms = malloc(num_platforms * sizeof(cl_platform_id));
 	clGetPlatformIDs(num_platforms, platforms, NULL);
 	for(i=0; i< num_platforms; i++) {
 		cl_uint pf_num_devices;
+#ifdef _CL_ALL_
+		if(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 
+#else
 		if(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, 
-		//if(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 
+#endif
 					CLCONTEXT_MAX_DEVICES-ctx->num_devices,
 					&devices[ctx->num_devices], &pf_num_devices) != CL_SUCCESS) {
 			//fprintf(stderr, "W: Failed to get Opencl Device IDs for platform %zu.\n", i);
@@ -59,12 +61,16 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		}
 		ctx->num_devices += pf_num_devices;
 	}
-	if(ctx->num_devices == 0)
+	if(ctx->num_devices == 0) {
+		free(platforms);
 		return 1;
+	}
 
 	/* Create OpenCL context. */
 	for(i=0; i< ctx->num_devices; i++) {
-		ctx->clctx[i] = clCreateContext(NULL, 1, &(devices[i]), pfn_notify, 
+		ctx->clctx[i] = (cl_context)clCreateContext(NULL, 1,
+			&(devices[i]),
+			pfn_notify, 
 				NULL, &errno);
 		check_clerror(errno, "Failed to execute clCreateContext.");
 	}
@@ -100,7 +106,10 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 				"Failed to execute clCreateCommandQueueWithProperties.");
 	}
 
-	if(ctx->kernel.num_src == 0) return 1;
+	if (ctx->kernel.num_src == 0) {
+		free(platforms);
+		return 1;
+	}
 	for(i=0; i< ctx->num_devices; i++) {
 		ctx->programs[i] = clCreateProgramWithSource(ctx->clctx[i], 
 				ctx->kernel.num_src, (const char**)src, size, &errno);
@@ -117,6 +126,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		free(build_log);
 		check_clerror(errno, "Failed to execute clBuildProgram");
 	}
+	free(platforms);
 	return 0;
 }
 

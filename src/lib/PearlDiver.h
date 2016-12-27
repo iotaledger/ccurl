@@ -2,8 +2,11 @@
 #ifndef PEARLDIVER_H
 #define PEARLDIVER_H
 
-
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <pthread.h>
+#endif
 #include <stdbool.h>
 #include "Hash.h"
 
@@ -21,8 +24,12 @@ typedef struct {
 } States;
 typedef struct {
 	volatile bool finished, interrupted, nonceFound;
+#ifdef _WIN32
+	CRITICAL_SECTION new_thread_search;
+#else
 	pthread_mutex_t new_thread_search;
-	pthread_t *tid;
+	//pthread_t *tid;
+#endif
 } PearlDiver;
 
 void init_pearldiver(PearlDiver *ctx);

@@ -1,7 +1,11 @@
 cmake_minimum_required (VERSION 3.6)
 enable_language (C)
 find_package (Threads)
+if (WIN32)
+find_package (OpenCL)
+else()
 find_library (OPENCL_LIBRARIES OpenCL)
+endif()
 project (ccurl)
 
 set(CMAKE_INSTALL_PREFIX "/usr")
@@ -10,8 +14,11 @@ set(CMAKE_INSTALL_PREFIX "/usr")
 set (LIBRARY_NAME ccurl)
 
 #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall -g -O0")
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall")
-#set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -g -O0 -Wno-unused-function")
+if (WIN32)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall ")
+else()
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall -g -O0")
+endif()
 
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin) 
 SET (CTEST_BUILD_TARGET "RELEASE")
@@ -19,6 +26,8 @@ SET (CTEST_BUILD_TARGET "RELEASE")
 
 #### OPENCL FILES
 
+if (WIN32)
+else()
 SET(RESOURCE_COMPILER xxd)
 FILE(GLOB COMPILED_RESOURCES "src/lib/cl/*")
 FOREACH(INPUT_FILE ${COMPILED_RESOURCES})
@@ -32,6 +41,7 @@ FOREACH(INPUT_FILE ${COMPILED_RESOURCES})
 		)
 	LIST(APPEND COMPILED_RESOURCES ${OUTPUT_FILE})
 ENDFOREACH()
+endif()
 
 #### LIBCCURL
 file(GLOB SRC src/lib/*.c src/lib/claccess/*.c src/lib/util/*.c)
@@ -41,10 +51,16 @@ set (SOURCES ${SRC})
 add_library (${LIBRARY_NAME} SHARED ${SOURCES} ${COMPILED_RESOURCES})
 target_link_libraries(${LIBRARY_NAME} ${OPENCL_LIBRARIES})
 
-set_target_properties (${LIBRARY_NAME} PROPERTIES 
-	LIBRARY_OUTPUT_DIRECTORY lib
-	LINK_FLAGS -lpthread
-	)
+if (WIN32)
+    set_target_properties (${LIBRARY_NAME} PROPERTIES 
+        LIBRARY_OUTPUT_DIRECTORY lib
+        )
+else()
+    set_target_properties (${LIBRARY_NAME} PROPERTIES 
+        LIBRARY_OUTPUT_DIRECTORY lib
+        LINK_FLAGS -lpthread
+        )
+endif()
 
 install(TARGETS ${LIBRARY_NAME} 
 	LIBRARY DESTINATION lib
