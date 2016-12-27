@@ -7,7 +7,7 @@
 */
 
 
-static void pfn_notify(
+static CL_CALLBACK pfn_notify(
 		const char *errinfo, 
 		const void *private_info,
 		size_t cb,
