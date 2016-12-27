@@ -82,18 +82,5 @@ int main(int argc, char *argv[]) {
 	}
 	output = ccurl_pow(buf, minWeightMagnitude);
 	printf("%s", output);
-	free(output);
 	return 0;
 }
-//trit_t trits[TRANSACTION_LENGTH];
-//PearlDiver pearl_diver;
-	//hash = ccurl_digest_transaction(output);
-	//printf("\nHash:\n%s", hash);
-	/*
-	init_converter();
-	Curl curl;
-	absorb(&curl, trits_from_trytes(buf, TRYTE_LENGTH), 0, TRYTE_LENGTH);
-	trit_t hash[HASH_LENGTH];
-	squeeze(&curl, hash, 0, HASH_LENGTH);
-	printf("\nHASH:\n%s", trytes_from_trits(hash, 0, HASH_LENGTH));
-	*/
