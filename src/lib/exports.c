@@ -8,6 +8,11 @@
 EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	init_converter();
 	char *buf = malloc(sizeof(char)*TRYTE_LENGTH);
+	/*
+	int len = strlen(trytes);
+	if (len != TRYTE_LENGTH)
+		return 0;
+	*/
 	trit_t *trits = trits_from_trytes(trytes, TRYTE_LENGTH);
 
 	PearlDiver pearl_diver;

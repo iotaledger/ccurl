@@ -195,7 +195,6 @@ bool pearcl_search(
 #endif
 	thread_count = numberOfThreads;
 
-	//numberOfThreads = 1;
 	PDCLThread  *pdthreads = (PDCLThread  *)malloc(numberOfThreads * sizeof(PDCLThread));
 	while (numberOfThreads-- > 0) {
 		pdthreads[numberOfThreads] = (PDCLThread) {
@@ -206,7 +205,7 @@ bool pearcl_search(
 				.pdcl = pdcl
 		};
 #ifdef _WIN32
-		CreateThread(&tid[numberOfThreads],0,&pearcl_find,(void *)&(pdthreads[numberOfThreads]),0,NULL);
+		tid[numberOfThreads] = CreateThread(NULL,0,&pearcl_find,(void *)&(pdthreads[numberOfThreads]),0,NULL);
 #else
 		pthread_create(&tid[numberOfThreads], NULL, &pearcl_find,
 			(void *)&(pdthreads[numberOfThreads]));

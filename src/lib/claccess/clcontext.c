@@ -2,10 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-/*
-#define DEBUG
-*/
-
+//#define _CL_ALL_
 
 static void CL_CALLBACK pfn_notify(
 		const char *errinfo, 
@@ -44,8 +41,11 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	clGetPlatformIDs(num_platforms, platforms, NULL);
 	for(i=0; i< num_platforms; i++) {
 		cl_uint pf_num_devices;
+#ifdef _CL_ALL_
+		if(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 
+#else
 		if(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, 
-		//if(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, 
+#endif
 					CLCONTEXT_MAX_DEVICES-ctx->num_devices,
 					&devices[ctx->num_devices], &pf_num_devices) != CL_SUCCESS) {
 			//fprintf(stderr, "W: Failed to get Opencl Device IDs for platform %zu.\n", i);

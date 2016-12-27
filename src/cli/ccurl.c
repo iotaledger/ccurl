@@ -41,9 +41,9 @@ int get_stdin(char *str, int len) {
 #else
 	if (select(1, &readfds, NULL, NULL, &timeout)) {
 #endif
-		puts("Input:");
+		//puts("Input:");
 		while ((chr = getchar()) != EOF) {
-			if(i>=len) return -1;
+			if (i > len) return -1;
 			str[i++] = chr;
 		}
 	}
@@ -56,35 +56,34 @@ int main(int argc, char *argv[]) {
 	char buf[TRYTE_LENGTH], *output, *hash;
 	long minWeightMagnitude;
 
-	if(argc < 2 ) {
-		fprintf(stderr, HINTS, TRYTE_LENGTH); 
+	if (argc < 2) {
+		fprintf(stderr, HINTS, TRYTE_LENGTH);
 		return 1;
 	}
 
-	if(argc > 2) {
-		switch(strlen(argv[2])) {
-			case TRYTE_LENGTH:
-				memcpy(buf,argv[2],sizeof(char)*TRYTE_LENGTH);
-				break;
-			default:
-				if(get_stdin(buf, TRYTE_LENGTH) != TRYTE_LENGTH) {
-					fprintf(stderr, HINTS, TRYTE_LENGTH); 
-					return 1;
-				}
+	if (argc > 2) {
+		if (strlen(argv[2]) >= TRYTE_LENGTH) {
+			memcpy(buf, argv[2], sizeof(char)*TRYTE_LENGTH);
 		}
-	} else if(get_stdin(buf, TRYTE_LENGTH) != TRYTE_LENGTH) {
-		fprintf(stderr, HINTS, TRYTE_LENGTH); 
+		else {
+			if (get_stdin(buf, TRYTE_LENGTH) != TRYTE_LENGTH) {
+				fprintf(stderr, HINTS, TRYTE_LENGTH);
+				return 1;
+			}
+		}
+	} else if (get_stdin(buf, TRYTE_LENGTH) != TRYTE_LENGTH) {
+		fprintf(stderr, HINTS, TRYTE_LENGTH);
 		return 1;
 	}
 	minWeightMagnitude = atol(argv[1]);
-	if( minWeightMagnitude == 0 ) {
-		fprintf(stderr, HINTS, TRYTE_LENGTH); 
+	if (minWeightMagnitude == 0) {
+		fprintf(stderr, HINTS, TRYTE_LENGTH);
 		return 1;
 	}
 	output = ccurl_pow(buf, minWeightMagnitude);
-	hash = ccurl_digest_transaction(output);
+	//hash = ccurl_digest_transaction(output);
 	printf("OUTPUT:\n%s", output);
-	printf("\nHash:\n%s", hash);
+	//printf("\nHash:\n%s", hash);
 	return 0;
 }
 //trit_t trits[TRANSACTION_LENGTH];

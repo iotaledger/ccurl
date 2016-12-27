@@ -27,6 +27,7 @@ void *find_nonce(void *states);
 void interrupt(PearlDiver *ctx) {
 
 #ifdef _WIN32
+	//http://stackoverflow.com/questions/800383/what-is-the-difference-between-mutex-and-critical-section
 	EnterCriticalSection(&ctx->new_thread_search);
 #else
 	pthread_mutex_lock(&ctx->new_thread_search);
@@ -98,7 +99,7 @@ bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, cons
 				.ctx = ctx
 		};
 #ifdef _WIN32
-		CreateThread(&tid[numberOfThreads], 0, &find_nonce, (void *)&(pdthreads[numberOfThreads]), 0, NULL);
+		tid[numberOfThreads] = CreateThread(NULL, 0, &find_nonce, (void *)&(pdthreads[numberOfThreads]), 0, NULL);
 #else
 		pthread_create(&tid[numberOfThreads], NULL, &find_nonce, (void *)&(pdthreads[numberOfThreads]));
 #endif
