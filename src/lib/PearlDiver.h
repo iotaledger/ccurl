@@ -26,17 +26,6 @@
 #define LOW_3 0xFFC0000007FFFFFF
 #define HIGH_3 0x003FFFFFFFFFFFFF
 
-
-
-
-
-
-
-
-
-
-
-
 typedef struct {
 	trit_t mid_low[STATE_LENGTH];
 	trit_t mid_high[STATE_LENGTH];
@@ -49,7 +38,6 @@ typedef struct {
 	CRITICAL_SECTION new_thread_search;
 #else
 	pthread_mutex_t new_thread_search;
-	//pthread_t *tid;
 #endif
 } PearlDiver;
 
