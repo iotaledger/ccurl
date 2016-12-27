@@ -36,11 +36,7 @@ int get_stdin(char *str, int len) {
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
 
-#ifdef _WIN32
 	if (select(1, &readfds, NULL, NULL, &timeout)) {
-#else
-	if (select(1, &readfds, NULL, NULL, &timeout)) {
-#endif
 		//puts("Input:");
 		while ((chr = getchar()) != EOF) {
 			if (i > len) return -1;
