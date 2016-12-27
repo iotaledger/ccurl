@@ -19,18 +19,19 @@
 
 
 int get_stdin(char *str, int len) {
-	fd_set readfds;
+
+	int i = 0;
+	char chr;
+	struct timeval timeout;
+	fd_set readfds, savefds;
 	FD_ZERO(&readfds);
 	FD_SET(STDIN_FILENO, &readfds);
 
-	fd_set savefds = readfds;
+	savefds = readfds;
 
-	struct timeval timeout;
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
 
-	char chr;
-	int i = 0;
 	if (select(1, &readfds, NULL, NULL, &timeout)) {
 		puts("Input:");
 		while ((chr = getchar()) != EOF) {
