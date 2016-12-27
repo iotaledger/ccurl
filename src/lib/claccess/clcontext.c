@@ -13,7 +13,7 @@ static void CL_CALLBACK pfn_notify(
 		size_t cb,
 		void *user_data
 		){
-	//fprintf(stderr, "W: caught an error in ocl_pfn_notify:\nW: %s", errinfo);
+	fprintf(stderr, "W: ocl_pfn_notify:\nW: %s", errinfo);
 }
 int check_clerror(cl_int err, char *comment, ...) {
 	if(err == CL_SUCCESS) {
