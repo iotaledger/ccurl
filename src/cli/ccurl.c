@@ -5,13 +5,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef _WIN32
 /*
 #include "Windows.h"
 #include "Winsock2.h"
 #pragma comment(lib, "Ws2_32.lib")
 */
-#else
+#ifndef _WIN32
 #include <sys/select.h>
 #endif
 
