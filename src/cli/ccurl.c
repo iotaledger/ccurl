@@ -6,7 +6,11 @@
 #include <string.h>
 
 #ifdef _WIN32
+#include "Windows.h"
+/*
 #include "Winsock2.h"
+#pragma comment(lib, "Ws2_32.lib")
+*/
 #else
 #include <sys/select.h>
 #endif
@@ -32,7 +36,11 @@ int get_stdin(char *str, int len) {
 	timeout.tv_sec = 0;
 	timeout.tv_usec = 0;
 
+#ifdef _WIN32
 	if (select(1, &readfds, NULL, NULL, &timeout)) {
+#else
+	if (select(1, &readfds, NULL, NULL, &timeout)) {
+#endif
 		puts("Input:");
 		while ((chr = getchar()) != EOF) {
 			if(i>=len) return -1;
@@ -45,9 +53,7 @@ int get_stdin(char *str, int len) {
 }
 
 int main(int argc, char *argv[]) {
-	char buf[TRYTE_LENGTH];
-	//trit_t trits[TRANSACTION_LENGTH];
-	//PearlDiver pearl_diver;
+	char buf[TRYTE_LENGTH], *output, *hash;
 	long minWeightMagnitude;
 
 	if(argc < 2 ) {
@@ -75,7 +81,19 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, HINTS, TRYTE_LENGTH); 
 		return 1;
 	}
-
-	printf("%s",ccurl_pow(buf, minWeightMagnitude));
+	output = ccurl_pow(buf, minWeightMagnitude);
+	hash = ccurl_digest_transaction(output);
+	printf("OUTPUT:\n%s", output);
+	printf("\nHash:\n%s", hash);
 	return 0;
 }
+//trit_t trits[TRANSACTION_LENGTH];
+//PearlDiver pearl_diver;
+	/*
+	init_converter();
+	Curl curl;
+	absorb(&curl, trits_from_trytes(buf, TRYTE_LENGTH), 0, TRYTE_LENGTH);
+	trit_t hash[HASH_LENGTH];
+	squeeze(&curl, hash, 0, HASH_LENGTH);
+	printf("\nHASH:\n%s", trytes_from_trits(hash, 0, HASH_LENGTH));
+	*/
