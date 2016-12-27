@@ -53,7 +53,7 @@ int get_stdin(char *str, int len) {
 }
 
 int main(int argc, char *argv[]) {
-	char buf[TRYTE_LENGTH], *output, *hash;
+	char buf[TRYTE_LENGTH], *output;// *hash;
 	long minWeightMagnitude;
 
 	if (argc < 2) {
@@ -81,13 +81,14 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	output = ccurl_pow(buf, minWeightMagnitude);
-	//hash = ccurl_digest_transaction(output);
-	printf("OUTPUT:\n%s", output);
-	//printf("\nHash:\n%s", hash);
+	printf("%s", output);
+	free(output);
 	return 0;
 }
 //trit_t trits[TRANSACTION_LENGTH];
 //PearlDiver pearl_diver;
+	//hash = ccurl_digest_transaction(output);
+	//printf("\nHash:\n%s", hash);
 	/*
 	init_converter();
 	Curl curl;

@@ -18,13 +18,19 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	PearlDiver pearl_diver;
 	PearCLDiver pdcl;
 	if(init_pearcl(&pdcl) == 0) {
+#ifdef DEBUG
 		fprintf(stderr, "OpenCL Hashing...");
+#endif
 		if(pearcl_search(&pdcl, trits, TRANSACTION_LENGTH, minWeightMagnitude)) {
-			fprintf(stderr, "Thread Hashing...");
+#ifdef DEBUG
+			fprintf(stderr, "Thread Hashing 2...");
+#endif
 			pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
 		}
 	} else {
+#ifdef DEBUG
 		fprintf(stderr, "Thread Hashing...");
+#endif
 		pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
 	}
 
@@ -35,12 +41,13 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 }
 
 EXPORT char *ccurl_digest_transaction(char *trytes) {
+	return 0;
 	init_converter();
 	Curl curl;
 	size_t length = strlen(trytes);
 	trit_t digest[HASH_LENGTH];
-
-	absorb(&curl, trits_from_trytes(trytes, length), 0, length*3);
+	trit_t *input = trits_from_trytes(trytes, length);
+	absorb(&curl, input, 0, length*3);
 	squeeze(&curl, digest, 0, HASH_LENGTH);
 
 	return trytes_from_trits(digest, 0, HASH_LENGTH);
