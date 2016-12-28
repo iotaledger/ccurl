@@ -198,7 +198,8 @@ DWORD WINAPI find_nonce(void *data) {
 void *find_nonce(void *data) {
 #endif
 	trit_t midStateCopyLow[STATE_LENGTH], midStateCopyHigh[STATE_LENGTH];
-	int i, nonce_probe;
+	int i;
+	trit_t nonce_probe, nonce_output;
 	PDThread *my_thread = (PDThread *)data;
 	trit_t *trits = my_thread->trits;
 
@@ -227,9 +228,12 @@ void *find_nonce(void *data) {
 		if ((nonce_probe = is_found_fast(stateLow, stateHigh,
 			my_thread->min_weight_magnitude)) == 0)
 			continue;
+
 #ifdef _WIN32
+		_BitScanForward64(&nonce_output, nonce_probe);
 		EnterCriticalSection(&my_thread->ctx->new_thread_search);
 #else
+		nonce_output = 1 << __builtin_ctzll(nonce_probe);
 		pthread_mutex_lock(&my_thread->ctx->new_thread_search);
 #endif
 		if (ctx->finished) {
@@ -239,12 +243,12 @@ void *find_nonce(void *data) {
 			pthread_mutex_unlock(&my_thread->ctx->new_thread_search);
 #endif
 			return 0;
-	}
+		}
 		ctx->finished = true;
 		for (i = 0; i < HASH_LENGTH; i++) {
 			trits[i] =
-				(((trit_t)(midStateCopyLow[i]) & nonce_probe) == 0) ?
-				1 : ((((trit_t)(midStateCopyHigh[i]) & nonce_probe) == 0) ? -1 : 0);
+				(((trit_t)(midStateCopyLow[i]) & nonce_output) == 0) ?
+				1 : ((((trit_t)(midStateCopyHigh[i]) & nonce_output) == 0) ? -1 : 0);
 		}
 		my_thread->ctx->nonceFound = true;
 #ifdef _WIN32

@@ -125,7 +125,11 @@ void check(
 		*nonce_probe &= ~(state_low[i] ^ state_high[i]);
 		if(*nonce_probe == 0) return;
 	}
-	if(*nonce_probe != 0) *found = gr_id + 1;
+	if(*nonce_probe != 0) {
+		*nonce_probe = 1 << __builtin_ctzl(*nonce_probe);
+		*found = gr_id + 1;
+	}
+
 }
 
 void setup_ids(
