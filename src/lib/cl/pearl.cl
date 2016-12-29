@@ -126,7 +126,7 @@ void check(
 		if(*nonce_probe == 0) return;
 	}
 	if(*nonce_probe != 0) {
-		*nonce_probe = 1 << __builtin_ctzl(*nonce_probe);
+		//*nonce_probe = 1 << __builtin_ctzl(*nonce_probe);
 		*found = gr_id + 1;
 	}
 
