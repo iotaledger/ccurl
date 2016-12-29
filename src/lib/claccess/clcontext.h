@@ -53,6 +53,6 @@ void init_cl(CLContext *ctx);
 int pd_init_cl(CLContext *ctx, unsigned char **src, size_t *size,char **names);
 void destroy_cl(CLContext *ctx);
 void finalize_cl(CLContext *ctx);
-int check_clerror(cl_int err, char *comment, ...);
+//int check_clerror(cl_int err, char *comment, ...);
 
 #endif
