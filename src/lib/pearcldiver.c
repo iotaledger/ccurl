@@ -27,15 +27,6 @@ typedef struct {
 } PDCLThread;
 
 int init_pearcl(PearCLDiver *pdcl) {
-	/*
-#ifdef _WIN32
-	unsigned char **src = (unsigned char**) { pearl_cl };
-	size_t *size = (size_t *) { pearl_cl_len };
-#else
-	//unsigned char **src = (unsigned char*[]) { pearl_cl };
-	//size_t *size = (size_t []) { pearl_cl_len };
-#endif
-*/
 	unsigned char *src[PD_NUM_SRC] = { pearl_cl };
 	size_t size[PD_NUM_SRC] = { pearl_cl_len };
 	char **names = (char *[]) { "init", "search", "finalize" };
@@ -44,7 +35,7 @@ int init_pearcl(PearCLDiver *pdcl) {
 		pdcl = malloc(sizeof(PearCLDiver));
 	}
 
-	pdcl->cl.kernel.num_src = 1;
+	pdcl->cl.kernel.num_src = PD_NUM_SRC;
 	pdcl->cl.kernel.num_kernels = 3;
 	return pd_init_cl(&(pdcl->cl), src, size, names);
 }
@@ -132,8 +123,8 @@ void *pearcl_find(void *data) {
 				clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.buffers[thread->index][0], CL_TRUE,
 			0, HASH_LENGTH * sizeof(trit_t), &(thread->trits[TRANSACTION_LENGTH - HASH_LENGTH]),
-			1, &ev, NULL),
-			"E: reading transaction hash failed.\n");
+			1, &ev, NULL))
+			fprintf(stderr, "E: reading transaction hash failed.\n");
 #ifdef _WIN32
 		LeaveCriticalSection(&pdcl->pd.new_thread_search);
 #else

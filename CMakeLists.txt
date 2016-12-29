@@ -26,9 +26,7 @@ SET (CTEST_BUILD_TARGET "RELEASE")
 
 #### OPENCL FILES
 
-if (WIN32)
-else()
-#SET(RESOURCE_COMPILER xxd)
+SET(RESOURCE_COMPILER xxd)
 FILE(GLOB COMPILED_RESOURCES "src/lib/cl/*")
 FOREACH(INPUT_FILE ${COMPILED_RESOURCES})
 	get_filename_component(INPUT_NAME ${INPUT_FILE} NAME)
@@ -36,13 +34,11 @@ FOREACH(INPUT_FILE ${COMPILED_RESOURCES})
 	SET(OUTPUT_FILE ${INPUT_PATH}/../${INPUT_NAME}.h)
 	ADD_CUSTOM_COMMAND(
 		OUTPUT ${OUTPUT_FILE}
-        #COMMAND ${RESOURCE_COMPILER} -i ${INPUT_NAME} ${OUTPUT_FILE}
-        COMMAND xxd -i ${INPUT_NAME} ${OUTPUT_FILE}
+        COMMAND ${RESOURCE_COMPILER} -i ${INPUT_NAME} ${OUTPUT_FILE}
 		WORKING_DIRECTORY ${INPUT_PATH}
 		)
 	LIST(APPEND COMPILED_RESOURCES ${OUTPUT_FILE})
 ENDFOREACH()
-endif()
 
 #### LIBCCURL
 file(GLOB SRC src/lib/*.c src/lib/claccess/*.c src/lib/util/*.c)
@@ -73,6 +69,6 @@ file(GLOB HEADERS src/lib/*.h)
 install(FILES ${HEADERS} DESTINATION include)
 
 ### TESTING
-#enable_testing ()
-#add_subdirectory (test)
+enable_testing ()
+add_subdirectory (test)
 add_subdirectory (src/cli)
