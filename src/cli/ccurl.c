@@ -12,6 +12,8 @@
 */
 #ifndef _WIN32
 #include <sys/select.h>
+#else
+#define STDIN_FILENO 0
 #endif
 
 
