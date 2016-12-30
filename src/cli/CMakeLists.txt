@@ -19,7 +19,7 @@ set_target_properties (${CLI_NAME} PROPERTIES
 	)
 endif()
 #target_link_libraries(${CLI_NAME} ${OPENCL_LIBRARIES} ${CCURL_LIBRARY})
-target_link_libraries(${CLI_NAME} ${OPENCL_LIBRARIES})
+target_link_libraries(${CLI_NAME} ${OPENCL_LIBRARIES} ${ws2_32_LIBRARY_PATH})
 
 install(TARGETS ${CLI_NAME} 
 	RUNTIME DESTINATION bin)

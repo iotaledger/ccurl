@@ -3,8 +3,9 @@ enable_language (C)
 find_library (OPENCL_LIBRARIES OpenCL)
 find_package (OpenCL)
 if (WIN32)
+    find_library(ws2_32_LIBRARY_PATH ws2_32)
 else()
-find_package (Threads)
+    find_package (Threads)
 endif()
 project (ccurl)
 
@@ -46,7 +47,7 @@ set (SOURCES ${SRC})
 
 #add_library (${LIBRARY_NAME} SHARED ${SOURCES})
 add_library (${LIBRARY_NAME} SHARED ${SOURCES} ${COMPILED_RESOURCES})
-target_link_libraries(${LIBRARY_NAME} ${OPENCL_LIBRARIES})
+target_link_libraries(${LIBRARY_NAME} ${OPENCL_LIBRARIES} ${ws2_32_LIBRARY_PATH})
 
 if (WIN32)
     set_target_properties (${LIBRARY_NAME} PROPERTIES 
