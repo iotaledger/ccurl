@@ -48,7 +48,7 @@ int get_stdin(char *str, int len) {
 }
 
 int main(int argc, char *argv[]) {
-	char buf[TRYTE_LENGTH], *output;// *hash;
+	char buf[TRYTE_LENGTH], *output, *hash;
 	long minWeightMagnitude;
 
 	if (argc < 2) {
@@ -76,6 +76,7 @@ int main(int argc, char *argv[]) {
 		return 1;
 	}
 	output = ccurl_pow(buf, minWeightMagnitude);
-	printf("%s", output);
+	hash = ccurl_digest_transaction(output);
+	fprintf(stdout, "[%s]\nDigest: %s\n", output, hash);
 	return 0;
 }

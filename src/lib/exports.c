@@ -41,14 +41,15 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 }
 
 EXPORT char *ccurl_digest_transaction(char *trytes) {
-	return 0;
+	char *hash;
 	init_converter();
 	Curl curl;
+	init_curl(&curl);
 	size_t length = strlen(trytes);
 	trit_t digest[HASH_LENGTH];
 	trit_t *input = trits_from_trytes(trytes, length);
 	absorb(&curl, input, 0, length*3);
 	squeeze(&curl, digest, 0, HASH_LENGTH);
-
-	return trytes_from_trits(digest, 0, HASH_LENGTH);
+	hash = trytes_from_trits(digest, 0, HASH_LENGTH);
+	return hash;
 }
