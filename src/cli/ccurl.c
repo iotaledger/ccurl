@@ -77,7 +77,8 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, HINTS, TRYTE_LENGTH);
 		return 1;
 	}
-	fputs(ccurl_pow(buf, minWeightMagnitude),stdout);
+	fprintf(stdout, "%s", ccurl_pow(buf, minWeightMagnitude));
+	//fputs(ccurl_pow(buf, minWeightMagnitude),stdout);
 	/*
 	output = ccurl_pow(buf, minWeightMagnitude);
 	fputs(ccurl_digest_transaction(output),stderr);

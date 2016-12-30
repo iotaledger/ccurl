@@ -49,6 +49,7 @@ set (SOURCES ${SRC})
 add_library (${LIBRARY_NAME} SHARED ${SOURCES} ${COMPILED_RESOURCES})
 add_library (${LIBRARY_NAME}static STATIC ${SOURCES} ${COMPILED_RESOURCES})
 target_link_libraries(${LIBRARY_NAME} ${OPENCL_LIBRARIES} ${ws2_32_LIBRARY_PATH})
+target_link_libraries(${LIBRARY_NAME}static ${OPENCL_LIBRARIES} ${ws2_32_LIBRARY_PATH})
 
 if (WIN32)
     set_target_properties (${LIBRARY_NAME} PROPERTIES 
