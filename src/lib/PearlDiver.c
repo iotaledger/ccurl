@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #ifdef _WIN32
+#include <intrin.h>
 #else
 #include <sched.h>
 #endif

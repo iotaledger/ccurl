@@ -12,6 +12,7 @@ static void CL_CALLBACK pfn_notify(
 		){
 	fprintf(stderr, "W: ocl_pfn_notify:\nW: %s", errinfo);
 }
+/*
 int check_clerror(cl_int err, char *comment, ...) {
 	if(err == CL_SUCCESS) {
 		return 0;
@@ -22,6 +23,7 @@ int check_clerror(cl_int err, char *comment, ...) {
 	printf("\n\n");
 	return 1;
 }
+*/
 
 static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	/* List devices for each platforms.*/ 
@@ -72,17 +74,20 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 			&(devices[i]),
 			pfn_notify, 
 				NULL, &errno);
-		check_clerror(errno, "Failed to execute clCreateContext.");
+		if(errno != CL_SUCCESS) {
+			fprintf(stderr, "Failed to execute clCreateContext, %d\n", errno);
+		}
 	}
 	/* Get Device info */
 	for(i=0; i< ctx->num_devices; i++) {
-		check_clerror(clGetDeviceInfo(devices[i], CL_DEVICE_MAX_COMPUTE_UNITS,
-					sizeof(cl_uint), &(ctx->num_cores[i]), NULL), 
-				"Failed to execute clGetDeviceInfo for %zu", i);
+		if(CL_SUCCESS != clGetDeviceInfo(devices[i], CL_DEVICE_MAX_COMPUTE_UNITS,
+					sizeof(cl_uint), &(ctx->num_cores[i]), NULL)) {
+				fprintf(stderr, "Failed to execute clGetDeviceInfo for %zu", i);
+		}
 
-		check_clerror(clGetDeviceInfo(devices[i], CL_DEVICE_MAX_MEM_ALLOC_SIZE,
-					sizeof(cl_ulong), &(ctx->max_memory[i]), NULL), 
-				"Failed to execute clGetDeviceInfo for %zu", i);
+		if( CL_SUCCESS != clGetDeviceInfo(devices[i], CL_DEVICE_MAX_MEM_ALLOC_SIZE,
+					sizeof(cl_ulong), &(ctx->max_memory[i]), NULL))
+				fprintf(stderr, "Failed to execute clGetDeviceInfo for %zu", i);
 
 		if(clGetDeviceInfo(devices[i], 
 					 CL_DEVICE_MAX_WORK_GROUP_SIZE,// wrong CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
@@ -102,8 +107,10 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		ctx->clcmdq[i] = clCreateCommandQueueWithProperties(ctx->clctx[i], 
 				devices[i], 0, &errno);
 #endif
-		check_clerror(errno, 
-				"Failed to execute clCreateCommandQueueWithProperties.");
+		if(errno != CL_SUCCESS) {
+			fprintf(stderr, "Failed to execute clCreateCommandQueueWithProperties.\n");
+			return 1;
+		}
 	}
 
 	if (ctx->kernel.num_src == 0) {
@@ -113,7 +120,10 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	for(i=0; i< ctx->num_devices; i++) {
 		ctx->programs[i] = clCreateProgramWithSource(ctx->clctx[i], 
 				ctx->kernel.num_src, (const char**)src, size, &errno);
-		check_clerror(errno, "Failed to execute clCreateProgramWithSource");
+		if(CL_SUCCESS != errno) {
+			fprintf(stderr, "Failed to execute clCreateProgramWithSource\n");
+			return 1;
+		}
 	}
 
 
@@ -124,7 +134,10 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		clGetProgramBuildInfo(ctx->programs[i], devices[i], 
 				CL_PROGRAM_BUILD_LOG, 0xFFFF, build_log, &log_size);
 		free(build_log);
-		check_clerror(errno, "Failed to execute clBuildProgram");
+		if(CL_SUCCESS != errno) {
+			fprintf(stderr, "Failed to execute clBuildProgram\n");
+			return 1;
+		}
 	}
 	free(platforms);
 	return 0;
@@ -172,9 +185,10 @@ int kernel_init_buffers (CLContext *ctx) {
 
 			ctx->buffers[i][j] = clCreateBuffer(ctx->clctx[i], 
 					ctx->kernel.buffer[j].flags, memsize, NULL, &errno);
-			if(check_clerror(errno, "Failed to execute clCreateBuffer for %d:%d",
-					i, j))
+			if(CL_SUCCESS != errno) { 
+				fprintf(stderr, "Failed to execute clCreateBuffer for %d:%d",i, j);
 				return 1;
+			}
 			for(k=0;k< ctx->kernel.num_kernels;k++) {
 				if((ctx->kernel.buffer[j].init_flag & 1) != 0) {
 					if (clSetKernelArg(ctx->clkernel[i][k], j, 

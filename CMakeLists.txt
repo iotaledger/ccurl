@@ -1,10 +1,12 @@
 cmake_minimum_required (VERSION 3.6)
 enable_language (C)
-find_package (Threads)
-if (WIN32)
 find_package (OpenCL)
+if (WIN32)
+    find_library (OPENCL_LIBRARIES OpenCL)
+    find_library(ws2_32_LIBRARY_PATH Ws2_32)
 else()
-find_library (OPENCL_LIBRARIES OpenCL)
+    find_library (OPENCL_LIBRARIES OpenCL)
+    find_package (Threads)
 endif()
 project (ccurl)
 
@@ -26,8 +28,6 @@ SET (CTEST_BUILD_TARGET "RELEASE")
 
 #### OPENCL FILES
 
-if (WIN32)
-else()
 SET(RESOURCE_COMPILER xxd)
 FILE(GLOB COMPILED_RESOURCES "src/lib/cl/*")
 FOREACH(INPUT_FILE ${COMPILED_RESOURCES})
@@ -36,33 +36,42 @@ FOREACH(INPUT_FILE ${COMPILED_RESOURCES})
 	SET(OUTPUT_FILE ${INPUT_PATH}/../${INPUT_NAME}.h)
 	ADD_CUSTOM_COMMAND(
 		OUTPUT ${OUTPUT_FILE}
-		COMMAND ${RESOURCE_COMPILER} -i ${INPUT_NAME} ${OUTPUT_FILE}
+        COMMAND ${RESOURCE_COMPILER} -i ${INPUT_NAME} ${OUTPUT_FILE}
 		WORKING_DIRECTORY ${INPUT_PATH}
 		)
 	LIST(APPEND COMPILED_RESOURCES ${OUTPUT_FILE})
 ENDFOREACH()
-endif()
 
 #### LIBCCURL
 file(GLOB SRC src/lib/*.c src/lib/claccess/*.c src/lib/util/*.c)
 set (SOURCES ${SRC})
 
-#add_library (${LIBRARY_NAME} SHARED ${SOURCES})
 add_library (${LIBRARY_NAME} SHARED ${SOURCES} ${COMPILED_RESOURCES})
-target_link_libraries(${LIBRARY_NAME} ${OPENCL_LIBRARIES})
+add_library (${LIBRARY_NAME}static STATIC ${SOURCES} ${COMPILED_RESOURCES})
+target_link_libraries(${LIBRARY_NAME} ${OPENCL_LIBRARIES} ${ws2_32_LIBRARY_PATH})
+target_link_libraries(${LIBRARY_NAME}static ${OPENCL_LIBRARIES} ${ws2_32_LIBRARY_PATH})
 
 if (WIN32)
     set_target_properties (${LIBRARY_NAME} PROPERTIES 
         LIBRARY_OUTPUT_DIRECTORY lib
+        )
+    set_target_properties(${LIBRARY_NAME}static PROPERTIES 
+        LIBRARY_OUTPUT_DIRECTORY lib
+        OUTPUT_NAME ${LIBRARY_NAME}
         )
 else()
     set_target_properties (${LIBRARY_NAME} PROPERTIES 
         LIBRARY_OUTPUT_DIRECTORY lib
         LINK_FLAGS -lpthread
         )
+    set_target_properties(${LIBRARY_NAME}static PROPERTIES 
+        LIBRARY_OUTPUT_DIRECTORY lib
+        OUTPUT_NAME ${LIBRARY_NAME}
+        LINK_FLAGS -lpthread
+        )
 endif()
 
-install(TARGETS ${LIBRARY_NAME} 
+install(TARGETS ${LIBRARY_NAME}
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib
 	RUNTIME DESTINATION bin)
@@ -72,6 +81,6 @@ file(GLOB HEADERS src/lib/*.h)
 install(FILES ${HEADERS} DESTINATION include)
 
 ### TESTING
-#enable_testing ()
-#add_subdirectory (test)
+enable_testing ()
+add_subdirectory (test)
 add_subdirectory (src/cli)

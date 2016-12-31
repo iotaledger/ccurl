@@ -12,6 +12,8 @@
 */
 #ifndef _WIN32
 #include <sys/select.h>
+#else
+#define STDIN_FILENO 0
 #endif
 
 
@@ -48,7 +50,7 @@ int get_stdin(char *str, int len) {
 }
 
 int main(int argc, char *argv[]) {
-	char buf[TRYTE_LENGTH], *output;// *hash;
+	char buf[TRYTE_LENGTH];// *output, *hash;
 	long minWeightMagnitude;
 
 	if (argc < 2) {
@@ -75,7 +77,12 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, HINTS, TRYTE_LENGTH);
 		return 1;
 	}
+	fprintf(stdout, "%s", ccurl_pow(buf, minWeightMagnitude));
+	//fputs(ccurl_pow(buf, minWeightMagnitude),stdout);
+	/*
 	output = ccurl_pow(buf, minWeightMagnitude);
-	printf("%s", output);
+	fputs(ccurl_digest_transaction(output),stderr);
+	*/
+	//fprintf(stdout, "%s", ccurl_pow(buf, minWeightMagnitude));
 	return 0;
 }

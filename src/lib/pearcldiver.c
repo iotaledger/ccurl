@@ -27,15 +27,6 @@ typedef struct {
 } PDCLThread;
 
 int init_pearcl(PearCLDiver *pdcl) {
-	/*
-#ifdef _WIN32
-	unsigned char **src = (unsigned char**) { pearl_cl };
-	size_t *size = (size_t *) { pearl_cl_len };
-#else
-	//unsigned char **src = (unsigned char*[]) { pearl_cl };
-	//size_t *size = (size_t []) { pearl_cl_len };
-#endif
-*/
 	unsigned char *src[PD_NUM_SRC] = { pearl_cl };
 	size_t size[PD_NUM_SRC] = { pearl_cl_len };
 	char **names = (char *[]) { "init", "search", "finalize" };
@@ -44,7 +35,7 @@ int init_pearcl(PearCLDiver *pdcl) {
 		pdcl = malloc(sizeof(PearCLDiver));
 	}
 
-	pdcl->cl.kernel.num_src = 1;
+	pdcl->cl.kernel.num_src = PD_NUM_SRC;
 	pdcl->cl.kernel.num_kernels = 3;
 	return pd_init_cl(&(pdcl->cl), src, size, names);
 }
@@ -69,62 +60,57 @@ void *pearcl_find(void *data) {
 	while (local_work_size > pdcl->cl.num_multiple[thread->index]) {
 		local_work_size /= 3;
 	}
-	/*
-	local_work_size = STATE_LENGTH < pdcl->cl.num_multiple[thread->index]?
-		STATE_LENGTH : pdcl->cl.num_multiple[thread->index];
-	local_work_size =  STATE_LENGTH /
-		(STATE_LENGTH / pdcl->cl.num_multiple[thread->index] +
-		(STATE_LENGTH % pdcl->cl.num_multiple[thread->index] == 0 ? 0 : 1));
-	local_work_size += (STATE_LENGTH % pdcl->cl.num_multiple[thread->index] == 0 ? 0 : 1);
-		*/
-		//local_work_size = HASH_LENGTH; 
 	global_work_size = local_work_size * num_groups;
 
 	for (int i = 0; i < thread->index; i++) {
 		global_offset += pdcl->cl.num_cores[i];
 	}
-	check_clerror(
+	if(CL_SUCCESS != 
 		clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.buffers[thread->index][1], CL_TRUE, 0,
-			sizeof(trit_t)*STATE_LENGTH, &(thread->states.mid_low), 0, NULL, NULL),
-		"E: failed to write mid state low");
-	check_clerror(
+			sizeof(trit_t)*STATE_LENGTH, &(thread->states.mid_low), 0, NULL, NULL))
+		fprintf(stderr, "E: failed to write mid state low");
+	if(CL_SUCCESS != 
 		clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.buffers[thread->index][2], CL_TRUE, 0,
-			sizeof(trit_t)*STATE_LENGTH, &(thread->states.mid_high), 0, NULL, NULL),
-		"E: failed to write mid state low");
-	check_clerror(
+			sizeof(trit_t)*STATE_LENGTH, &(thread->states.mid_high), 0, NULL, NULL))
+		fprintf(stderr, "E: failed to write mid state low");
+	if(CL_SUCCESS != 
 		clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.buffers[thread->index][5], CL_TRUE, 0,
 			pdcl->cl.kernel.buffer[5].size, &(thread->min_weight_magnitude), 0,
-			NULL, NULL),
-		"E: failed to write min_weight_magnitude");
+			NULL, NULL))
+		fprintf(stderr, "E: failed to write min_weight_magnitude");
 
-	check_clerror(
+	if(CL_SUCCESS != 
 		clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.clkernel[thread->index][0], 1, &global_offset,
-			&global_work_size, &local_work_size, 0, NULL, &ev),
-		"E: running init kernel failed.\n");
-	check_clerror(
+			&global_work_size, &local_work_size, 0, NULL, &ev))
+		fprintf(stderr, "E: running init kernel failed.\n");
+	if(CL_SUCCESS != 
 		clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.buffers[thread->index][6], CL_TRUE, 0, sizeof(char),
-			&found, 1, &ev, NULL), "E: could not read init errors.\n");
+			&found, 1, &ev, NULL))
+		fprintf(stderr, "E: could not read init errors.\n");
 	while (found == 0 && !pdcl->pd.finished) {
 		cl_event ev1;
-		check_clerror(clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
+	if(CL_SUCCESS != 
+				clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.clkernel[thread->index][1], 1, NULL,
-			&global_work_size, &local_work_size, 0, NULL, &ev1),
-			"E: running search kernel failed.\n");
-		check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
+			&global_work_size, &local_work_size, 0, NULL, &ev1))
+			fprintf(stderr, "E: running search kernel failed.\n");
+	if(CL_SUCCESS != 
+			clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.buffers[thread->index][6], CL_TRUE, 0,
-			sizeof(char), &found, 1, &ev1, NULL),
-			"E: reading finished bool failed.\n");
+			sizeof(char), &found, 1, &ev1, NULL))
+			fprintf(stderr, "E: reading finished bool failed.\n");
 	}
 	if (found > 0) {
-		check_clerror(clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
+	if(CL_SUCCESS != 
+				clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.clkernel[thread->index][2], 1, NULL,
-			&global_work_size, &local_work_size, 0, NULL, &ev),
-			"E: running search kernel failed.\n");
+			&global_work_size, &local_work_size, 0, NULL, &ev))
+			fprintf(stderr, "E: running search kernel failed.\n");
 #ifdef _WIN32
 		EnterCriticalSection(&pdcl->pd.new_thread_search);
 #else
@@ -133,11 +119,12 @@ void *pearcl_find(void *data) {
 		if (pdcl->pd.nonceFound) return 0;
 		pdcl->pd.nonceFound = true;
 		pdcl->pd.finished = true;
-		check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
+		if(CL_SUCCESS != 
+				clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.buffers[thread->index][0], CL_TRUE,
 			0, HASH_LENGTH * sizeof(trit_t), &(thread->trits[TRANSACTION_LENGTH - HASH_LENGTH]),
-			1, &ev, NULL),
-			"E: reading transaction hash failed.\n");
+			1, &ev, NULL))
+			fprintf(stderr, "E: reading transaction hash failed.\n");
 #ifdef _WIN32
 		LeaveCriticalSection(&pdcl->pd.new_thread_search);
 #else
