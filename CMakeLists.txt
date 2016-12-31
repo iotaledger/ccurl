@@ -81,6 +81,6 @@ file(GLOB HEADERS src/lib/*.h)
 install(FILES ${HEADERS} DESTINATION include)
 
 ### TESTING
-enable_testing ()
-add_subdirectory (test)
+#enable_testing ()
+#add_subdirectory (test)
 add_subdirectory (src/cli)
