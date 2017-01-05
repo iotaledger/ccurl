@@ -18,19 +18,10 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	PearlDiver pearl_diver;
 	PearCLDiver pdcl;
 	if(init_pearcl(&pdcl) == 0) {
-#ifdef DEBUG
-		fprintf(stderr, "OpenCL Hashing...");
-#endif
 		if(pearcl_search(&pdcl, trits, TRANSACTION_LENGTH, minWeightMagnitude)) {
-#ifdef DEBUG
-			fprintf(stderr, "Thread Hashing 2...");
-#endif
 			pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
 		}
 	} else {
-#ifdef DEBUG
-		fprintf(stderr, "Thread Hashing...");
-#endif
 		pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
 	}
 
