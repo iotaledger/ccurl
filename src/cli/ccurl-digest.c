@@ -39,19 +39,18 @@ int get_stdin(char *str, int len) {
 
 	//if (select(1, &readfds, NULL, NULL, &timeout)) {
 	if (select(1, &readfds, NULL, NULL, NULL)) {
-		//puts("Input:");
 		while ((chr = getchar()) != EOF) {
 			if (i > len) return -1;
 			str[i++] = chr;
 		}
 	}
 	readfds = savefds;
-	//str[i] = 0;
+	str[i] = 0;
 	return i;
 }
 
 int main(int argc, char *argv[]) {
-	char *buf;// *output, *hash;
+	char *buf;
 	int in_size;
 
 	if (argc > 1) {
@@ -71,8 +70,6 @@ int main(int argc, char *argv[]) {
 			return 1;
 		}
 	}
-	//fprintf(stderr, "Buffer: %lu\n", strlen(buf));
-	//puts(buf);
 	fputs(ccurl_digest_transaction(buf),stderr);
 	return 0;
 }

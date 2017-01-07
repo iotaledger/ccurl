@@ -1,6 +1,7 @@
 project (ccurl-cli)
-
-#file(GLOB SRC ccurl.c )
+if(WIN32)
+    set(ws2_LIBRARY_PATH Ws2_32)
+endif()
 set (CLI_SOURCES ccurl.c)
 set (DIGEST_SOURCE ccurl-digest.c)
 
@@ -31,8 +32,8 @@ set_target_properties (${CLI_NAME} PROPERTIES
 	)
 endif()
 #target_link_libraries(${CLI_NAME} ${OPENCL_LIBRARIES} )
-target_link_libraries(${CLI_NAME} ${LIBRARY_NAME}static ${ws2_32_LIBRARY_PATH})
-target_link_libraries(${DIGEST_NAME} ${LIBRARY_NAME}static ${ws2_32_LIBRARY_PATH})
+target_link_libraries(${CLI_NAME} ${ws2_LIBRARY_PATH} ${LIBRARY_NAME}static)
+target_link_libraries(${DIGEST_NAME} ${ws2_LIBRARY_PATH} ${LIBRARY_NAME}static)
 
 install(TARGETS ${DIGEST_NAME} 
 	RUNTIME DESTINATION bin)

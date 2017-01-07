@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifndef DEBUG
+#define DEBUG
+#endif
+
 EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	init_converter();
 	char *buf = malloc(sizeof(char)*TRYTE_LENGTH);
@@ -18,10 +22,19 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	PearlDiver pearl_diver;
 	PearCLDiver pdcl;
 	if(init_pearcl(&pdcl) == 0) {
+#ifdef DEBUG
+		fprintf(stderr, "OpenCL Hashing...");
+#endif
 		if(pearcl_search(&pdcl, trits, TRANSACTION_LENGTH, minWeightMagnitude)) {
+#ifdef DEBUG
+			fprintf(stderr, "Thread Hashing Fallback...");
+#endif
 			pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
 		}
 	} else {
+#ifdef DEBUG
+		fprintf(stderr, "Thread Hashing...");
+#endif
 		pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
 	}
 
@@ -42,5 +55,6 @@ EXPORT char *ccurl_digest_transaction(char *trytes) {
 	absorb(&curl, input, 0, length*3);
 	squeeze(&curl, digest, 0, HASH_LENGTH);
 	hash = trytes_from_trits(digest, 0, HASH_LENGTH);
+	hash[HASH_LENGTH] = 0;
 	return hash;
 }

@@ -1,19 +1,18 @@
 cmake_minimum_required (VERSION 3.6)
 enable_language (C)
-find_package (OpenCL)
-if (WIN32)
-    find_library (OPENCL_LIBRARIES OpenCL)
-    find_library(ws2_32_LIBRARY_PATH Ws2_32)
-else()
-    find_library (OPENCL_LIBRARIES OpenCL)
+#find_package (OpenCL)
+if (NOT WIN32)
     find_package (Threads)
 endif()
 project (ccurl)
 
 set(CMAKE_INSTALL_PREFIX "/usr")
 
-
 set (LIBRARY_NAME ccurl)
+#set (OPENCL_LIBRARIES ${CMAKE_SOURCE_DIR}/deps/libopencl-stub/build/lib/libOpenCL.a)
+set (CL_LIBRARY_NAME OpenCL)
+set (OPENCL_LIBRARIES ${CL_LIBRARY_NAME})
+add_subdirectory (deps/libopencl-stub)
 
 #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall -g -O0")
 if (WIN32)
@@ -46,10 +45,17 @@ ENDFOREACH()
 file(GLOB SRC src/lib/*.c src/lib/claccess/*.c src/lib/util/*.c)
 set (SOURCES ${SRC})
 
+include_directories (${CMAKE_SOURCE_DIR}/deps/libopencl-stub/include)
 add_library (${LIBRARY_NAME} SHARED ${SOURCES} ${COMPILED_RESOURCES})
 add_library (${LIBRARY_NAME}static STATIC ${SOURCES} ${COMPILED_RESOURCES})
-target_link_libraries(${LIBRARY_NAME} ${OPENCL_LIBRARIES} ${ws2_32_LIBRARY_PATH})
-target_link_libraries(${LIBRARY_NAME}static ${OPENCL_LIBRARIES} ${ws2_32_LIBRARY_PATH})
+if (WIN32)
+target_link_libraries(${LIBRARY_NAME} ${OPENCL_LIBRARIES} )
+target_link_libraries(${LIBRARY_NAME}static ${OPENCL_LIBRARIES})
+else()
+target_link_libraries(${LIBRARY_NAME} dl ${OPENCL_LIBRARIES})
+target_link_libraries(${LIBRARY_NAME}static dl ${OPENCL_LIBRARIES})
+endif()
+
 
 if (WIN32)
     set_target_properties (${LIBRARY_NAME} PROPERTIES 
