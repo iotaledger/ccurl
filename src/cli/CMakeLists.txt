@@ -1,5 +1,7 @@
 project (ccurl-cli)
-
+if(WIN32)
+find_library(ws2_32_LIBRARY_PATH Ws2_32)
+endif()
 #file(GLOB SRC ccurl.c )
 set (CLI_SOURCES ccurl.c)
 set (DIGEST_SOURCE ccurl-digest.c)
