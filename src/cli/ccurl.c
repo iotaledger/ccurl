@@ -38,19 +38,18 @@ int get_stdin(char *str, int len) {
 	timeout.tv_usec = 0;
 
 	if (select(1, &readfds, NULL, NULL, &timeout)) {
-		//puts("Input:");
 		while ((chr = getchar()) != EOF) {
 			if (i > len) return -1;
 			str[i++] = chr;
 		}
 	}
 	readfds = savefds;
-	//str[i] = 0;
+	str[i] = 0;
 	return i;
 }
 
 int main(int argc, char *argv[]) {
-	char buf[TRYTE_LENGTH];// *output, *hash;
+	char buf[TRYTE_LENGTH];
 	long minWeightMagnitude;
 
 	if (argc < 2) {
@@ -77,12 +76,6 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, HINTS, TRYTE_LENGTH);
 		return 1;
 	}
-	fprintf(stdout, "%s", ccurl_pow(buf, minWeightMagnitude));
-	//fputs(ccurl_pow(buf, minWeightMagnitude),stdout);
-	/*
-	output = ccurl_pow(buf, minWeightMagnitude);
-	fputs(ccurl_digest_transaction(output),stderr);
-	*/
-	//fprintf(stdout, "%s", ccurl_pow(buf, minWeightMagnitude));
+	fputs(ccurl_pow(buf, minWeightMagnitude), stdout);
 	return 0;
 }
