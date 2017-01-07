@@ -230,11 +230,12 @@ void *find_nonce(void *data) {
 			my_thread->min_weight_magnitude)) == 0)
 			continue;
 
+		nonce_output = nonce_probe;
 #ifdef _WIN32
-		_BitScanForward64(&nonce_output, nonce_probe);
+		//_BitScanForward64(&nonce_output, nonce_probe);
 		EnterCriticalSection(&my_thread->ctx->new_thread_search);
 #else
-		nonce_output = 1 << __builtin_ctzll(nonce_probe);
+		//nonce_output = 1 << __builtin_ctzll(nonce_probe);
 		pthread_mutex_lock(&my_thread->ctx->new_thread_search);
 #endif
 		if (ctx->finished) {
