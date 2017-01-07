@@ -8,12 +8,15 @@ else()
     #find_library (OPENCL_LIBRARIES OpenCL)
     find_package (Threads)
 endif()
-set (OPENCL_LIBRARIES ${CMAKE_SOURCE_DIR}/deps/libopencl-stub/libOpenCL.a)
 project (ccurl)
 
 set(CMAKE_INSTALL_PREFIX "/usr")
 
 set (LIBRARY_NAME ccurl)
+#set (OPENCL_LIBRARIES ${CMAKE_SOURCE_DIR}/deps/libopencl-stub/build/lib/libOpenCL.a)
+set (CL_LIBRARY_NAME OpenCL)
+set (OPENCL_LIBRARIES ${CL_LIBRARY_NAME})
+add_subdirectory (deps/libopencl-stub)
 
 #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall -g -O0")
 if (WIN32)
