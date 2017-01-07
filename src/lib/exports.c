@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 #ifndef DEBUG
-#define DEBUG
+//#define DEBUG
 #endif
 
 EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
