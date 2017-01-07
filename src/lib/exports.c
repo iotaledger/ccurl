@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 #ifndef DEBUG
-#define DEBUG
+//#define DEBUG
 #endif
 
 EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
@@ -55,5 +55,6 @@ EXPORT char *ccurl_digest_transaction(char *trytes) {
 	absorb(&curl, input, 0, length*3);
 	squeeze(&curl, digest, 0, HASH_LENGTH);
 	hash = trytes_from_trits(digest, 0, HASH_LENGTH);
+	hash[HASH_LENGTH] = 0;
 	return hash;
 }
