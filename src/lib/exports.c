@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#ifndef DEBUG
+//#define DEBUG
+#endif
+
 EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	init_converter();
 	char *buf = malloc(sizeof(char)*TRYTE_LENGTH);
@@ -23,7 +27,7 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 #endif
 		if(pearcl_search(&pdcl, trits, TRANSACTION_LENGTH, minWeightMagnitude)) {
 #ifdef DEBUG
-			fprintf(stderr, "Thread Hashing 2...");
+			fprintf(stderr, "Thread Hashing Fallback...");
 #endif
 			pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
 		}

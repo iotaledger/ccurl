@@ -98,15 +98,8 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	}
 	/* Create command queue */
 	for(i=0; i< ctx->num_devices; i++) {
-#ifndef CL_VERSION_2_0
-		/* For OpenCL version < 2.0 */
 		ctx->clcmdq[i] = clCreateCommandQueue(ctx->clctx[i], devices[i], 0, 
 				&errno);
-#else
-		/* For OpenCL version >= 2.0 */
-		ctx->clcmdq[i] = clCreateCommandQueueWithProperties(ctx->clctx[i], 
-				devices[i], 0, &errno);
-#endif
 		if(errno != CL_SUCCESS) {
 			fprintf(stderr, "Failed to execute clCreateCommandQueueWithProperties.\n");
 			return 1;

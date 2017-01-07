@@ -1,11 +1,14 @@
 #ifndef CLCONTEXT_H
 #define CLCONTEXT_H
 
+/*
 #ifdef __APPLE__
 #include <OpenCL/opencl.h>
 #else
 #include <CL/cl.h>
 #endif
+*/
+#include "libopencl.h"
 
 #define CLCONTEXT_MAX_DEVICES (16)
 #define MAX_PLATFORMS (8)
