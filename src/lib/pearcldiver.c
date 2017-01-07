@@ -97,8 +97,10 @@ void *pearcl_find(void *data) {
 	if(CL_SUCCESS != 
 				clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.clkernel[thread->index][1], 1, NULL,
-			&global_work_size, &local_work_size, 0, NULL, &ev1))
+			&global_work_size, &local_work_size, 0, NULL, &ev1)) {
 			fprintf(stderr, "E: running search kernel failed.\n");
+			return 0;
+	}
 	if(CL_SUCCESS != 
 			clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.buffers[thread->index][6], CL_TRUE, 0,
