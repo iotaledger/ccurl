@@ -4,6 +4,8 @@ enable_language (C)
 if (NOT WIN32)
     find_package (Threads)
 endif()
+set(CMAKE_USER_MAKE_RULES_OVERRIDE
+   ${CMAKE_CURRENT_SOURCE_DIR}/c_flag_overrides.cmake)
 project (ccurl)
 
 set(CMAKE_INSTALL_PREFIX "/usr")
