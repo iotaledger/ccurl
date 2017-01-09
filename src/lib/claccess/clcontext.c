@@ -2,7 +2,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#define _CL_ALL_
+//#define _CL_ALL_
+#ifndef DEBUG
+//#define DEBUG
+#endif
 
 static void CL_CALLBACK pfn_notify(
 		const char *errinfo, 
@@ -38,13 +41,21 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	cl_platform_id *platforms;
 	cl_device_id devices[CLCONTEXT_MAX_DEVICES];
 
+#ifdef DEBUG
+	fprintf(stderr, "Getting platforms... \n");
+#endif
 	if(clGetPlatformIDs(0, NULL, &num_platforms) != CL_SUCCESS) {
-		//fprintf(stderr, "Cannot get the number of OpenCL platforms available.\n");
+#ifdef DEBUG
+		fprintf(stderr, "Cannot get the number of OpenCL platforms available.\n");
+#endif
 		return 1;
 	}
 	//cl_platform_id platforms[num_platforms];
 	platforms = malloc(num_platforms * sizeof(cl_platform_id));
 	clGetPlatformIDs(num_platforms, platforms, NULL);
+#ifdef DEBUG
+	fprintf(stderr, "Getting devices... \n");
+#endif
 	for(i=0; i< num_platforms; i++) {
 		cl_uint pf_num_devices;
 #ifdef _CL_ALL_
@@ -79,7 +90,9 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 			pfn_notify, 
 				NULL, &errno);
 		if(errno != CL_SUCCESS) {
+#ifdef DEBUG
 			fprintf(stderr, "Failed to execute clCreateContext, %d\n", errno);
+#endif
 			return 1;
 		}
 	}
@@ -87,12 +100,17 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	for(i=0; i< ctx->num_devices; i++) {
 		if(CL_SUCCESS != clGetDeviceInfo(devices[i], CL_DEVICE_MAX_COMPUTE_UNITS,
 					sizeof(cl_uint), &(ctx->num_cores[i]), NULL)) {
+#ifdef DEBUG
 				fprintf(stderr, "Failed to execute clGetDeviceInfo for %zu", i);
+#endif
 		}
 
 		if( CL_SUCCESS != clGetDeviceInfo(devices[i], CL_DEVICE_MAX_MEM_ALLOC_SIZE,
-					sizeof(cl_ulong), &(ctx->max_memory[i]), NULL))
+					sizeof(cl_ulong), &(ctx->max_memory[i]), NULL)) {
+#ifdef DEBUG
 				fprintf(stderr, "Failed to execute clGetDeviceInfo for %zu", i);
+#endif
+		}
 
 		if(clGetDeviceInfo(devices[i], 
 					 CL_DEVICE_MAX_WORK_GROUP_SIZE,// wrong CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
@@ -106,7 +124,9 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		ctx->clcmdq[i] = clCreateCommandQueue(ctx->clctx[i], devices[i], 0, 
 				&errno);
 		if(errno != CL_SUCCESS) {
+#ifdef DEBUG
 			fprintf(stderr, "Failed to execute clCreateCommandQueue.\n");
+#endif
 			return 1;
 		}
 	}
@@ -119,7 +139,9 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		ctx->programs[i] = clCreateProgramWithSource(ctx->clctx[i], 
 				ctx->kernel.num_src, (const char**)src, size, &errno);
 		if(CL_SUCCESS != errno) {
+#ifdef DEBUG
 			fprintf(stderr, "Failed to execute clCreateProgramWithSource\n");
+#endif
 			return 1;
 		}
 	}
@@ -134,7 +156,9 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		//fputs(build_log, stderr);
 		free(build_log);
 		if(CL_SUCCESS != errno) {
+#ifdef DEBUG
 			fprintf(stderr, "Failed to execute clBuildProgram\n");
+#endif
 			return 1;
 		}
 	}
@@ -178,14 +202,18 @@ int kernel_init_buffers (CLContext *ctx) {
 			}
 			maxmemsize += memsize;
 			if(maxmemsize >= ctx->max_memory[i]) {
-				//fprintf(stderr, " You too much has memories! \n");
+#ifdef DEBUG
+				fprintf(stderr, "E: max memory passed! \n");
+#endif
 				return 1;
 			}
 
 			ctx->buffers[i][j] = clCreateBuffer(ctx->clctx[i], 
 					ctx->kernel.buffer[j].flags, memsize, NULL, &errno);
 			if(CL_SUCCESS != errno) { 
+#ifdef DEBUG
 				fprintf(stderr, "Failed to execute clCreateBuffer for %d:%d",i, j);
+#endif
 				return 1;
 			}
 			for(k=0;k< ctx->kernel.num_kernels;k++) {

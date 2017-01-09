@@ -12,15 +12,15 @@
 EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	init_converter();
 	char *buf = malloc(sizeof(char)*TRYTE_LENGTH);
-	/*
-	int len = strlen(trytes);
-	if (len != TRYTE_LENGTH)
-		return 0;
-		*/
 	trit_t *trits = trits_from_trytes(trytes, TRYTE_LENGTH);
 
+#ifdef DEBUG
+	fprintf(stderr, "Welcome to CCURL, home of the ccurl. can I take your vector?\n");
+#endif
 	PearlDiver pearl_diver;
 	PearCLDiver pdcl;
+	memset(&pdcl, 0, sizeof(PearCLDiver));
+	memset(&pearl_diver, 0, sizeof(PearlDiver));
 	if(init_pearcl(&pdcl) == 0) {
 #ifdef DEBUG
 		fprintf(stderr, "OpenCL Hashing...");

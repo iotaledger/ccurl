@@ -10,8 +10,8 @@ if (process.argv.length < 3) {
   process.exit()
 }
 
-var trytes = process.argv[2];
-var mwm = parseInt(process.argv[3]);
+var mwm = parseInt(process.argv[2]);
+var trytes = process.argv[3];
 
 /*
 
