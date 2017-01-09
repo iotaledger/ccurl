@@ -39,7 +39,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	cl_int errno;
 	ctx->num_devices = 0;
 	cl_platform_id *platforms;
-	cl_device_id devices[CLCONTEXT_MAX_DEVICES];
+	//cl_device_id devices[CLCONTEXT_MAX_DEVICES];
 
 #ifdef DEBUG
 	fprintf(stderr, "Getting platforms... \n");
@@ -64,7 +64,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		if(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_GPU, 
 #endif
 					CLCONTEXT_MAX_DEVICES-ctx->num_devices,
-					&devices[ctx->num_devices], &pf_num_devices) != CL_SUCCESS) {
+					&(ctx->device[ctx->num_devices]), &pf_num_devices) != CL_SUCCESS) {
 			//fprintf(stderr, "W: Failed to get Opencl Device IDs for platform %zu.\n", i);
 			continue;
 		}
@@ -86,7 +86,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	/* Create OpenCL context. */
 	for(i=0; i< ctx->num_devices; i++) {
 		ctx->clctx[i] = (cl_context)clCreateContext(NULL, 1,
-			&(devices[i]),
+			&(ctx->device[i]),
 			pfn_notify, 
 				NULL, &errno);
 		if(errno != CL_SUCCESS) {
@@ -98,21 +98,21 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	}
 	/* Get Device info */
 	for(i=0; i< ctx->num_devices; i++) {
-		if(CL_SUCCESS != clGetDeviceInfo(devices[i], CL_DEVICE_MAX_COMPUTE_UNITS,
+		if(CL_SUCCESS != clGetDeviceInfo(ctx->device[i], CL_DEVICE_MAX_COMPUTE_UNITS,
 					sizeof(cl_uint), &(ctx->num_cores[i]), NULL)) {
 #ifdef DEBUG
 				fprintf(stderr, "Failed to execute clGetDeviceInfo for %zu", i);
 #endif
 		}
 
-		if( CL_SUCCESS != clGetDeviceInfo(devices[i], CL_DEVICE_MAX_MEM_ALLOC_SIZE,
+		if( CL_SUCCESS != clGetDeviceInfo(ctx->device[i], CL_DEVICE_MAX_MEM_ALLOC_SIZE,
 					sizeof(cl_ulong), &(ctx->max_memory[i]), NULL)) {
 #ifdef DEBUG
 				fprintf(stderr, "Failed to execute clGetDeviceInfo for %zu", i);
 #endif
 		}
 
-		if(clGetDeviceInfo(devices[i], 
+		if(clGetDeviceInfo(ctx->device[i], 
 					 CL_DEVICE_MAX_WORK_GROUP_SIZE,// wrong CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
 					sizeof(size_t), &(ctx->num_multiple[i]), NULL) 
 					!= CL_SUCCESS) {
@@ -121,7 +121,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	}
 	/* Create command queue */
 	for(i=0; i< ctx->num_devices; i++) {
-		ctx->clcmdq[i] = clCreateCommandQueue(ctx->clctx[i], devices[i], 0, 
+		ctx->clcmdq[i] = clCreateCommandQueue(ctx->clctx[i], ctx->device[i], 0, 
 				&errno);
 		if(errno != CL_SUCCESS) {
 #ifdef DEBUG
@@ -148,10 +148,10 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 
 
 	for(i=0; i< ctx->num_devices; i++) {
-		errno = clBuildProgram(ctx->programs[i], 1, &(devices[i]), "-Werror", bfn_notify, NULL);
+		errno = clBuildProgram(ctx->programs[i], 1, &(ctx->device[i]), "-Werror", bfn_notify, NULL);
 		char *build_log = malloc(0xFFFF);
 		size_t log_size;
-		clGetProgramBuildInfo(ctx->programs[i], devices[i], 
+		clGetProgramBuildInfo(ctx->programs[i], ctx->device[i], 
 				CL_PROGRAM_BUILD_LOG, 0xFFFF, build_log, &log_size);
 		//fputs(build_log, stderr);
 		free(build_log);
@@ -276,6 +276,7 @@ void finalize_cl(CLContext *ctx) {
 			}
 		}
 		clReleaseCommandQueue(ctx->clcmdq[i]);
+		clReleaseDevice(ctx->device[i]);
 		clReleaseContext(ctx->clctx[i]);
 	}
 	stubOpenclReset();
