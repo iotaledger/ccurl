@@ -5,11 +5,14 @@ C port of the Curl library
 
 * To Compile
 
-    CMake and OpenCL are build dependencies. If you are testing, you must also
+    CMake is a build dependency. If you are testing, you must also
     install CUnit (BCUnit).
 
-`mkdir build && cd build && cmake .. && cd .. && make -C build`
+`mkdir build && cd build && cmake .. && cmake --build . &&  cd ..`
 
-Include the header files found in `src/`.
+### Note for Windows
 
-In order to run automated tests, you must have BCUnit installed.
+You may build using mingw or cygwin, but if you build with Visual C++, it is
+highly recommended that you also install the 
+[LLVM compiler](http://releases.llvm.org/download.html). Instead of the `cmake ..`
+statement above, I would recommend the following: `cmake -A x64 -T LLVM-vs2014 ..`
