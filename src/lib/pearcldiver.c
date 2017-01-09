@@ -51,7 +51,7 @@ void *pearcl_find(void *data) {
 		num_groups;
 	char found = 0;
 	cl_event ev;
-	cl_int errno = 0;
+	cl_int errno;
 	PDCLThread *thread;
 	PearCLDiver *pdcl;
 	thread = (PDCLThread *)data;
