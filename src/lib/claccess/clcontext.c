@@ -250,4 +250,5 @@ void finalize_cl(CLContext *ctx) {
 		clReleaseCommandQueue(ctx->clcmdq[i]);
 		clReleaseContext(ctx->clctx[i]);
 	}
+	stubOpenclReset();
 }
