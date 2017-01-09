@@ -4,10 +4,7 @@ enable_language (C)
 if (NOT WIN32)
     find_package (Threads)
 endif()
-set(CMAKE_USER_MAKE_RULES_OVERRIDE
-   ${CMAKE_CURRENT_SOURCE_DIR}/c_flag_overrides.cmake)
-set(CMAKE_USER_MAKE_RULES_OVERRIDE_CXX
-   ${CMAKE_CURRENT_SOURCE_DIR}/cxx_flag_overrides.cmake)
+include(InstallRequiredSystemLibraries)
 project (ccurl)
 
 set(CMAKE_INSTALL_PREFIX "/usr")
@@ -81,16 +78,26 @@ else()
         )
 endif()
 
-install(TARGETS ${LIBRARY_NAME}
+install(TARGETS ${LIBRARY_NAME} ${LIBRARY_NAME}static
 	LIBRARY DESTINATION lib
 	ARCHIVE DESTINATION lib
 	RUNTIME DESTINATION bin)
 
 # Install library headers
-file(GLOB HEADERS src/lib/*.h)
-install(FILES ${HEADERS} DESTINATION include)
+install(FILES ${CMAKE_SOURCE_DIR}/src/lib/ccurl.h DESTINATION include/ccurl)
 
 ### TESTING
 #enable_testing ()
 #add_subdirectory (test)
 add_subdirectory (src/cli)
+
+set(CPACK_PACKAGE_NAME "CCurl")
+set(CPACK_PACKAGE_VENDOR "IOTA Foundation")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "CCurl - IOTA POW Accelerator")
+set(CPACK_PACKAGE_VERSION "0.1.0")
+set(CPACK_PACKAGE_VERSION_MAJOR "0")
+set(CPACK_PACKAGE_VERSION_MINOR "1")
+set(CPACK_PACKAGE_VERSION_PATCH "0")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "CCurl")
+set(CPACK_PACKAGE_CONTACT "Paul Handy (iota@pauldhandy.com)")
+include(CPack)

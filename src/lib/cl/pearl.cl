@@ -142,14 +142,12 @@ void setup_ids(
 	__private size_t l_rem;
 	*id = get_local_id(0);
 	*l_size = get_local_size(0);
-	//*gr_id = get_global_id(0)/HASH_LENGTH;
 	*gr_id = get_global_id(0)/ *l_size;
 	*gid = *gr_id*STATE_LENGTH;
 	l_rem = STATE_LENGTH % *l_size; 
 	*n_trits = STATE_LENGTH/ *l_size;
 	*n_trits += l_rem == 0? 0: 1;
 	*n_trits -= (*n_trits) * (*id) < STATE_LENGTH ? 0 : 1;
-	//*id *= *n_trits;
 }
 
 __kernel void init (
@@ -183,7 +181,6 @@ __kernel void init (
 			increment(&(mid_low[gid]), &(mid_high[gid]), HASH_LENGTH / 3, (HASH_LENGTH / 3) * 2);
 		}
 	}
-	return;
 }
 
 __kernel void search (

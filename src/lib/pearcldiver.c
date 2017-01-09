@@ -51,6 +51,7 @@ void *pearcl_find(void *data) {
 		num_groups;
 	char found = 0;
 	cl_event ev;
+	cl_int errno = 0;
 	PDCLThread *thread;
 	PearCLDiver *pdcl;
 	thread = (PDCLThread *)data;
@@ -83,10 +84,12 @@ void *pearcl_find(void *data) {
 		fprintf(stderr, "E: failed to write min_weight_magnitude");
 
 	if(CL_SUCCESS != 
-		clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
+		(errno = clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.clkernel[thread->index][0], 1, &global_offset,
-			&global_work_size, &local_work_size, 0, NULL, &ev))
-		fprintf(stderr, "E: running init kernel failed.\n");
+			&global_work_size, &local_work_size, 0, NULL, &ev))) {
+		fprintf(stderr, "E: running init kernel failed with error %d.\n", errno);
+		return 0;
+	}
 	if(CL_SUCCESS != 
 		clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.buffers[thread->index][6], CL_TRUE, 0, sizeof(char),

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define _CL_ALL_
+#define _CL_ALL_
 
 static void CL_CALLBACK pfn_notify(
 		const char *errinfo, 
@@ -10,8 +10,12 @@ static void CL_CALLBACK pfn_notify(
 		size_t cb,
 		void *user_data
 		){
-	fprintf(stderr, "W: ocl_pfn_notify:\nW: %s", errinfo);
+	fprintf(stderr, "W: ocl_pfn_notify error: %s\n", errinfo);
 }
+static void CL_CALLBACK bfn_notify(cl_program prog, void *user_data) {
+	//fprintf(stderr, "W: build error: \n");
+}
+
 /*
 int check_clerror(cl_int err, char *comment, ...) {
 	if(err == CL_SUCCESS) {
@@ -76,6 +80,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 				NULL, &errno);
 		if(errno != CL_SUCCESS) {
 			fprintf(stderr, "Failed to execute clCreateContext, %d\n", errno);
+			return 1;
 		}
 	}
 	/* Get Device info */
@@ -101,7 +106,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		ctx->clcmdq[i] = clCreateCommandQueue(ctx->clctx[i], devices[i], 0, 
 				&errno);
 		if(errno != CL_SUCCESS) {
-			fprintf(stderr, "Failed to execute clCreateCommandQueueWithProperties.\n");
+			fprintf(stderr, "Failed to execute clCreateCommandQueue.\n");
 			return 1;
 		}
 	}
@@ -121,11 +126,12 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 
 
 	for(i=0; i< ctx->num_devices; i++) {
-		errno = clBuildProgram(ctx->programs[i], 0, NULL, NULL, NULL, NULL);
+		errno = clBuildProgram(ctx->programs[i], 1, &(devices[i]), "-Werror", bfn_notify, NULL);
 		char *build_log = malloc(0xFFFF);
 		size_t log_size;
 		clGetProgramBuildInfo(ctx->programs[i], devices[i], 
 				CL_PROGRAM_BUILD_LOG, 0xFFFF, build_log, &log_size);
+		//fputs(build_log, stderr);
 		free(build_log);
 		if(CL_SUCCESS != errno) {
 			fprintf(stderr, "Failed to execute clBuildProgram\n");
