@@ -32,7 +32,7 @@ set_target_properties (${CLI_NAME} PROPERTIES
 	)
 endif()
 #target_link_libraries(${CLI_NAME} ${OPENCL_LIBRARIES} )
-target_link_libraries(${CLI_NAME} ${ws2_LIBRARY_PATH} ${LIBRARY_NAME}static)
+target_link_libraries(${CLI_NAME} ${ws2_LIBRARY_PATH} ${LIBRARY_NAME})
 target_link_libraries(${DIGEST_NAME} ${ws2_LIBRARY_PATH} ${LIBRARY_NAME}static)
 
 install(TARGETS ${DIGEST_NAME} 
