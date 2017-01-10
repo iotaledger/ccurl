@@ -68,8 +68,7 @@ bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, cons
 		GetSystemInfo(&sysinfo);
 		numberOfThreads = sysinfo.dwNumberOfProcessors;
 #else
-		//numberOfThreads = sysconf(_SC_NPROCESSORS_ONLN) - 1;
-		numberOfThreads = sysconf(_SC_NPROCESSORS_ONLN);
+		numberOfThreads = sysconf(_SC_NPROCESSORS_ONLN) - 1;
 #endif
 		if (numberOfThreads < 1)
 			numberOfThreads = 1;
