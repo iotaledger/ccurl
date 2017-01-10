@@ -15,14 +15,21 @@ int cl_available = 0;
 
 int ccurl_pow_init() {
 	if(!initialized) {
+		size_t lc = pdcl.loop_count;
 		memset(&pdcl, 0, sizeof(PearCLDiver));
 		memset(&pearl_diver, 0, sizeof(PearlDiver));
+		pdcl.loop_count  = lc;
 		cl_available = init_pearcl(&pdcl);
 		initialized = 1;
 	}
 	return cl_available;
 }
-void ccurl_pow_finalize() {
+EXPORT void ccurl_pow_set_loop_count(size_t c) {
+	if(c > 0) 
+		pdcl.loop_count = c;
+}
+
+EXPORT void ccurl_pow_finalize() {
 	finalize_cl(&pdcl.cl);
 }
 
@@ -35,8 +42,11 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	fprintf(stderr, "Welcome to CCURL, home of the ccurl. can I take your vector?\n");
 #endif
 	if(ccurl_pow_init() == 0) {
+		if(pdcl.loop_count < 1) {
+			ccurl_pow_set_loop_count(32);
+		}
 #ifdef DEBUG
-		fprintf(stderr, "OpenCL Hashing...");
+		fprintf(stderr, "OpenCL Hashing with %lu loops...", pdcl.loop_count);
 #endif
 		if(pearcl_search(&pdcl, trits, TRANSACTION_LENGTH, minWeightMagnitude)) {
 #ifdef DEBUG

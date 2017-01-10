@@ -4,6 +4,7 @@
 #include "util/converter.h"
 
 EXPORT void ccurl_pow_finalize();
+EXPORT void ccurl_pow_set_loop_count(size_t c);
 EXPORT char *ccurl_pow(char *trytes, int min_weight_magnitude);
 EXPORT char *ccurl_digest_transaction(char *trytes);
 

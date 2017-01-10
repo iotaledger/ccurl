@@ -86,6 +86,14 @@ void *pearcl_find(void *data) {
 		fprintf(stderr, "E: failed to write min_weight_magnitude");
 		return 0;
 	}
+	if(CL_SUCCESS != 
+		clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
+			pdcl->cl.buffers[thread->index][8], CL_TRUE, 0,
+			pdcl->cl.kernel.buffer[8].size, &(pdcl->loop_count), 0,
+			NULL, NULL)) {
+		fprintf(stderr, "E: failed to write min_weight_magnitude");
+		return 0;
+	}
 
 	if(CL_SUCCESS != 
 		(errno = clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
@@ -160,7 +168,7 @@ bool pearcl_search(
 		return Invalid_min_weight_magnitude;
 	}
 
-	pdcl->cl.kernel.num_buffers = 8;
+	pdcl->cl.kernel.num_buffers = 9;
 	pdcl->cl.kernel.buffer[0] = (BufferInfo) { sizeof(trit_t)*HASH_LENGTH, CL_MEM_WRITE_ONLY };  // trit_hash //
 	pdcl->cl.kernel.buffer[1] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
 	pdcl->cl.kernel.buffer[2] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
@@ -169,6 +177,7 @@ bool pearcl_search(
 	pdcl->cl.kernel.buffer[5] = (BufferInfo) { sizeof(size_t), CL_MEM_READ_ONLY };                		// minweightmagnitude //
 	pdcl->cl.kernel.buffer[6] = (BufferInfo) { sizeof(char), CL_MEM_READ_WRITE };                 		// found //
 	pdcl->cl.kernel.buffer[7] = (BufferInfo) { sizeof(trit_t), CL_MEM_READ_WRITE, 2 };           // nonce_probe //
+	pdcl->cl.kernel.buffer[8] = (BufferInfo) { sizeof(size_t), CL_MEM_READ_ONLY};           // loop_length //
 
 	if (kernel_init_buffers(&(pdcl->cl)) != 0) {
 		//fprintf(stderr, "Could not init kernel buffers. \n");

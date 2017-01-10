@@ -49,7 +49,7 @@ int get_stdin(char *str, int len) {
 }
 
 int main(int argc, char *argv[]) {
-	char *buf, *out;
+	char *buf, *out, *str;
 	buf = (char *)malloc(sizeof(char)*(TRYTE_LENGTH));
 	long minWeightMagnitude;
 
@@ -76,6 +76,9 @@ int main(int argc, char *argv[]) {
 	if (minWeightMagnitude == 0) {
 		fprintf(stderr, HINTS, TRYTE_LENGTH);
 		return 1;
+	}
+	if((str=getenv("CCURL_LOOP_COUNT"))) {
+		ccurl_pow_set_loop_count(atol(str));
 	}
 	out = ccurl_pow(buf, minWeightMagnitude);
 	out[TRYTE_LENGTH] = 0;

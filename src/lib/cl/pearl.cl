@@ -158,7 +158,8 @@ __kernel void init (
 		__global trit_t *state_high,
 		__constant size_t *min_weight_magnitude,
 		__global volatile char *found,
-		__global trit_t *nonce_probe
+		__global trit_t *nonce_probe,
+		__constant size_t *loop_count
 		) {
 	__private size_t i, j, id, gid, gr_id, gl_off, l_size, n_trits;
 	setup_ids(&id, &gid, &gr_id, &l_size, &n_trits);
@@ -191,12 +192,13 @@ __kernel void search (
 		__global trit_t *state_high,
 		__constant size_t *min_weight_magnitude,
 		__global volatile char *found,
-		__global trit_t *nonce_probe
+		__global trit_t *nonce_probe,
+		__constant size_t *loop_count
 		) {
 	__private size_t i, id, gid, gr_id, l_size, n_trits;
 	setup_ids(&id, &gid, &gr_id, &l_size, &n_trits);
 
-	for(i = 0; i < 32; i++) {
+	for(i = 0; i < *loop_count; i++) {
 		if(id == 0) increment(&(mid_low[gid]), &(mid_high[gid]), (HASH_LENGTH/3)*2, HASH_LENGTH);
 
 		barrier(CLK_LOCAL_MEM_FENCE);
@@ -222,7 +224,8 @@ __kernel void finalize (
 		__global trit_t *state_high,
 		__constant size_t *min_weight_magnitude,
 		__global volatile char *found,
-		__global trit_t *nonce_probe
+		__global trit_t *nonce_probe,
+		__constant size_t *loop_count
 		) {
 	__private size_t i,j, id, gid, gr_id, l_size, n_trits;
 	setup_ids(&id, &gid, &gr_id, &l_size, &n_trits);

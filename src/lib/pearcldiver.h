@@ -9,6 +9,7 @@ typedef struct {
 	CLContext cl;
 	PearlDiver pd;
 	size_t num_groups;
+	size_t loop_count;
 } PearCLDiver;
 
 int init_pearcl(PearCLDiver *pd);
