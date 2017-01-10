@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 #ifndef DEBUG
-#define DEBUG
+//#define DEBUG
 #endif
 PearlDiver pearl_diver;
 PearCLDiver pdcl;

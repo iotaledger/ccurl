@@ -12,8 +12,6 @@
 #include <sched.h>
 #endif
 
-//#define GROUP_SIZE 256
-
 #ifndef PD_NUM_SRC
 #define PD_NUM_SRC 1
 #endif /*PD_NUM_SRC*/
@@ -56,7 +54,6 @@ void *pearcl_find(void *data) {
 	PearCLDiver *pdcl;
 	thread = (PDCLThread *)data;
 	pdcl = thread->pdcl;
-	char nonce_probe_clear[pdcl->cl.kernel.buffer[7].size];
 	num_groups = (pdcl->cl.num_cores[thread->index]);// * pdcl->cl.num_multiple[thread->index];
 	local_work_size = STATE_LENGTH;
 	while (local_work_size > pdcl->cl.num_multiple[thread->index]) {
@@ -85,22 +82,6 @@ void *pearcl_find(void *data) {
 		clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.buffers[thread->index][5], CL_TRUE, 0,
 			pdcl->cl.kernel.buffer[5].size, &(thread->min_weight_magnitude), 0,
-			NULL, NULL)) {
-		fprintf(stderr, "E: failed to write min_weight_magnitude");
-		return 0;
-	}
-	if(CL_SUCCESS != 
-		clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
-			pdcl->cl.buffers[thread->index][6], CL_TRUE, 0,
-			pdcl->cl.kernel.buffer[6].size, &found, 0,
-			NULL, NULL)) {
-		fprintf(stderr, "E: failed to write min_weight_magnitude");
-		return 0;
-	}
-	if(CL_SUCCESS != 
-		clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
-			pdcl->cl.buffers[thread->index][7], CL_TRUE, 0,
-			pdcl->cl.kernel.buffer[7].size, nonce_probe_clear, 0,
 			NULL, NULL)) {
 		fprintf(stderr, "E: failed to write min_weight_magnitude");
 		return 0;
