@@ -4,7 +4,7 @@
 
 //#define _CL_ALL_
 #ifndef DEBUG
-//#define DEBUG
+#define DEBUG
 #endif
 
 static void CL_CALLBACK pfn_notify(
@@ -35,7 +35,7 @@ int check_clerror(cl_int err, char *comment, ...) {
 static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	/* List devices for each platforms.*/ 
 	size_t i;
-	cl_uint num_platforms;
+	cl_uint num_platforms = 0;
 	cl_int errno;
 	ctx->num_devices = 0;
 	cl_platform_id *platforms;
@@ -44,7 +44,8 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 #ifdef DEBUG
 	fprintf(stderr, "Getting platforms... \n");
 #endif
-	if(clGetPlatformIDs(0, NULL, &num_platforms) != CL_SUCCESS) {
+	errno = clGetPlatformIDs(0, NULL, &num_platforms);
+	if(errno != CL_SUCCESS) {
 #ifdef DEBUG
 		fprintf(stderr, "Cannot get the number of OpenCL platforms available.\n");
 #endif
@@ -85,7 +86,10 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 
 	/* Create OpenCL context. */
 	for(i=0; i< ctx->num_devices; i++) {
-		ctx->clctx[i] = (cl_context)clCreateContext(NULL, 1,
+		ctx->clctx[i] = 
+			(cl_context)
+			clCreateContext(
+					NULL, 1,
 			&(ctx->device[i]),
 			pfn_notify, 
 				NULL, &errno);
@@ -93,6 +97,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 #ifdef DEBUG
 			fprintf(stderr, "Failed to execute clCreateContext, %d\n", errno);
 #endif
+			free(platforms);
 			return 1;
 		}
 	}
@@ -127,6 +132,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 #ifdef DEBUG
 			fprintf(stderr, "Failed to execute clCreateCommandQueue.\n");
 #endif
+			free(platforms);
 			return 1;
 		}
 	}
@@ -142,12 +148,14 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 #ifdef DEBUG
 			fprintf(stderr, "Failed to execute clCreateProgramWithSource\n");
 #endif
+			free(platforms);
 			return 1;
 		}
 	}
 
 
 	for(i=0; i< ctx->num_devices; i++) {
+		//memset(&(ctx->programs[i]), 0, sizeof(cl_program));
 		errno = clBuildProgram(ctx->programs[i], 1, &(ctx->device[i]), "-Werror", bfn_notify, NULL);
 		char *build_log = malloc(0xFFFF);
 		size_t log_size;
@@ -159,6 +167,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 #ifdef DEBUG
 			fprintf(stderr, "Failed to execute clBuildProgram\n");
 #endif
+			free(platforms);
 			return 1;
 		}
 	}
@@ -174,8 +183,9 @@ static int create_kernel (CLContext *ctx,char **names) {
 		for(j=0;j< ctx->kernel.num_kernels; j++) {
 			ctx->clkernel[i][j] = clCreateKernel(ctx->programs[i], names[j], 
 					&errno);
-			if(errno != CL_SUCCESS)
+			if(errno != CL_SUCCESS) {
 				return 1;
+			}
 		}
 	}
 	return 0;

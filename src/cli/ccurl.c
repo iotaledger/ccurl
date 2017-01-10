@@ -44,12 +44,13 @@ int get_stdin(char *str, int len) {
 		}
 	}
 	readfds = savefds;
-	str[i] = 0;
+	//str[i] = 0;
 	return i;
 }
 
 int main(int argc, char *argv[]) {
-	char buf[TRYTE_LENGTH];
+	char *buf, *out;
+	buf = (char *)malloc(sizeof(char)*(TRYTE_LENGTH));
 	long minWeightMagnitude;
 
 	if (argc < 2) {
@@ -76,6 +77,11 @@ int main(int argc, char *argv[]) {
 		fprintf(stderr, HINTS, TRYTE_LENGTH);
 		return 1;
 	}
-	fputs(ccurl_pow(buf, minWeightMagnitude), stdout);
+	out = ccurl_pow(buf, minWeightMagnitude);
+	out[TRYTE_LENGTH] = 0;
+	fputs(out, stdout);
+	free(buf);
+	free(out);
+	ccurl_pow_finalize();
 	return 0;
 }

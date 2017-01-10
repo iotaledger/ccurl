@@ -102,14 +102,13 @@ void test_pearl_diver_interrupt(void)
 }
 
 void test_export_pow(void) {
-	char *hash, *lastnines, *output;
+	char *hash, *output;
 	trit_t hash_trits[HASH_LENGTH];
 	int mwm = 13;
 
-	lastnines = (char *)malloc(sizeof(char)*mwm/3);
-
-
-	output = ccurl_pow((char *)real_transaction, mwm);
+	for(int i = 1; i <=13; i++) {
+		output = ccurl_pow((char *)real_transaction, i);
+	}
 	output[TRANSACTION_LENGTH/3] = 0;
 	trit_t *outtrits = trits_from_trytes(output, TRANSACTION_LENGTH/3);
 
@@ -120,9 +119,6 @@ void test_export_pow(void) {
 	squeeze(&curl, hash_trits, 0, HASH_LENGTH);
 	hash = trytes_from_trits(hash_trits, 0, HASH_LENGTH);
 	hash[HASH_LENGTH/3] = 0;
-
-	memcpy(lastnines, hash+HASH_LENGTH/3-mwm/3, mwm/3*sizeof(char));
-	lastnines[mwm/3] = 0;
 
 	CU_ASSERT_FATAL(test_last_n_nines(hash, HASH_LENGTH/3, mwm/3));
 	free(outtrits);
