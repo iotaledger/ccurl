@@ -13,7 +13,7 @@ PearCLDiver pdcl;
 int initialized = 0;
 int cl_available = 0;
 
-int ccurl_pow_init() {
+EXPORT int ccurl_pow_init() {
 	if(!initialized) {
 		size_t lc = pdcl.loop_count;
 		memset(&pdcl, 0, sizeof(PearCLDiver));
