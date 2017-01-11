@@ -112,8 +112,8 @@ void copyTrits(trit_t const value, trit_t *const destination, const int offset, 
 char *trytes_from_trits(trit_t *const trits, const int offset, const int size) {
 
 	const int length = (size + NUMBER_OF_TRITS_IN_A_TRYTE - 1) / NUMBER_OF_TRITS_IN_A_TRYTE;
-	char *trytes = malloc(sizeof(char) * (length));
-	*trytes = '\0';
+	char *trytes = malloc(sizeof(char) * (length + 1));
+	trytes[length] = '\0';
 	for (int i = 0; i < length; i++) {
 		trit_t j = trits[offset + i * 3] + trits[offset + i * 3 + 1] * 3 + trits[offset + i * 3 + 2] * 9;
 		if (j < 0) {
