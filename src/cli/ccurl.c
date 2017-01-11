@@ -50,7 +50,7 @@ int get_stdin(char *str, int len) {
 
 int main(int argc, char *argv[]) {
 	char *buf, *out, *str;
-	buf = (char *)malloc(sizeof(char)*(TRYTE_LENGTH));
+	buf = (char *)malloc(sizeof(char)*(TRYTE_LENGTH + 1));
 	long minWeightMagnitude;
 
 	if (argc < 2) {

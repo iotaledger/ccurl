@@ -64,7 +64,7 @@ int main(int argc, char *argv[]) {
 			return 1;
 		}
 	} else {
-		buf = malloc(sizeof(char)*TRYTE_LENGTH);
+		buf = malloc(sizeof(char)*(TRYTE_LENGTH + 1));
 		in_size = get_stdin(buf, TRYTE_LENGTH);
 		if (in_size != TRYTE_LENGTH) {
 			fprintf(stderr, HINTS, TRYTE_LENGTH);
