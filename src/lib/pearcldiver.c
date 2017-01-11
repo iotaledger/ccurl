@@ -38,6 +38,33 @@ int init_pearcl(PearCLDiver *pdcl) {
 	return pd_init_cl(&(pdcl->cl), src, size, names);
 }
 
+void pearcl_write_buffers(PDCLThread *thread) {
+		PearCLDiver *pdcl = thread->pdcl;
+		CLContext *cl = &(pdcl->cl);
+		cl_command_queue *cmdq = &(cl->clcmdq[thread->index]);
+		cl_mem *mem = cl->buffers[thread->index];
+		BufferInfo *bufinfo = cl->kernel.buffer;
+		if(CL_SUCCESS != 
+				clEnqueueWriteBuffer(*cmdq, mem[1], CL_TRUE, 0, bufinfo[1].size, 
+					&(thread->states.mid_low), 0, NULL, NULL)) {
+			fprintf(stderr, "E: failed to write mid state low");
+		}
+		if(CL_SUCCESS != 
+				clEnqueueWriteBuffer(*cmdq, mem[2], CL_TRUE, 0, bufinfo[2].size, 
+					&(thread->states.mid_high), 0, NULL, NULL)) {
+			fprintf(stderr, "E: failed to write mid state low");
+		}
+		if(CL_SUCCESS != 
+				clEnqueueWriteBuffer(*cmdq, mem[5], CL_TRUE, 0, bufinfo[5].size,
+					&(thread->min_weight_magnitude), 0, NULL, NULL)) {
+			fprintf(stderr, "E: failed to write min_weight_magnitude");
+		}
+		if(CL_SUCCESS != 
+				clEnqueueWriteBuffer(*cmdq, mem[8], CL_TRUE, 0, bufinfo[8].size,
+					&(pdcl->loop_count), 0, NULL, NULL)) {
+			fprintf(stderr, "E: failed to write min_weight_magnitude");
+		}
+}
 #ifdef _WIN32
 DWORD WINAPI pearcl_find(void *data) {
 #else
@@ -48,13 +75,13 @@ DWORD WINAPI pearcl_find(void *data) {
 			   global_offset = 0,
 			   num_groups;
 		char found = 0;
-		cl_event ev;
+		cl_event ev, ev1;
 		cl_int errno;
 		PDCLThread *thread;
 		PearCLDiver *pdcl;
 		thread = (PDCLThread *)data;
 		pdcl = thread->pdcl;
-		num_groups = (pdcl->cl.num_cores[thread->index]);// * pdcl->cl.num_multiple[thread->index];
+		num_groups = (pdcl->cl.num_cores[thread->index]);
 		local_work_size = STATE_LENGTH;
 		while (local_work_size > pdcl->cl.num_multiple[thread->index]) {
 			local_work_size /= 3;
@@ -64,78 +91,51 @@ DWORD WINAPI pearcl_find(void *data) {
 		for (int i = 0; i < thread->index; i++) {
 			global_offset += pdcl->cl.num_cores[i];
 		}
-		if(CL_SUCCESS != 
-				clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
-					pdcl->cl.buffers[thread->index][1], CL_TRUE, 0,
-					sizeof(trit_t)*STATE_LENGTH, &(thread->states.mid_low), 0, NULL, NULL)) {
-			fprintf(stderr, "E: failed to write mid state low");
-			return 0;
-		}
-		if(CL_SUCCESS != 
-				clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
-					pdcl->cl.buffers[thread->index][2], CL_TRUE, 0,
-					sizeof(trit_t)*STATE_LENGTH, &(thread->states.mid_high), 0, NULL, NULL)) {
-			fprintf(stderr, "E: failed to write mid state low");
-			return 0;
-		}
-		if(CL_SUCCESS != 
-				clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
-					pdcl->cl.buffers[thread->index][5], CL_TRUE, 0,
-					pdcl->cl.kernel.buffer[5].size, &(thread->min_weight_magnitude), 0,
-					NULL, NULL)) {
-			fprintf(stderr, "E: failed to write min_weight_magnitude");
-			return 0;
-		}
-		if(CL_SUCCESS != 
-				clEnqueueWriteBuffer(pdcl->cl.clcmdq[thread->index],
-					pdcl->cl.buffers[thread->index][8], CL_TRUE, 0,
-					pdcl->cl.kernel.buffer[8].size, &(pdcl->loop_count), 0,
-					NULL, NULL)) {
-			fprintf(stderr, "E: failed to write min_weight_magnitude");
-			return 0;
+		pearcl_write_buffers(thread);
+		errno = clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
+			pdcl->cl.clkernel[thread->index][0], 1, &global_offset,
+			&global_work_size, &local_work_size, 0, NULL, &ev);
+		if(CL_SUCCESS != errno ) {
+			fprintf(stderr, "E: running init kernel failed with error %d.\n", errno);
+			clReleaseEvent(ev);
+			goto FIND_END;
 		}
 
-		if(CL_SUCCESS != 
-				(errno = clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
-												pdcl->cl.clkernel[thread->index][0], 1, &global_offset,
-												&global_work_size, &local_work_size, 0, NULL, &ev))) {
-			fprintf(stderr, "E: running init kernel failed with error %d.\n", errno);
-			return 0;
-		}
-		if(CL_SUCCESS != 
-				clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
-					pdcl->cl.buffers[thread->index][6], CL_TRUE, 0, sizeof(char),
-					&found, 1, &ev, NULL))
-			fprintf(stderr, "E: could not read init errors.\n");
+		clWaitForEvents(1, &ev);
 		clReleaseEvent(ev);
+
 		while (found == 0 && !pdcl->pd.finished) {
-			cl_event ev1;
-			if(CL_SUCCESS != 
-					clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
-						pdcl->cl.clkernel[thread->index][1], 1, NULL,
-						&global_work_size, &local_work_size, 0, NULL, &ev1)) {
-				fprintf(stderr, "E: running search kernel failed.\n");
-				return 0;
+			errno = clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
+				pdcl->cl.clkernel[thread->index][1], 1, NULL,
+				&global_work_size, &local_work_size, 0, NULL, &ev1);
+			if(errno != CL_SUCCESS) {
+				clReleaseEvent(ev1);
+				fprintf(stderr, "E: running search kernel failed. err: %d \n", errno);
+				goto FIND_END;
 			}
+			clWaitForEvents(1, &ev1);
+			clReleaseEvent(ev1);
 			if(CL_SUCCESS != 
 					clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
 						pdcl->cl.buffers[thread->index][6], CL_TRUE, 0,
-						sizeof(char), &found, 1, &ev1, NULL))
+						sizeof(char), &found, 0, NULL, NULL))
 				fprintf(stderr, "E: reading finished bool failed.\n");
-			clReleaseEvent(ev1);
 		}
+		
+FIND_END:
+		if(CL_SUCCESS != 
+				clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
+					pdcl->cl.clkernel[thread->index][2], 1, NULL,
+					&global_work_size, &local_work_size, 0, NULL, &ev))
+			fprintf(stderr, "E: running finalize kernel failed.\n");
+
 		if (found > 0) {
-			if(CL_SUCCESS != 
-					clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
-						pdcl->cl.clkernel[thread->index][2], 1, NULL,
-						&global_work_size, &local_work_size, 0, NULL, &ev))
-				fprintf(stderr, "E: running search kernel failed.\n");
 #ifdef _WIN32
 			EnterCriticalSection(&pdcl->pd.new_thread_search);
 #else
 			pthread_mutex_lock(&pdcl->pd.new_thread_search);
 #endif
-			if (pdcl->pd.nonceFound) return 0;
+			if (pdcl->pd.nonceFound) goto FIND_END;
 			pdcl->pd.nonceFound = true;
 			pdcl->pd.finished = true;
 			if(CL_SUCCESS != 
@@ -151,6 +151,9 @@ DWORD WINAPI pearcl_find(void *data) {
 #endif
 		}
 
+		clReleaseEvent(ev);
+		clFlush(pdcl->cl.clcmdq[thread->index]);
+		clFinish(pdcl->cl.clcmdq[thread->index]);
 		return 0;
 	}
 
@@ -243,12 +246,3 @@ DWORD WINAPI pearcl_find(void *data) {
 		free(pdthreads);
 		return pdcl->pd.interrupted;
 	}
-	/*
-	 *
-	 check_clerror(clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
-	 pdcl->cl.buffers[thread->index][1], CL_TRUE,
-	 0, sizeof(trit_t)*STATE_LENGTH, mid_low,
-	 0, NULL, NULL),
-	 "E: reading transaction hash failed.\n");
-	 assert(memcmp(thread->states.mid_low, mid_low, STATE_LENGTH*sizeof(trit_t)) == 0);
-	 */

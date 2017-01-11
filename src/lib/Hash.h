@@ -3,7 +3,6 @@
 
 #if defined(WIN32) || defined(_WIN32)
 #define EXPORT __declspec(dllexport)
-//#include "unistd.h"
 #else
 #define EXPORT
 #include <unistd.h>

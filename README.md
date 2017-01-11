@@ -26,3 +26,7 @@ is as follows:
 
 where <MinWeightMagnitude> is replaced with, for example, 18, and 
 <TransactionTrytes> is replaced with your 2673-length transaction.
+
+#### Tricks
+
+If using GPU acceleration, you may tune the loop length with 

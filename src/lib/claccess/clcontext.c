@@ -32,6 +32,13 @@ int check_clerror(cl_int err, char *comment, ...) {
 }
 */
 
+void free_platforms(cl_platform_id *platforms, cl_uint num_platforms) {
+	for(cl_uint i=0; i < num_platforms; i++) {
+		clUnloadPlatformCompiler(platforms[i]);
+	}
+	free(platforms);
+}
+
 static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	/* List devices for each platforms.*/ 
 	size_t i;
@@ -80,7 +87,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		ctx->num_devices += pf_num_devices;
 	}
 	if(ctx->num_devices == 0) {
-		free(platforms);
+		free_platforms(platforms, num_platforms);
 		return 1;
 	}
 
@@ -97,7 +104,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 #ifdef DEBUG
 			fprintf(stderr, "Failed to execute clCreateContext, %d\n", errno);
 #endif
-			free(platforms);
+			free_platforms(platforms, num_platforms);
 			return 1;
 		}
 	}
@@ -132,13 +139,13 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 #ifdef DEBUG
 			fprintf(stderr, "Failed to execute clCreateCommandQueue.\n");
 #endif
-			free(platforms);
+			free_platforms(platforms, num_platforms);
 			return 1;
 		}
 	}
 
 	if (ctx->kernel.num_src == 0) {
-		free(platforms);
+		free_platforms(platforms, num_platforms);
 		return 1;
 	}
 	for(i=0; i< ctx->num_devices; i++) {
@@ -148,7 +155,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 #ifdef DEBUG
 			fprintf(stderr, "Failed to execute clCreateProgramWithSource\n");
 #endif
-			free(platforms);
+			free_platforms(platforms, num_platforms);
 			return 1;
 		}
 	}
@@ -167,11 +174,10 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 #ifdef DEBUG
 			fprintf(stderr, "Failed to execute clBuildProgram\n");
 #endif
-			free(platforms);
+			free_platforms(platforms, num_platforms);
 			return 1;
 		}
 	}
-	free(platforms);
 	return 0;
 }
 
@@ -286,8 +292,8 @@ void finalize_cl(CLContext *ctx) {
 			}
 		}
 		clReleaseCommandQueue(ctx->clcmdq[i]);
-		clReleaseDevice(ctx->device[i]);
 		clReleaseContext(ctx->clctx[i]);
+		clReleaseDevice(ctx->device[i]);
 	}
 	stubOpenclReset();
 }

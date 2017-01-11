@@ -230,13 +230,13 @@ __kernel void finalize (
 	__private size_t i,j, id, gid, gr_id, l_size, n_trits;
 	setup_ids(&id, &gid, &gr_id, &l_size, &n_trits);
 
-	if(gr_id != (size_t)(*found - 1)) return;
-	if(nonce_probe[gr_id] == 0 ) return;
-	for(i = 0; i < n_trits; i++) {
-		j = id + i*l_size;
-		if(j < HASH_LENGTH) {
-			trit_hash[j] = (mid_low[gid + j] & nonce_probe[gr_id]) == 0 ? 
-				1 : (mid_high[gid + j] & nonce_probe[gr_id]) == 0 ? -1 : 0;
+	if(gr_id == (size_t)(*found - 1) && nonce_probe[gr_id] != 0) {
+		for(i = 0; i < n_trits; i++) {
+			j = id + i*l_size;
+			if(j < HASH_LENGTH) {
+				trit_hash[j] = (mid_low[gid + j] & nonce_probe[gr_id]) == 0 ? 
+					1 : (mid_high[gid + j] & nonce_probe[gr_id]) == 0 ? -1 : 0;
+			}
 		}
 	}
 }
