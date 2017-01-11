@@ -1,7 +1,12 @@
 #ifndef _CCURL_H_
 #define _CCURL_H_
 
-#include "util/converter.h"
+#if defined(WIN32) || defined(_WIN32)
+#define EXPORT __declspec(dllexport)
+#else
+#define EXPORT
+#include <unistd.h>
+#endif
 
 EXPORT int ccurl_pow_init();
 EXPORT void ccurl_pow_finalize();

@@ -1,6 +1,7 @@
 #include "../lib/ccurl.h"
 #include "../lib/Hash.h"
 #include "../lib/PearlDiver.h"
+#include "../lib/util/converter.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

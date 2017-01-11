@@ -86,7 +86,9 @@ install(TARGETS ${LIBRARY_NAME} ${LIBRARY_NAME}static
 	RUNTIME DESTINATION bin)
 
 # Install library headers
-install(FILES ${CMAKE_SOURCE_DIR}/src/lib/ccurl.h DESTINATION include/ccurl)
+FILE(GLOB HEADERS "src/lib/*.h" "src/lib/util/*.h" )
+#install(FILES ${CMAKE_SOURCE_DIR}/src/lib/ccurl.h DESTINATION include/ccurl)
+install(FILES ${HEADERS} DESTINATION include/ccurl)
 
 ### TESTING
 #enable_testing ()
