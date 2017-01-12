@@ -274,13 +274,17 @@ int pd_init_cl(
 }
 
 void destroy_cl(CLContext *ctx) {
+	size_t i;
+	for(i=0; i< ctx->num_devices; i++) {
+		clFlush(ctx->clcmdq[i]);
+		clFinish(ctx->clcmdq[i]);
+	}
 }
 
 void finalize_cl(CLContext *ctx) {
 	size_t i,j;
+	destroy_cl(ctx);
 	for(i=0; i< ctx->num_devices; i++) {
-		clFlush(ctx->clcmdq[i]);
-		clFinish(ctx->clcmdq[i]);
 		if(&(ctx->kernel) !=NULL){
 			for(j=0; j< ctx->kernel.num_kernels; j++) {
 				clReleaseKernel(ctx->clkernel[i][j]);

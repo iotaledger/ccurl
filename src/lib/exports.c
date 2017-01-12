@@ -6,7 +6,7 @@
 #include <stdio.h>
 
 #ifndef DEBUG
-//#define DEBUG
+#define DEBUG
 #endif
 PearlDiver pearl_diver;
 PearCLDiver pdcl;
@@ -30,6 +30,7 @@ EXPORT void ccurl_pow_set_loop_count(size_t c) {
 }
 
 EXPORT void ccurl_pow_finalize() {
+	initialized = 0;
 	finalize_cl(&pdcl.cl);
 }
 
@@ -48,7 +49,8 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 #ifdef DEBUG
 		fprintf(stderr, "OpenCL Hashing with %lu loops...", pdcl.loop_count);
 #endif
-		if(pearcl_search(&pdcl, trits, TRANSACTION_LENGTH, minWeightMagnitude)) {
+		pearcl_search(&pdcl, trits, TRANSACTION_LENGTH, minWeightMagnitude);
+		if(pdcl.pd.status != PD_FOUND) {
 #ifdef DEBUG
 			fprintf(stderr, "Thread Hashing Fallback...");
 #endif
@@ -64,6 +66,7 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	buf = trytes_from_trits(trits, 0, TRANSACTION_LENGTH);
 	//buf[TRYTE_LENGTH] = 0;
 	free(trits);
+	destroy_cl(&pdcl.cl);
 	return buf;
 }
 

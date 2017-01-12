@@ -1,6 +1,8 @@
 project (ccurl-cli)
-if(WIN32)
+if (WIN32 AND NOT MINGW)
     set(ws2_LIBRARY_PATH Ws2_32)
+elseif (MINGW)
+    set(ws2_LIBRARY_PATH ws2_32)
 endif()
 set (CLI_SOURCES ccurl.c)
 set (DIGEST_SOURCE ccurl-digest.c)
@@ -12,13 +14,11 @@ set (DIGEST_NAME ccurl-digest)
 #add_executable (${CLI_NAME} ${CLI_SOURCES} ${SOURCES})
 add_executable (${CLI_NAME} ${CLI_SOURCES})
 add_executable (${DIGEST_NAME} ${DIGEST_SOURCE})
-if (WIN32)
+if (WIN32 AND NOT MINGW)
 set_target_properties (${CLI_NAME} PROPERTIES 
-	LINK_FLAGS -Wl
 	BINARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin
 	)
 set_target_properties (${DIGEST_NAME} PROPERTIES 
-	LINK_FLAGS -Wl
 	BINARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}/bin
 	)
 else()

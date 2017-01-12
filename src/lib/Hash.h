@@ -1,10 +1,15 @@
 #ifndef HASH_H
 #define HASH_H
 
-#if defined(WIN32) || defined(_WIN32)
+#ifndef EXPORT
+#if defined(_WIN32)
 #define EXPORT __declspec(dllexport)
 #else
 #define EXPORT
+#endif
+#endif
+#if defined(_WIN32) && !defined(MINGW)
+#else
 #include <unistd.h>
 #endif
 
