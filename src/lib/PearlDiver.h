@@ -31,7 +31,7 @@
 #if defined(_WIN32) && !defined(__MINGW32__)
 #define pthread_mutex_init(A, B) InitializeCriticalSection(A)
 #define pthread_t HANDLE
-#define pthread_create(&A, B, C, D) A = CreateThread(B, 0, C, D)
+#define pthread_create(A, B, C, D) *A = CreateThread(B, 0, C, D, 0, NULL)
 #define sched_yield() SwitchToThread()
 #define pthread_join(A, B) WaitForSingleObject(A, INFINITE)
 #define pthread_mutex_t CRITICAL_SECTION
