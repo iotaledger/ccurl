@@ -53,7 +53,6 @@ int main(int argc, char *argv[]) {
 	buf = (char *)malloc(sizeof(char)*(TRYTE_LENGTH + 1));
 	long minWeightMagnitude;
 
-	fprintf(stderr, "Hello World!\n");
 	if (argc < 2) {
 		fprintf(stderr, HINTS, TRYTE_LENGTH);
 		return 1;
@@ -81,10 +80,7 @@ int main(int argc, char *argv[]) {
 	if((str=getenv("CCURL_LOOP_COUNT"))) {
 		ccurl_pow_set_loop_count(atol(str));
 	}
-	for(int i=0; i< 100; i++) {
-		if(i>0) free(out);
-		out = ccurl_pow(buf, minWeightMagnitude);
-	}
+	out = ccurl_pow(buf, minWeightMagnitude);
 	out[TRYTE_LENGTH] = 0;
 	fputs(out, stdout);
 	free(buf);
