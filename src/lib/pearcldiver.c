@@ -7,7 +7,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdio.h>
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 #else
 #include <sched.h>
 #endif
@@ -15,6 +15,7 @@
 #ifndef PD_NUM_SRC
 #define PD_NUM_SRC 1
 #endif /*PD_NUM_SRC*/
+
 
 typedef struct {
 	States states;
@@ -35,7 +36,21 @@ int init_pearcl(PearCLDiver *pdcl) {
 
 	pdcl->cl.kernel.num_src = PD_NUM_SRC;
 	pdcl->cl.kernel.num_kernels = 3;
-	return pd_init_cl(&(pdcl->cl), src, size, names);
+	if (pd_init_cl(&(pdcl->cl), src, size, names) != 0) {
+		return 1;
+	}
+	pdcl->cl.kernel.num_buffers = 9;
+	pdcl->cl.kernel.buffer[0] = (BufferInfo) { sizeof(trit_t)*HASH_LENGTH, CL_MEM_WRITE_ONLY };  // trit_hash //
+	pdcl->cl.kernel.buffer[1] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
+	pdcl->cl.kernel.buffer[2] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
+	pdcl->cl.kernel.buffer[3] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
+	pdcl->cl.kernel.buffer[4] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
+	pdcl->cl.kernel.buffer[5] = (BufferInfo) { sizeof(size_t), CL_MEM_READ_ONLY };                		// minweightmagnitude //
+	pdcl->cl.kernel.buffer[6] = (BufferInfo) { sizeof(char), CL_MEM_READ_WRITE };                 		// found //
+	pdcl->cl.kernel.buffer[7] = (BufferInfo) { sizeof(trit_t), CL_MEM_READ_WRITE, 2 };           // nonce_probe //
+	pdcl->cl.kernel.buffer[8] = (BufferInfo) { sizeof(size_t), CL_MEM_READ_ONLY};           // loop_length //
+
+	return kernel_init_buffers(&(pdcl->cl));
 }
 
 void pearcl_write_buffers(PDCLThread *thread) {
@@ -44,28 +59,23 @@ void pearcl_write_buffers(PDCLThread *thread) {
 		cl_command_queue *cmdq = &(cl->clcmdq[thread->index]);
 		cl_mem *mem = cl->buffers[thread->index];
 		BufferInfo *bufinfo = cl->kernel.buffer;
-		if(CL_SUCCESS != 
-				clEnqueueWriteBuffer(*cmdq, mem[1], CL_TRUE, 0, bufinfo[1].size, 
-					&(thread->states.mid_low), 0, NULL, NULL)) {
-			fprintf(stderr, "E: failed to write mid state low");
-		}
-		if(CL_SUCCESS != 
-				clEnqueueWriteBuffer(*cmdq, mem[2], CL_TRUE, 0, bufinfo[2].size, 
-					&(thread->states.mid_high), 0, NULL, NULL)) {
-			fprintf(stderr, "E: failed to write mid state low");
-		}
-		if(CL_SUCCESS != 
-				clEnqueueWriteBuffer(*cmdq, mem[5], CL_TRUE, 0, bufinfo[5].size,
-					&(thread->min_weight_magnitude), 0, NULL, NULL)) {
-			fprintf(stderr, "E: failed to write min_weight_magnitude");
-		}
-		if(CL_SUCCESS != 
-				clEnqueueWriteBuffer(*cmdq, mem[8], CL_TRUE, 0, bufinfo[8].size,
-					&(pdcl->loop_count), 0, NULL, NULL)) {
-			fprintf(stderr, "E: failed to write min_weight_magnitude");
-		}
+
+		clEnqueueWriteBuffer(*cmdq, mem[1], CL_TRUE, 0, bufinfo[1].size, 
+			&(thread->states.mid_low), 0, NULL, NULL);
+		clEnqueueWriteBuffer(*cmdq, mem[2], CL_TRUE, 0, bufinfo[2].size, 
+			&(thread->states.mid_high), 0, NULL, NULL);
+		clEnqueueWriteBuffer(*cmdq, mem[5], CL_TRUE, 0, bufinfo[5].size,
+			&(thread->min_weight_magnitude), 0, NULL, NULL);
+		clEnqueueWriteBuffer(*cmdq, mem[8], CL_TRUE, 0, bufinfo[8].size,
+			&(pdcl->loop_count), 0, NULL, NULL);
+		/*
+		fprintf(stderr, "E: failed to write mid state low");
+		fprintf(stderr, "E: failed to write mid state low");
+		fprintf(stderr, "E: failed to write min_weight_magnitude");
+		fprintf(stderr, "E: failed to write min_weight_magnitude");
+		*/
 }
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 DWORD WINAPI pearcl_find(void *data) {
 #else
 	void *pearcl_find(void *data) {
@@ -76,7 +86,6 @@ DWORD WINAPI pearcl_find(void *data) {
 			   num_groups;
 		char found = 0;
 		cl_event ev, ev1;
-		cl_int errno;
 		PDCLThread *thread;
 		PearCLDiver *pdcl;
 		thread = (PDCLThread *)data;
@@ -92,11 +101,12 @@ DWORD WINAPI pearcl_find(void *data) {
 			global_offset += pdcl->cl.num_cores[i];
 		}
 		pearcl_write_buffers(thread);
-		errno = clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
+		if(CL_SUCCESS != 
+		clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
 			pdcl->cl.clkernel[thread->index][0], 1, &global_offset,
-			&global_work_size, &local_work_size, 0, NULL, &ev);
-		if(CL_SUCCESS != errno ) {
-			fprintf(stderr, "E: running init kernel failed with error %d.\n", errno);
+			&global_work_size, &local_work_size, 0, NULL, &ev)
+				) {
+			fprintf(stderr, "E: running init kernel failed.\n" );
 			clReleaseEvent(ev);
 			goto FIND_END;
 		}
@@ -104,13 +114,14 @@ DWORD WINAPI pearcl_find(void *data) {
 		clWaitForEvents(1, &ev);
 		clReleaseEvent(ev);
 
-		while (found == 0 && !pdcl->pd.finished) {
-			errno = clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
+		while (found == 0 && pdcl->pd.status == PD_SEARCHING) {
+			if(
+			clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
 				pdcl->cl.clkernel[thread->index][1], 1, NULL,
-				&global_work_size, &local_work_size, 0, NULL, &ev1);
-			if(errno != CL_SUCCESS) {
+				&global_work_size, &local_work_size, 0, NULL, &ev1)
+					!= CL_SUCCESS) {
 				clReleaseEvent(ev1);
-				fprintf(stderr, "E: running search kernel failed. err: %d \n", errno);
+				fprintf(stderr, "E: running search kernel failed. \n");
 				goto FIND_END;
 			}
 			clWaitForEvents(1, &ev1);
@@ -130,25 +141,16 @@ FIND_END:
 			fprintf(stderr, "E: running finalize kernel failed.\n");
 
 		if (found > 0) {
-#ifdef _WIN32
-			EnterCriticalSection(&pdcl->pd.new_thread_search);
-#else
 			pthread_mutex_lock(&pdcl->pd.new_thread_search);
-#endif
-			if (pdcl->pd.nonceFound) goto FIND_END;
-			pdcl->pd.nonceFound = true;
-			pdcl->pd.finished = true;
+			if (pdcl->pd.status == PD_FOUND) goto FIND_END;
+			pdcl->pd.status = PD_FOUND;
 			if(CL_SUCCESS != 
 					clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
 						pdcl->cl.buffers[thread->index][0], CL_TRUE,
 						0, HASH_LENGTH * sizeof(trit_t), &(thread->trits[TRANSACTION_LENGTH - HASH_LENGTH]),
 						1, &ev, NULL))
 				fprintf(stderr, "E: reading transaction hash failed.\n");
-#ifdef _WIN32
-			LeaveCriticalSection(&pdcl->pd.new_thread_search);
-#else
 			pthread_mutex_unlock(&pdcl->pd.new_thread_search);
-#endif
 		}
 
 		clReleaseEvent(ev);
@@ -157,92 +159,64 @@ FIND_END:
 		return 0;
 	}
 
-	bool pearcl_search(
-			PearCLDiver *pdcl,
-			trit_t *const trits,
-			size_t length,
-			size_t min_weight_magnitude
-			) {
-		int k, thread_count;
-		int numberOfThreads = pdcl->cl.num_devices;
+void pearcl_search(
+		PearCLDiver *pdcl,
+		trit_t *const trits,
+		size_t length,
+		size_t min_weight_magnitude
+		) {
+	int k, thread_count;
+	int numberOfThreads = pdcl->cl.num_devices;
 
-		if (length != TRANSACTION_LENGTH) {
-			return Invalid_transaction_trits_length;
-		}
-		if (min_weight_magnitude > HASH_LENGTH) {
-			return Invalid_min_weight_magnitude;
-		}
-
-		pdcl->cl.kernel.num_buffers = 9;
-		pdcl->cl.kernel.buffer[0] = (BufferInfo) { sizeof(trit_t)*HASH_LENGTH, CL_MEM_WRITE_ONLY };  // trit_hash //
-		pdcl->cl.kernel.buffer[1] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
-		pdcl->cl.kernel.buffer[2] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
-		pdcl->cl.kernel.buffer[3] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
-		pdcl->cl.kernel.buffer[4] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
-		pdcl->cl.kernel.buffer[5] = (BufferInfo) { sizeof(size_t), CL_MEM_READ_ONLY };                		// minweightmagnitude //
-		pdcl->cl.kernel.buffer[6] = (BufferInfo) { sizeof(char), CL_MEM_READ_WRITE };                 		// found //
-		pdcl->cl.kernel.buffer[7] = (BufferInfo) { sizeof(trit_t), CL_MEM_READ_WRITE, 2 };           // nonce_probe //
-		pdcl->cl.kernel.buffer[8] = (BufferInfo) { sizeof(size_t), CL_MEM_READ_ONLY};           // loop_length //
-
-		if (kernel_init_buffers(&(pdcl->cl)) != 0) {
-			//fprintf(stderr, "Could not init kernel buffers. \n");
-			return true;
-		}
-
-		pdcl->pd.finished = false;
-		pdcl->pd.interrupted = false;
-		pdcl->pd.nonceFound = false;
-
-		States states;
-		pd_search_init(&states, trits);
-
-		if (numberOfThreads == 0)
-			return 1;
-
-
-#ifdef _WIN32
-		InitializeCriticalSection(&pdcl->pd.new_thread_search);
-		HANDLE *tid = malloc(sizeof(HANDLE)*numberOfThreads);
-#else
-		pthread_mutex_init(&pdcl->pd.new_thread_search, NULL);
-		if (pthread_mutex_lock(&pdcl->pd.new_thread_search) != 0) {
-			return 1;
-		}
-		pthread_mutex_unlock(&pdcl->pd.new_thread_search);
-		pthread_t *tid = malloc(numberOfThreads * sizeof(pthread_t));
-#endif
-		thread_count = numberOfThreads;
-
-		PDCLThread  *pdthreads = (PDCLThread  *)malloc(numberOfThreads * sizeof(PDCLThread));
-		while (numberOfThreads-- > 0) {
-			pdthreads[numberOfThreads] = (PDCLThread) {
-				.states = states,
-					.trits = trits,
-					.min_weight_magnitude = min_weight_magnitude,
-					.index = numberOfThreads,
-					.pdcl = pdcl
-			};
-#ifdef _WIN32
-			tid[numberOfThreads] = CreateThread(NULL,0,&pearcl_find,(void *)&(pdthreads[numberOfThreads]),0,NULL);
-#else
-			pthread_create(&tid[numberOfThreads], NULL, &pearcl_find,
-					(void *)&(pdthreads[numberOfThreads]));
-#endif
-		}
-
-#ifdef _WIN32
-		SwitchToThread();
-		for (k = thread_count; k > 0; k--) {
-			WaitForSingleObject(tid[k - 1], INFINITE);
-		}
-#else
-		sched_yield();
-		for (k = thread_count; k > 0; k--) {
-			pthread_join(tid[k - 1], NULL);
-		}
-#endif
-
-		free(tid);
-		free(pdthreads);
-		return pdcl->pd.interrupted;
+	if (length != TRANSACTION_LENGTH || min_weight_magnitude > HASH_LENGTH) {
+		pdcl->pd.status = PD_FAILED;
+		return;
+		/*
+		return Invalid_transaction_trits_length;
+		return Invalid_min_weight_magnitude;
+		*/
 	}
+
+
+	pdcl->pd.status = PD_SEARCHING;
+	/*
+	pdcl->pd.finished = false;
+	pdcl->pd.interrupted = false;
+	pdcl->pd.nonceFound = false;
+	*/
+
+	States states;
+	pd_search_init(&states, trits);
+
+	if (numberOfThreads == 0) {
+		pdcl->pd.status = PD_FAILED;
+		return;
+	}
+
+
+	pthread_mutex_init(&pdcl->pd.new_thread_search, NULL);
+	pthread_t *tid = malloc(numberOfThreads * sizeof(pthread_t));
+	thread_count = numberOfThreads;
+
+	PDCLThread  *pdthreads = (PDCLThread  *)malloc(numberOfThreads * sizeof(PDCLThread));
+	while (numberOfThreads-- > 0) {
+		pdthreads[numberOfThreads] = (PDCLThread) {
+			.states = states,
+				.trits = trits,
+				.min_weight_magnitude = min_weight_magnitude,
+				.index = numberOfThreads,
+				.pdcl = pdcl
+		};
+		pthread_create(&tid[numberOfThreads], NULL, &pearcl_find,
+				(void *)&(pdthreads[numberOfThreads]));
+	}
+
+	sched_yield();
+	for (k = thread_count; k > 0; k--) {
+		pthread_join(tid[k - 1], NULL);
+	}
+
+	free(tid);
+	free(pdthreads);
+	//return pdcl->pd.interrupted;
+}

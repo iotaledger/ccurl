@@ -1,10 +1,15 @@
 #ifndef _CCURL_H_
 #define _CCURL_H_
 
-#if defined(WIN32) || defined(_WIN32)
+#ifndef EXPORT
+#if defined(_WIN32) && !defined(__MINGW32__)
 #define EXPORT __declspec(dllexport)
 #else
 #define EXPORT
+#endif
+#endif
+#if defined(_WIN32) && !defined(__MINGW32__)
+#else
 #include <unistd.h>
 #endif
 

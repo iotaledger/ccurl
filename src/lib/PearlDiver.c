@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdlib.h>
 #include <stdio.h>
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 #include <intrin.h>
 #else
 #include <sched.h>
@@ -19,28 +19,16 @@ typedef struct {
 } PDThread;
 
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 DWORD WINAPI find_nonce(void *data);
 #else
 void *find_nonce(void *states);
 #endif
 
 void interrupt(PearlDiver *ctx) {
-
-#ifdef _WIN32
-	//http://stackoverflow.com/questions/800383/what-is-the-difference-between-mutex-and-critical-section
-	EnterCriticalSection(&ctx->new_thread_search);
-#else
 	pthread_mutex_lock(&ctx->new_thread_search);
-#endif
-	ctx->finished = true;
-	ctx->interrupted = true;
-
-#ifdef _WIN32
-	LeaveCriticalSection(&ctx->new_thread_search);
-#else
+	ctx->status = PD_INTERRUPTED;
 	pthread_mutex_unlock(&ctx->new_thread_search);
-#endif
 }
 
 bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, const int min_weight_magnitude, int numberOfThreads) {
@@ -48,22 +36,22 @@ bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, cons
 	int k, thread_count;
 
 	if (length != TRANSACTION_LENGTH) {
+		ctx->status = PD_FAILED;
 		return Invalid_transaction_trits_length;
 	}
 	if (min_weight_magnitude < 0 || min_weight_magnitude > HASH_LENGTH) {
+		ctx->status = PD_FAILED;
 		return Invalid_min_weight_magnitude;
 	}
 
-	ctx->finished = false;
-	ctx->interrupted = false;
-	ctx->nonceFound = false;
+	ctx->status = PD_SEARCHING;
 
 	States states;
 	pd_search_init(&states, transactionTrits);
 
 	if (numberOfThreads <= 0) {
 
-#ifdef _WIN32
+#if defined(_WIN32)
 		SYSTEM_INFO sysinfo;
 		GetSystemInfo(&sysinfo);
 		numberOfThreads = sysinfo.dwNumberOfProcessors;
@@ -74,18 +62,8 @@ bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, cons
 			numberOfThreads = 1;
 	}
 
-#ifdef _WIN32
-	InitializeCriticalSection(&ctx->new_thread_search);
-	HANDLE *tid = malloc(sizeof(HANDLE)*numberOfThreads);
-#else
 	pthread_mutex_init(&ctx->new_thread_search, NULL);
-	if (pthread_mutex_lock(&ctx->new_thread_search) != 0) {
-		printf("mutex init failed");
-		return 1;
-	}
-	pthread_mutex_unlock(&ctx->new_thread_search);
 	pthread_t *tid = malloc(numberOfThreads * sizeof(pthread_t));
-#endif
 	thread_count = numberOfThreads;
 
 	PDThread *pdthreads = (PDThread *)malloc(numberOfThreads * sizeof(PDThread));
@@ -98,34 +76,17 @@ bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, cons
 				.threadIndex = numberOfThreads,
 				.ctx = ctx
 		};
-#ifdef _WIN32
-		tid[numberOfThreads] = CreateThread(NULL, 0, &find_nonce, (void *)&(pdthreads[numberOfThreads]), 0, NULL);
-#else
 		pthread_create(&tid[numberOfThreads], NULL, &find_nonce, (void *)&(pdthreads[numberOfThreads]));
-#endif
 	}
 
-#ifdef _WIN32
-	SwitchToThread();
-#else
-	sched_yield();
-#endif
-
-#ifdef _WIN32
-	SwitchToThread();
-	for (k = thread_count; k > 0; k--) {
-		WaitForSingleObject(tid[k - 1], INFINITE);
-	}
-#else
 	sched_yield();
 	for (k = thread_count; k > 0; k--) {
 		pthread_join(tid[k - 1], NULL);
 	}
-#endif
 
 	free(tid);
 	free(pdthreads);
-	return ctx->interrupted;
+	return ctx->status == PD_INTERRUPTED;
 }
 
 void pd_search_init(States *states, trit_t *transactionTrits) {
@@ -192,7 +153,7 @@ int is_found_fast(trit_t *low, trit_t *high, int min_weight_magnitude) {
 	return lastMeasurement;
 }
 
-#ifdef _WIN32
+#if defined(_WIN32) && !defined(__MINGW32__)
 DWORD WINAPI find_nonce(void *data) {
 #else
 void *find_nonce(void *data) {
@@ -219,7 +180,7 @@ void *find_nonce(void *data) {
 	memset(stateHigh, 0, STATE_LENGTH * sizeof(trit_t));
 	memset(scratchpadLow, 0, STATE_LENGTH * sizeof(trit_t));
 	memset(scratchpadHigh, 0, STATE_LENGTH * sizeof(trit_t));
-	while (!ctx->finished && !ctx->interrupted) {
+	while (ctx->status == PD_SEARCHING) {
 		pd_increment(midStateCopyLow, midStateCopyHigh, (HASH_LENGTH / 3) * 2, HASH_LENGTH);
 		memcpy(stateLow, midStateCopyLow, STATE_LENGTH * sizeof(trit_t));
 		memcpy(stateHigh, midStateCopyHigh, STATE_LENGTH * sizeof(trit_t));
@@ -229,39 +190,30 @@ void *find_nonce(void *data) {
 			my_thread->min_weight_magnitude)) == 0)
 			continue;
 
+#if defined(_WIN32) && !defined(__MINGW32__)
 #ifdef _WIN64
 		_BitScanForward64(&shift, nonce_probe);
 		nonce_output = 1 << shift;
 		EnterCriticalSection(&my_thread->ctx->new_thread_search);
-#elif defined(_WIN32)
+#else
 		_BitScanForward(&shift, nonce_probe);
 		nonce_output = 1 << shift;
 		EnterCriticalSection(&my_thread->ctx->new_thread_search);
+#endif
 #else
 		shift = __builtin_ctzll(nonce_probe);
 		nonce_output = 1 << shift;
 		pthread_mutex_lock(&my_thread->ctx->new_thread_search);
 #endif
-		if (ctx->finished) {
-#ifdef _WIN32
-			LeaveCriticalSection(&my_thread->ctx->new_thread_search);
-#else
-			pthread_mutex_unlock(&my_thread->ctx->new_thread_search);
-#endif
-			return 0;
+		if (ctx->status != PD_FOUND) {
+			ctx->status = PD_FOUND;
+			for (i = 0; i < HASH_LENGTH; i++) {
+				trits[i] =
+					(((trit_t)(midStateCopyLow[i]) & nonce_output) == 0) ?
+					1 : ((((trit_t)(midStateCopyHigh[i]) & nonce_output) == 0) ? -1 : 0);
+			}
 		}
-		ctx->finished = true;
-		for (i = 0; i < HASH_LENGTH; i++) {
-			trits[i] =
-				(((trit_t)(midStateCopyLow[i]) & nonce_output) == 0) ?
-				1 : ((((trit_t)(midStateCopyHigh[i]) & nonce_output) == 0) ? -1 : 0);
-		}
-		my_thread->ctx->nonceFound = true;
-#ifdef _WIN32
-		LeaveCriticalSection(&my_thread->ctx->new_thread_search);
-#else
 		pthread_mutex_unlock(&my_thread->ctx->new_thread_search);
-#endif
 		return 0;
 
 }

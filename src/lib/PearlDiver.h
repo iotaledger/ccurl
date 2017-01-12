@@ -2,8 +2,10 @@
 #ifndef PEARLDIVER_H
 #define PEARLDIVER_H
 
-#ifdef _WIN32
+#if defined(_WIN32)
 #include <windows.h>
+#endif
+#if defined(_WIN32) && !defined(__MINGW32__)
 #else
 #include <pthread.h>
 #endif
@@ -26,19 +28,35 @@
 #define LOW_3 0xFFC0000007FFFFFF
 #define HIGH_3 0x003FFFFFFFFFFFFF
 
+#if defined(_WIN32) && !defined(__MINGW32__)
+#define pthread_mutex_init(A, B) InitializeCriticalSection(A)
+#define pthread_t HANDLE
+#define pthread_create(A, B, C, D) *A = CreateThread(B, 0, C, D, 0, NULL)
+#define sched_yield() SwitchToThread()
+#define pthread_join(A, B) WaitForSingleObject(A, INFINITE)
+#define pthread_mutex_t CRITICAL_SECTION
+#define pthread_mutex_unlock(A) LeaveCriticalSection(A)
+//http://stackoverflow.com/questions/800383/what-is-the-difference-between-mutex-and-critical-section
+#define pthread_mutex_lock(A) EnterCriticalSection(A)
+#endif
+
 typedef struct {
 	trit_t mid_low[STATE_LENGTH];
 	trit_t mid_high[STATE_LENGTH];
 	trit_t low[STATE_LENGTH];
 	trit_t high[STATE_LENGTH];
 } States;
+
+typedef enum {
+	PD_SEARCHING,
+	PD_FOUND,
+	PD_FAILED,
+	PD_INTERRUPTED
+} PDStatus;
+
 typedef struct {
-	volatile bool finished, interrupted, nonceFound;
-#ifdef _WIN32
-	CRITICAL_SECTION new_thread_search;
-#else
+	PDStatus status;
 	pthread_mutex_t new_thread_search;
-#endif
 } PearlDiver;
 
 void init_pearldiver(PearlDiver *ctx);

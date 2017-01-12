@@ -11,9 +11,7 @@
 #include "Winsock2.h"
 #pragma comment(lib, "Ws2_32.lib")
 */
-#ifndef _WIN32
-//#include <sys/select.h>
-#else
+#if defined(_WIN32) && !defined(__MINGW32__)
 #define STDIN_FILENO 0
 #endif
 
