@@ -81,6 +81,9 @@ int main(int argc, char *argv[]) {
 		ccurl_pow_set_loop_count(atol(str));
 	}
 	out = ccurl_pow(buf, minWeightMagnitude);
+	if(out == NULL) {
+		return 1;
+	}
 	out[TRYTE_LENGTH] = 0;
 	fputs(out, stdout);
 	free(buf);

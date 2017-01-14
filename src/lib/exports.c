@@ -8,7 +8,7 @@
 #ifndef DEBUG
 //#define DEBUG
 #endif
-PearlDiver pearl_diver;
+//PearlDiver pearl_diver;
 PearCLDiver pdcl;
 int initialized = 0;
 int cl_available = 0;
@@ -17,7 +17,7 @@ EXPORT int ccurl_pow_init() {
 	if(!initialized) {
 		size_t lc = pdcl.loop_count;
 		memset(&pdcl, 0, sizeof(PearCLDiver));
-		memset(&pearl_diver, 0, sizeof(PearlDiver));
+		//memset(&pearl_diver, 0, sizeof(PearlDiver));
 		pdcl.loop_count  = lc;
 		cl_available = init_pearcl(&pdcl);
 		initialized = 1;
@@ -50,20 +50,21 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 		fprintf(stderr, "OpenCL Hashing with %lu loops...", pdcl.loop_count);
 #endif
 		pearcl_search(&pdcl, trits, TRANSACTION_LENGTH, minWeightMagnitude);
-		if(pdcl.pd.status != PD_FOUND) {
-#ifdef DEBUG
-			fprintf(stderr, "Thread Hashing Fallback...");
-#endif
-			pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
-		}
-	} else {
+	} 
+	if(pdcl.pd.status != PD_FOUND) {
 #ifdef DEBUG
 		fprintf(stderr, "Thread Hashing...");
 #endif
-		pd_search(&pearl_diver, trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
+		pd_search(&(pdcl.pd), trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
+	}
+	if(pdcl.pd.status != PD_FOUND) {
+#ifdef DEBUG
+		fprintf(stderr, "Pow Failed.\n");
+#endif
+		return NULL;
 	}
 #ifdef DEBUG
-			fprintf(stderr, "Pow Finished.\n");
+	fprintf(stderr, "Pow Finished.\n");
 #endif
 
 	buf = trytes_from_trits(trits, 0, TRANSACTION_LENGTH);
