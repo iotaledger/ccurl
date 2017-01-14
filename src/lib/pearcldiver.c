@@ -186,9 +186,9 @@ FIND_END:
 #ifdef DEBUG
 			fprintf(stderr, "output trit read done.\n");
 #endif
+FINISHED:
 			pthread_mutex_unlock(&pdcl->pd.new_thread_search);
 		}
-FINISHED:
 		clReleaseEvent(ev);
 		return 0;
 	}
