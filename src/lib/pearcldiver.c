@@ -256,6 +256,7 @@ FINISHED:
 			pthread_join(tid[k - 1], NULL);
 		}
 
+		pthread_mutex_destroy(&pdcl->pd.new_thread_search);
 #ifdef DEBUG
 		fprintf(stderr, "Returning to master. Status is %u \n", pdcl->pd.status);
 #endif

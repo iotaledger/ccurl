@@ -30,6 +30,7 @@
 
 #if defined(_WIN32) && !defined(__MINGW32__)
 #define pthread_mutex_init(A, B) InitializeCriticalSection(A)
+#define pthread_mutex_destroy(A, B) DeleteCriticalSection(A)
 #define pthread_t HANDLE
 #define pthread_create(A, B, C, D) *A = CreateThread(B, 0, C, D, 0, NULL)
 #define sched_yield() SwitchToThread()
