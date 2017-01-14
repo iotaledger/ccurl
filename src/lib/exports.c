@@ -37,7 +37,8 @@ EXPORT void ccurl_pow_finalize() {
 EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	init_converter();
 	char *buf; //= malloc(sizeof(char)*TRYTE_LENGTH);
-	trit_t *trits = trits_from_trytes(trytes, TRYTE_LENGTH);
+	size_t len = strlen(trytes);
+	trit_t *trits = trits_from_trytes(trytes, len);
 
 #ifdef DEBUG
 	fprintf(stderr, "Welcome to CCURL, home of the ccurl. can I take your vector?\n");
@@ -49,13 +50,13 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 #ifdef DEBUG
 		fprintf(stderr, "OpenCL Hashing with %lu loops...", pdcl.loop_count);
 #endif
-		pearcl_search(&pdcl, trits, TRANSACTION_LENGTH, minWeightMagnitude);
+		pearcl_search(&pdcl, trits, len * 3, minWeightMagnitude);
 	} 
 	if(pdcl.pd.status != PD_FOUND) {
 #ifdef DEBUG
 		fprintf(stderr, "Thread Hashing...");
 #endif
-		pd_search(&(pdcl.pd), trits, TRANSACTION_LENGTH, minWeightMagnitude, -1);
+		pd_search(&(pdcl.pd), trits, len * 3, minWeightMagnitude, -1);
 	}
 	if(pdcl.pd.status != PD_FOUND) {
 #ifdef DEBUG
