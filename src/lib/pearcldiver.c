@@ -167,7 +167,9 @@ FIND_END:
 #endif
 		if (found > 0) {
 			pthread_mutex_lock(&pdcl->pd.new_thread_search);
-			if (pdcl->pd.status == PD_FOUND) goto FIND_END;
+			if (pdcl->pd.status == PD_FOUND) {
+				goto FINISHED;
+			}
 			pdcl->pd.status = PD_FOUND;
 #ifdef DEBUG
 			fprintf(stderr, "Reading output trits...\n");
@@ -186,7 +188,7 @@ FIND_END:
 #endif
 			pthread_mutex_unlock(&pdcl->pd.new_thread_search);
 		}
-
+FINISHED:
 		clReleaseEvent(ev);
 		return 0;
 	}
