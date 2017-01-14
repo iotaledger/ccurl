@@ -115,47 +115,45 @@ DWORD WINAPI pearcl_find(void *data) {
 #ifdef DEBUG
 		fprintf(stderr, "Initializing cores... ");
 #endif
-		if(CL_SUCCESS != 
+		if(CL_SUCCESS == 
 				clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
 					pdcl->cl.clkernel[thread->index][0], 1, &global_offset,
 					&global_work_size, &local_work_size, 0, NULL, &ev)
 		  ) {
-			fprintf(stderr, "E: running init kernel failed.\n" );
+			clWaitForEvents(1, &ev);
 			clReleaseEvent(ev);
-			goto FIND_END;
-		}
-
-		clWaitForEvents(1, &ev);
-		clReleaseEvent(ev);
 #ifdef DEBUG
-		fprintf(stderr, "Done.\nRunning search kernels...");
+			fprintf(stderr, "Done.\nRunning search kernels...");
 #endif
 
-		while (found == 0 && pdcl->pd.status == PD_SEARCHING) {
-			if(
-					clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
-						pdcl->cl.clkernel[thread->index][1], 1, NULL,
-						&global_work_size, &local_work_size, 0, NULL, &ev1)
-					!= CL_SUCCESS) {
+			while (found == 0 && pdcl->pd.status == PD_SEARCHING) {
+				if(
+						clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
+							pdcl->cl.clkernel[thread->index][1], 1, NULL,
+							&global_work_size, &local_work_size, 0, NULL, &ev1)
+						!= CL_SUCCESS) {
+					clReleaseEvent(ev1);
+					fprintf(stderr, "E: running search kernel failed. \n");
+					break;
+				}
+				clWaitForEvents(1, &ev1);
 				clReleaseEvent(ev1);
-				fprintf(stderr, "E: running search kernel failed. \n");
-				goto FIND_END;
+				if(CL_SUCCESS != 
+						clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
+							pdcl->cl.buffers[thread->index][6], CL_TRUE, 0,
+							sizeof(char), &found, 0, NULL, NULL)) {
+					fprintf(stderr, "E: reading finished bool failed.\n");
+					break;
+				}
 			}
-			clWaitForEvents(1, &ev1);
-			clReleaseEvent(ev1);
-			if(CL_SUCCESS != 
-					clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
-						pdcl->cl.buffers[thread->index][6], CL_TRUE, 0,
-						sizeof(char), &found, 0, NULL, NULL)) {
-				fprintf(stderr, "E: reading finished bool failed.\n");
-				goto FIND_END;
-			}
+		} else {
+			fprintf(stderr, "E: running init kernel failed.\n" );
+			clReleaseEvent(ev);
 		}
 
 #ifdef DEBUG
 		fprintf(stderr, "Done.\nFinalizing...");
 #endif
-FIND_END:
 		if(CL_SUCCESS != 
 				clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
 					pdcl->cl.clkernel[thread->index][2], 1, NULL,
@@ -167,26 +165,24 @@ FIND_END:
 #endif
 		if (found > 0) {
 			pthread_mutex_lock(&pdcl->pd.new_thread_search);
-			if (pdcl->pd.status == PD_FOUND) {
-				goto FINISHED;
+			if (pdcl->pd.status != PD_FOUND) {
+				pdcl->pd.status = PD_FOUND;
+#ifdef DEBUG
+				fprintf(stderr, "Reading output trits...\n");
+#endif
+				if(CL_SUCCESS != 
+						clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
+							pdcl->cl.buffers[thread->index][0], CL_TRUE,
+							0, HASH_LENGTH * sizeof(trit_t), &(thread->trits[TRANSACTION_LENGTH - HASH_LENGTH]),
+							1, &ev, NULL)) {
+#ifdef DEBUG
+					fprintf(stderr, "E: reading transaction hash failed.\n");
+#endif
+				}
+#ifdef DEBUG
+				fprintf(stderr, "output trit read done.\n");
+#endif
 			}
-			pdcl->pd.status = PD_FOUND;
-#ifdef DEBUG
-			fprintf(stderr, "Reading output trits...\n");
-#endif
-			if(CL_SUCCESS != 
-					clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
-						pdcl->cl.buffers[thread->index][0], CL_TRUE,
-						0, HASH_LENGTH * sizeof(trit_t), &(thread->trits[TRANSACTION_LENGTH - HASH_LENGTH]),
-						1, &ev, NULL)) {
-#ifdef DEBUG
-				fprintf(stderr, "E: reading transaction hash failed.\n");
-#endif
-			}
-#ifdef DEBUG
-			fprintf(stderr, "output trit read done.\n");
-#endif
-FINISHED:
 			pthread_mutex_unlock(&pdcl->pd.new_thread_search);
 		}
 		clReleaseEvent(ev);
