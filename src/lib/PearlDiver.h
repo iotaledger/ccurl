@@ -50,9 +50,11 @@ typedef struct {
 
 typedef enum {
 	PD_SEARCHING,
-	PD_FOUND,
 	PD_FAILED,
-	PD_INTERRUPTED
+	PD_FOUND,
+	PD_FINISHED,
+	PD_INTERRUPTED,
+	PD_INVALID
 } PDStatus;
 
 typedef struct {
@@ -62,7 +64,7 @@ typedef struct {
 
 void init_pearldiver(PearlDiver *ctx);
 void interrupt(PearlDiver *ctx);
-bool pd_search(PearlDiver *ctx, trit_t *const transaction_trits, int length, const int min_weight_magnitude, int numberOfThreads);
+void pd_search(PearlDiver *ctx, trit_t *const transaction_trits, int length, const int min_weight_magnitude, int numberOfThreads);
 void pd_transform( trit_t *const stateLow, trit_t *const stateHigh, trit_t *const scratchpadLow, trit_t *const scratchpadHigh);
 void pd_increment(trit_t *const midStateCopyLow, trit_t *const midStateCopyHigh, const int fromIndex, const int toIndex);
 void pd_search_init(States *states, trit_t *transaction_trits);

@@ -20,4 +20,7 @@
 #define TRANSACTION_LENGTH TRYTE_LENGTH * 3
 typedef int64_t trit_t;
 
+#ifndef DEBUG
+//#define DEBUG
+#endif //DEBUG
 #endif

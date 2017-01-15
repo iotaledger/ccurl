@@ -5,9 +5,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifndef DEBUG
-//#define DEBUG
-#endif
 //PearlDiver pearl_diver;
 PearCLDiver pdcl;
 int initialized = 0;
@@ -36,7 +33,7 @@ EXPORT void ccurl_pow_finalize() {
 
 EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	init_converter();
-	char *buf; //= malloc(sizeof(char)*TRYTE_LENGTH);
+	char *buf = NULL; //= malloc(sizeof(char)*TRYTE_LENGTH);
 	size_t len = strlen(trytes);
 	trit_t *trits = trits_from_trytes(trytes, len);
 
@@ -52,25 +49,22 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 #endif
 		pearcl_search(&pdcl, trits, len * 3, minWeightMagnitude);
 	} 
-	if(pdcl.pd.status != PD_FOUND) {
+	if(pdcl.pd.status != PD_FOUND && pdcl.pd.status != PD_INVALID) {
 #ifdef DEBUG
 		fprintf(stderr, "Thread Hashing...");
 #endif
 		pd_search(&(pdcl.pd), trits, len * 3, minWeightMagnitude, -1);
 	}
-	if(pdcl.pd.status != PD_FOUND) {
+	if(pdcl.pd.status == PD_FOUND) {
 #ifdef DEBUG
-		fprintf(stderr, "Pow Failed.\n");
+		fprintf(stderr, "Pow Finished.\n");
 #endif
-		return NULL;
+		buf = trytes_from_trits(trits, 0, TRANSACTION_LENGTH);
 	}
-#ifdef DEBUG
-	fprintf(stderr, "Pow Finished.\n");
-#endif
 
-	buf = trytes_from_trits(trits, 0, TRANSACTION_LENGTH);
 	//buf[TRYTE_LENGTH] = 0;
 	free(trits);
+	pdcl.pd.status = PD_FINISHED;
 	return buf;
 }
 

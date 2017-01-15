@@ -73,7 +73,9 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 #endif
 					CLCONTEXT_MAX_DEVICES-ctx->num_devices,
 					&(ctx->device[ctx->num_devices]), &pf_num_devices) != CL_SUCCESS) {
-			//fprintf(stderr, "W: Failed to get Opencl Device IDs for platform %zu.\n", i);
+#ifdef DEBUG
+			fprintf(stderr, "W: Failed to get Opencl Device IDs for platform %zu.\n", i);
+#endif
 			continue;
 		}
 		if(pf_num_devices > CLCONTEXT_MAX_DEVICES-ctx->num_devices) {
@@ -125,7 +127,7 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		}
 
 		if(clGetDeviceInfo(ctx->device[i], 
-					 CL_DEVICE_MAX_WORK_GROUP_SIZE,// wrong CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
+					 CL_DEVICE_MAX_WORK_GROUP_SIZE,
 					sizeof(size_t), &(ctx->num_multiple[i]), NULL) 
 					!= CL_SUCCESS) {
 				ctx->num_multiple[i] = 1;

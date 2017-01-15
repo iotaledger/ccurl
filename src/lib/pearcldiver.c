@@ -16,11 +16,6 @@
 #define PD_NUM_SRC 1
 #endif /*PD_NUM_SRC*/
 
-#ifndef DEBUG
-//#define DEBUG
-#endif //DEBUG
-
-
 typedef struct {
 	States states;
 	trit_t *trits;
@@ -199,7 +194,11 @@ DWORD WINAPI pearcl_find(void *data) {
 		int numberOfThreads = pdcl->cl.num_devices;
 
 		if (length != TRANSACTION_LENGTH || min_weight_magnitude > HASH_LENGTH) {
-			pdcl->pd.status = PD_FAILED;
+			pdcl->pd.status = PD_INVALID;
+#ifdef DEBUG
+			fprintf(stderr, "E: Invalid transaction length. Got %lu, expected %lu\n",
+					length, (size_t)TRANSACTION_LENGTH);
+#endif
 			return;
 			/*
 			   return Invalid_transaction_trits_length;
@@ -209,11 +208,6 @@ DWORD WINAPI pearcl_find(void *data) {
 
 
 		pdcl->pd.status = PD_SEARCHING;
-		/*
-		   pdcl->pd.finished = false;
-		   pdcl->pd.interrupted = false;
-		   pdcl->pd.nonceFound = false;
-		   */
 
 		States states;
 		pd_search_init(&states, trits);

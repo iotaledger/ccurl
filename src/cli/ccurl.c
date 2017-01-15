@@ -49,7 +49,7 @@ int get_stdin(char *str, int len) {
 }
 
 int main(int argc, char *argv[]) {
-	char *buf, *out, *str;
+	char *buf, *out = NULL, *str;
 	buf = (char *)malloc(sizeof(char)*(TRYTE_LENGTH + 1));
 	long minWeightMagnitude;
 
@@ -60,18 +60,13 @@ int main(int argc, char *argv[]) {
 
 	if (argc > 2) {
 		if (strlen(argv[2]) >= TRYTE_LENGTH) {
-			memcpy(buf, argv[2], sizeof(char)*TRYTE_LENGTH);
+			memcpy(buf, argv[2], sizeof(char)*strlen(argv[2]));
 		}
 		else {
-			if (get_stdin(buf, TRYTE_LENGTH) != TRYTE_LENGTH) {
-				fprintf(stderr, HINTS, TRYTE_LENGTH);
-				return 1;
-			}
+			fprintf(stderr, HINTS, TRYTE_LENGTH);
+			return 1;
 		}
-	} else if (get_stdin(buf, TRYTE_LENGTH) != TRYTE_LENGTH) {
-		fprintf(stderr, HINTS, TRYTE_LENGTH);
-		return 1;
-	}
+	} 
 	minWeightMagnitude = atol(argv[1]);
 	if (minWeightMagnitude == 0) {
 		fprintf(stderr, HINTS, TRYTE_LENGTH);
@@ -80,14 +75,13 @@ int main(int argc, char *argv[]) {
 	if((str=getenv("CCURL_LOOP_COUNT"))) {
 		ccurl_pow_set_loop_count(atol(str));
 	}
+	ccurl_pow_init();
 	out = ccurl_pow(buf, minWeightMagnitude);
-	if(out == NULL) {
-		return 1;
+	if(out != NULL) {
+		fputs(out, stdout);
 	}
-	out[TRYTE_LENGTH] = 0;
-	fputs(out, stdout);
-	free(buf);
 	free(out);
+	free(buf);
 	ccurl_pow_finalize();
 	return 0;
 }

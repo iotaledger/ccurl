@@ -31,17 +31,20 @@ void interrupt(PearlDiver *ctx) {
 	pthread_mutex_unlock(&ctx->new_thread_search);
 }
 
-bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, const int min_weight_magnitude, int numberOfThreads) {
+void pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, const int min_weight_magnitude, int numberOfThreads) {
 
 	int k, thread_count;
 
-	if (length != TRANSACTION_LENGTH) {
-		ctx->status = PD_FAILED;
+	if (length != TRANSACTION_LENGTH || min_weight_magnitude < 0 || min_weight_magnitude > HASH_LENGTH) {
+		ctx->status = PD_INVALID;
+#ifdef DEBUG
+	fprintf(stderr, "E: Invalid arguments.\n");
+#endif
+		return;
+		/*
 		return Invalid_transaction_trits_length;
-	}
-	if (min_weight_magnitude < 0 || min_weight_magnitude > HASH_LENGTH) {
-		ctx->status = PD_FAILED;
 		return Invalid_min_weight_magnitude;
+		*/
 	}
 
 	ctx->status = PD_SEARCHING;
@@ -67,6 +70,9 @@ bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, cons
 	thread_count = numberOfThreads;
 
 	PDThread *pdthreads = (PDThread *)malloc(numberOfThreads * sizeof(PDThread));
+#ifdef DEBUG
+	fprintf(stderr, "I: Starting search threads.\n");
+#endif
 	while (numberOfThreads-- > 0) {
 
 		pdthreads[numberOfThreads] = (PDThread) {
@@ -84,9 +90,12 @@ bool pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, cons
 		pthread_join(tid[k - 1], NULL);
 	}
 
+#ifdef DEBUG
+	fprintf(stderr, "I: Found threads. Returning.\n");
+#endif
 	free(tid);
 	free(pdthreads);
-	return ctx->status == PD_INTERRUPTED;
+	return;// ctx->status == PD_INTERRUPTED;
 }
 
 void pd_search_init(States *states, trit_t *transactionTrits) {
