@@ -3,6 +3,10 @@ C port of the Curl library
 
 ## Usage
 
+Don't forget to grab submodules! use `git submodule update --init --recursive` 
+when cloning, and `git submodule update --recursive` when pulling from this 
+repository.
+
 ### To Compile
 
     CMake is a build dependency. If you are testing, you must also
@@ -30,3 +34,6 @@ where <MinWeightMagnitude> is replaced with, for example, 18, and
 #### Tricks
 
 If using GPU acceleration, you may tune the loop length with 
+`ccurl_pow_set_loop_count(my_loop_count);` with the library, or 
+setting an environment variable to, for example, `CCURL_LOOP_COUNT=64`, when 
+using ccurl-cli.
