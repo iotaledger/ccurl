@@ -31,6 +31,10 @@ EXPORT void ccurl_pow_finalize() {
 	finalize_cl(&pdcl.cl);
 }
 
+EXPORT void ccurl_pow_interrupt() {
+	interrupt(&pdcl.pd);
+}
+
 EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	init_converter();
 	char *buf = NULL; //= malloc(sizeof(char)*TRYTE_LENGTH);
@@ -49,7 +53,7 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 #endif
 		pearcl_search(&pdcl, trits, len * 3, minWeightMagnitude);
 	} 
-	if(pdcl.pd.status != PD_FOUND && pdcl.pd.status != PD_INVALID) {
+	if(pdcl.pd.status != PD_FOUND && pdcl.pd.status != PD_INVALID && pdcl.pd.status != PD_INTERRUPTED) {
 #ifdef DEBUG
 		fprintf(stderr, "Thread Hashing...");
 #endif
