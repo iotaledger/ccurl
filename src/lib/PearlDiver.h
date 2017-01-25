@@ -49,10 +49,10 @@ typedef struct {
 } States;
 
 typedef enum {
+	PD_FINISHED,
 	PD_SEARCHING,
 	PD_FAILED,
 	PD_FOUND,
-	PD_FINISHED,
 	PD_INTERRUPTED,
 	PD_INVALID
 } PDStatus;

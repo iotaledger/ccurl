@@ -41,6 +41,7 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	size_t len = strlen(trytes);
 	trit_t *trits = trits_from_trytes(trytes, len);
 
+	do {} while (pdcl.pd.status == PD_SEARCHING);
 #ifdef DEBUG
 	fprintf(stderr, "Welcome to CCURL, home of the ccurl. can I take your vector?\n");
 #endif
