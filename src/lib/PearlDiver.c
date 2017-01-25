@@ -26,9 +26,11 @@ void *find_nonce(void *states);
 #endif
 
 void interrupt(PearlDiver *ctx) {
-	pthread_mutex_lock(&ctx->new_thread_search);
-	ctx->status = PD_INTERRUPTED;
-	pthread_mutex_unlock(&ctx->new_thread_search);
+	if(ctx->status == PD_SEARCHING) {
+		pthread_mutex_lock(&ctx->new_thread_search);
+		ctx->status = PD_INTERRUPTED;
+		pthread_mutex_unlock(&ctx->new_thread_search);
+	}
 }
 
 void pd_search(PearlDiver *ctx, trit_t *const transactionTrits, int length, const int min_weight_magnitude, int numberOfThreads) {
