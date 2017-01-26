@@ -92,8 +92,8 @@ FILE(GLOB HEADERS "src/lib/*.h" "src/lib/util/*.h" )
 install(FILES ${HEADERS} DESTINATION include/ccurl)
 
 ### TESTING
-#enable_testing ()
-#add_subdirectory (test)
+enable_testing ()
+add_subdirectory (test)
 add_subdirectory (src/cli)
 
 set(CPACK_PACKAGE_NAME "CCurl")

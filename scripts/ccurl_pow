@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 var ffi = require('ffi')
 
-var libccurl = ffi.Library('libccurl', {
+var libccurl = ffi.Library('../build/lib/libccurl', {
   ccurl_pow : [ 'string', [ 'string', 'int'] ]
 })
 
@@ -13,10 +13,7 @@ if (process.argv.length < 3) {
 var mwm = parseInt(process.argv[2]);
 var trytes = process.argv[3];
 
-/*
-
-console.log('Your output: ' + parseInt(process.argv[3]));
-*/
+console.log('Your trytes: ' + trytes.length);
 var output = libccurl.ccurl_pow(trytes, mwm);
 
 console.log('Your output: ' + output)

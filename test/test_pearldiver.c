@@ -82,6 +82,8 @@ void *dosearch(void *ctx) {
 	absorb(&curl, mytrits, 0, TRANSACTION_LENGTH);
 	squeeze(&curl, hash_trits, 0, HASH_LENGTH);
 
+	CU_ASSERT(pearl_diver->status != PD_FOUND);
+	CU_ASSERT(pearl_diver->status == PD_INTERRUPTED);
 	return 0;
 }
 void test_pearl_diver_interrupt(void)
@@ -95,10 +97,7 @@ void test_pearl_diver_interrupt(void)
 
 	interrupt(&pearl_diver);
 
-	sleep(1);
-	
-	CU_ASSERT(!pearl_diver.nonceFound);
-	CU_ASSERT(pearl_diver.interrupted);
+	pthread_join(tid, NULL);
 }
 
 void test_export_pow(void) {
