@@ -12,14 +12,26 @@ repository.
     CMake is a build dependency. If you are testing, you must also
     install CUnit (BCUnit).
 
+#### Unix-based (linux, mac, etc.)
+
 `mkdir build && cd build && cmake .. && cmake --build . &&  cd ..`
 
-#### Note for Windows
+#### Windows
 
 You may build using mingw or cygwin, but if you build with Visual C++, it is
 highly recommended that you also install the 
-[LLVM compiler](http://releases.llvm.org/download.html). Instead of the `cmake ..`
-statement above, I would recommend the following: `cmake -A x64 -T LLVM-vs2014 ..`
+[LLVM compiler](http://releases.llvm.org/download.html), and Microsoft's [Build Tools](https://www.microsoft.com/en-us/download/details.aspx?id=48159).
+
+
+```
+mkdir build
+cd build
+cmake -G "Visual Studio 14 2015" -A x64 -T LLVM-vs2014 ..
+cmake --build . --config Release
+cd ..
+```
+
+In Windows, the libraries would be located in the build\Release directory.
 
 ### Command-line programs
 
