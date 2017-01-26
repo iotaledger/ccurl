@@ -69,15 +69,16 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	trit_t *trits = trits_from_trytes(trytes, len);
 	pdcl_node_t *pd_node = &base;
 
+#ifdef DEBUG
+	fprintf(stderr, "Welcome to CCURL, home of the ccurl. can I take your vector?\n");
+#endif
+	ccurl_pow_node_init(pd_node);
 	while(pd_node->pdcl->pd.status == PD_SEARCHING) {
 		if(pd_node->next != NULL) {
 			pd_node = pd_node->next;
 		}
 	}
 
-#ifdef DEBUG
-	fprintf(stderr, "Welcome to CCURL, home of the ccurl. can I take your vector?\n");
-#endif
 	if(ccurl_pow_node_init(pd_node) == 0) {
 		if(pd_node->pdcl->loop_count < 1) {
 			pd_node->pdcl->loop_count = loop_count;
