@@ -40,8 +40,8 @@ is as follows:
 
 `% ccurl-digest $(ccurl-cli <MinWeightMagnitude> <TransactionTrytes>)`
 
-where <MinWeightMagnitude> is replaced with, for example, 18, and 
-<TransactionTrytes> is replaced with your 2673-length transaction.
+where `<MinWeightMagnitude>` is replaced with, for example, 18, and 
+`<TransactionTrytes>` is replaced with your 2673-length transaction.
 
 #### Tricks
 
