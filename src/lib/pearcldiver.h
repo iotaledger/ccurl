@@ -2,8 +2,8 @@
 #ifndef _PEARCLDIVER_H_
 #define _PEARCLDIVER_H_
 #include "claccess/clcontext.h"
-#include "PearlDiver.h"
-//#include "Hash.h"
+#include "pearl_diver.h"
+//#include "hash.h"
 
 typedef struct {
 	CLContext cl;

@@ -2,9 +2,9 @@
  * (c) 2016 Paul Handy, based on code from come-from-beyond
  */
 
-#include "Hash.h"
-#include "Curl.h"
-#include "PearlDiver.h"
+#include "hash.h"
+#include "curl.h"
+#include "pearl_diver.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>

@@ -10,7 +10,7 @@
 #include <pthread.h>
 #endif
 #include <stdbool.h>
-#include "Hash.h"
+#include "hash.h"
 
 #define Invalid_transaction_trits_length 0x63
 #define Invalid_min_weight_magnitude 0x64

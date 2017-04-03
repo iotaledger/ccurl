@@ -1,6 +1,6 @@
 #include "pearcldiver.h"
-#include "PearlDiver.h"
-#include "Hash.h"
+#include "pearl_diver.h"
+#include "hash.h"
 #include "claccess/clcontext.h"
 #include "pearl.cl.h"
 #include <time.h>

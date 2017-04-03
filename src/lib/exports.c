@@ -1,6 +1,6 @@
-#include "PearlDiver.h"
+#include "pearl_diver.h"
 #include "pearcldiver.h"
-#include "Curl.h"
+#include "curl.h"
 #include "util/converter.h"
 #include <stdlib.h>
 #include <stdio.h>

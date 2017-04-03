@@ -1,5 +1,5 @@
-#include "Hash.h"
-#include "PearlDiver.h"
+#include "hash.h"
+#include "pearl_diver.h"
 #include <string.h>
 #include <stdbool.h>
 #include <stdlib.h>

@@ -1,6 +1,6 @@
 #include "../lib/ccurl.h"
-#include "../lib/Hash.h"
-#include "../lib/PearlDiver.h"
+#include "../lib/hash.h"
+#include "../lib/pearl_diver.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

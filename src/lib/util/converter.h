@@ -1,7 +1,7 @@
 #ifndef _CONVERTER_H_
 #define _CONVERTER_H_
 
-#include "../Hash.h"
+#include "../hash.h"
 
 
 trit_t trit_tValue(trit_t *const trits, const int offset, const int size);

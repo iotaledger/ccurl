@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "Hash.h"
+#include "hash.h"
 
 #define NUMBER_OF_ROUNDS 27
 
