@@ -8,4 +8,4 @@ Version: @PACKAGE_VERSION@
 Description: @PACKAGE_DESCRIPTION@
 Vendor: @PACKAGE_VENDOR@
 Libs: -L${libdir} -lccurl
-Cflags: -I${includedir}
+Cflags: -I${includedir}/ccurl
