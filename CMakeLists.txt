@@ -86,6 +86,13 @@ install(TARGETS ${LIBRARY_NAME} ${LIBRARY_NAME}static
 	ARCHIVE DESTINATION lib
 	RUNTIME DESTINATION bin)
 
+set(PACKAGE_NAME "CCurl")
+set(PACKAGE_VENDOR "IOTA Foundation")
+set(PACKAGE_DESCRIPTION "CCurl - IOTA POW Accelerator")
+set(PACKAGE_VERSION "0.2.0")
+configure_file ("ccurl.pc.in" "${PROJECT_BINARY_DIR}/ccurl.pc" @ONLY)
+install (FILES "${PROJECT_BINARY_DIR}/ccurl.pc" DESTINATION lib/pkgconfig)
+
 # Install library headers
 FILE(GLOB HEADERS "src/lib/*.h" "src/lib/util/*.h" )
 #install(FILES ${CMAKE_SOURCE_DIR}/src/lib/ccurl.h DESTINATION include/ccurl)
