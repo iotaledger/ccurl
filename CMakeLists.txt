@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.6)
+cmake_minimum_required (VERSION 3.5)
 enable_language (C)
 #find_package (OpenCL)
 if (WIN32 AND NOT MINGW)
@@ -86,6 +86,13 @@ install(TARGETS ${LIBRARY_NAME} ${LIBRARY_NAME}static
 	ARCHIVE DESTINATION lib
 	RUNTIME DESTINATION bin)
 
+set(PACKAGE_NAME "CCurl")
+set(PACKAGE_VENDOR "IOTA Foundation")
+set(PACKAGE_DESCRIPTION "CCurl - IOTA POW Accelerator")
+set(PACKAGE_VERSION "0.2.0")
+configure_file ("ccurl.pc.in" "${PROJECT_BINARY_DIR}/ccurl.pc" @ONLY)
+install (FILES "${PROJECT_BINARY_DIR}/ccurl.pc" DESTINATION lib/pkgconfig)
+
 # Install library headers
 FILE(GLOB HEADERS "src/lib/*.h" "src/lib/util/*.h" )
 #install(FILES ${CMAKE_SOURCE_DIR}/src/lib/ccurl.h DESTINATION include/ccurl)
@@ -99,7 +106,7 @@ add_subdirectory (src/cli)
 set(CPACK_PACKAGE_NAME "CCurl")
 set(CPACK_PACKAGE_VENDOR "IOTA Foundation")
 set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "CCurl - IOTA POW Accelerator")
-set(CPACK_PACKAGE_VERSION "v0.2.0")
+set(CPACK_PACKAGE_VERSION "0.2.0")
 set(CPACK_PACKAGE_VERSION_MAJOR "0")
 set(CPACK_PACKAGE_VERSION_MINOR "2")
 set(CPACK_PACKAGE_VERSION_PATCH "0")
