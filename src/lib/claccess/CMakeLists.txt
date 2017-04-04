@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.6)
+cmake_minimum_required (VERSION 3.5)
 enable_language (C)
 find_package (Threads)
 find_library (OPENCL_LIBRARIES OpenCL)
