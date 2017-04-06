@@ -94,9 +94,10 @@ configure_file ("ccurl.pc.in" "${PROJECT_BINARY_DIR}/ccurl.pc" @ONLY)
 install (FILES "${PROJECT_BINARY_DIR}/ccurl.pc" DESTINATION lib/pkgconfig)
 
 # Install library headers
-FILE(GLOB HEADERS "src/lib/*.h" "src/lib/util/*.h" )
-#install(FILES ${CMAKE_SOURCE_DIR}/src/lib/ccurl.h DESTINATION include/ccurl)
+FILE(GLOB HEADERS "src/lib/*.h")
 install(FILES ${HEADERS} DESTINATION include/ccurl)
+FILE(GLOB HEADERSUTIL "src/lib/util/*.h")
+install(FILES ${HEADERSUTIL} DESTINATION include/ccurl/util)
 
 ### TESTING
 #enable_testing ()
