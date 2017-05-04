@@ -1,7 +1,7 @@
 #include "cunit_include.h"
 #include "../src/lib/ccurl.h"
-#include "../src/lib/Hash.h"
-#include "../src/lib/Curl.h"
+#include "../src/lib/hash.h"
+#include "../src/lib/curl.h"
 #include "../src/lib/util/converter.h"
 #include "random_trits.h"
 #include <stdio.h>

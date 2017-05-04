@@ -1,8 +1,8 @@
 #include "../src/lib/pearcldiver.h"
 #include "../src/lib/ccurl.h"
-#include "../src/lib/PearlDiver.h"
+#include "../src/lib/pearl_diver.h"
 #include "../src/lib/util/converter.h"
-#include "../src/lib/Curl.h"
+#include "../src/lib/curl.h"
 
 #include "cunit_include.h"
 #include <stdio.h>
