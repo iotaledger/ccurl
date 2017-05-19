@@ -32,7 +32,7 @@ trit_t TRYTE_TO_TRITS_MAPPINGS[TRYTE_SPACE][NUMBER_OF_TRITS_IN_A_TRYTE];/*[TRYTE
 
 static const char *TRYTE_ALPHABET = TRYTE_STRING;
 
-trit_t longValue(trit_t *const trits, const int offset, const int size) {
+trit_t long_value(trit_t *const trits, const int offset, const int size) {
 
 	trit_t value = 0;
 	for (int i = size; i-- > 0; ) {

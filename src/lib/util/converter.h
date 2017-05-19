@@ -4,6 +4,7 @@
 #include "../hash.h"
 
 
+trit_t long_value(trit_t *const trits, const int offset, const int size);
 trit_t trit_tValue(trit_t *const trits, const int offset, const int size);
 char *bytes_from_trits(trit_t *const trits, const int offset, const int size);
 void getTrits(const char * bytes, int bytelength, trit_t *const trits, int length);
