@@ -3,8 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TRYTE_LENGTH 2673
-
 #define HINTS "### TRYTES TO LONG ###\nUsage:\n\t trytes-to-long <Tryte string all caps> \n"
 
 int get_stdin(char *str, int len) {
@@ -37,11 +35,10 @@ int main(int argc, char *argv[]) {
 
 	if (argc > 1) {
 		buf = argv[1];
-		//memcpy(buf, argv[1], sizeof(char)*TRYTE_LENGTH);
 	} else {
 		buf = malloc(27 * sizeof(char));
 		if(get_stdin(buf, 27) != 0) {
-			fprintf(stderr, HINTS, TRYTE_LENGTH);
+			fprintf(stderr, HINTS);
 			return 1;
 		}
 	}
