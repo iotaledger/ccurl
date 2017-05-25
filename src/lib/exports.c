@@ -70,7 +70,7 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 	pdcl_node_t *pd_node = &base;
 
 #ifdef DEBUG
-	fprintf(stderr, "Welcome to CCURL, home of the ccurl. can I take your vector?\n");
+	fprintf(stderr, "Welcome to CCURL 0.2.1, home of the ccurl. can I take your vector?\n");
 #endif
 	ccurl_pow_node_init(pd_node);
 	while(pd_node->pdcl->pd.status == PD_SEARCHING) {

@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-//#define _CL_ALL_
+#define _CL_ALL_
 #ifndef DEBUG
 //#define DEBUG
 #endif
@@ -54,16 +54,13 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 	errno = clGetPlatformIDs(0, NULL, &num_platforms);
 	if(errno != CL_SUCCESS) {
 #ifdef DEBUG
-		fprintf(stderr, "Cannot get the number of OpenCL platforms available.\n");
+		fprintf(stderr, "Cannot get the number of OpenCL platforms available. E:%d\n", errno);
 #endif
 		return 1;
 	}
 	//cl_platform_id platforms[num_platforms];
 	platforms = malloc(num_platforms * sizeof(cl_platform_id));
 	clGetPlatformIDs(num_platforms, platforms, NULL);
-#ifdef DEBUG
-	fprintf(stderr, "Getting devices... \n");
-#endif
 	for(i=0; i< num_platforms; i++) {
 		cl_uint pf_num_devices;
 #ifdef _CL_ALL_
@@ -170,7 +167,9 @@ static int get_devices(CLContext *ctx, unsigned char **src, size_t *size) {
 		size_t log_size;
 		clGetProgramBuildInfo(ctx->programs[i], ctx->device[i], 
 				CL_PROGRAM_BUILD_LOG, 0xFFFF, build_log, &log_size);
-		//fputs(build_log, stderr);
+#ifdef DEBUG
+		fputs(build_log, stderr);
+#endif
 		free(build_log);
 		if(CL_SUCCESS != errno) {
 #ifdef DEBUG
