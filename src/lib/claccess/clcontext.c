@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 
-#define _CL_ALL_
+//#define _CL_ALL_
 #ifndef DEBUG
 //#define DEBUG
 #endif
