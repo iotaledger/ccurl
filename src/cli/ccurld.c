@@ -60,6 +60,9 @@ int main(int argc, char *argv[]) {
 	if((str=getenv("CCURL_LOOP_COUNT"))) {
 		ccurl_pow_set_loop_count(atol(str));
 	}
+	if((str=getenv("CCURL_OFFSET"))) {
+		ccurl_pow_set_offset(atol(str));
+	}
 	fprintf(stderr, "ccurl starting\n");
 	ccurl_pow_init();
 	while(running) {
@@ -71,16 +74,18 @@ int main(int argc, char *argv[]) {
 		char buf[TRYTE_LENGTH];
 		read(fd, buf, sizeof(buf));
 		close(fd);
-		time_t start,end;
-		start = time(0);
-		out = ccurl_pow(buf, min_weight_magnitude);
-		end = time(0);
-		if(out != NULL) {
-			fd = open(path, O_WRONLY);
-			write(fd, out, strlen(out));
-			close(fd);
-			digest = ccurl_digest_transaction(out);
-			fprintf(stderr,"%s: %f s\n",digest, difftime(end, start));
+		if(running) {
+			time_t start,end;
+			start = time(0);
+			out = ccurl_pow(buf, min_weight_magnitude);
+			end = time(0);
+			if(out != NULL) {
+				fd = open(path, O_WRONLY);
+				write(fd, out, strlen(out));
+				close(fd);
+				digest = ccurl_digest_transaction(out);
+				fprintf(stderr,"%s: %f s\n",digest, difftime(end, start));
+			}
 		}
 	}
     if(unlink(path)<0){

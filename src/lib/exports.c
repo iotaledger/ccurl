@@ -14,6 +14,7 @@ typedef struct pdcl_node {
 
 pdcl_node_t base;
 size_t loop_count = 32;
+size_t offset = 0;
 
 int ccurl_pow_node_init(pdcl_node_t *node) {
 	if(!node->initialized) {
@@ -28,15 +29,21 @@ int ccurl_pow_node_init(pdcl_node_t *node) {
 	}
 	return node->cl_available;
 }
+
 EXPORT int ccurl_pow_init() {
 	if(!base.initialized) {
 		base.cl_available = ccurl_pow_node_init(&base);
 	}
 	return base.cl_available;
 }
+
 EXPORT void ccurl_pow_set_loop_count(size_t c) {
 	if(c > 0) 
 		loop_count = c;
+}
+
+EXPORT void ccurl_pow_set_offset(size_t o) {
+	offset = o;
 }
 
 void ccurl_pow_node_finalize(pdcl_node_t *node) {
@@ -86,7 +93,7 @@ EXPORT char *ccurl_pow(char *trytes, int minWeightMagnitude) {
 #ifdef DEBUG
 		fprintf(stderr, "OpenCL Hashing with %lu loops...", pd_node->pdcl->loop_count);
 #endif
-		pearcl_search(pd_node->pdcl, trits, len * 3, minWeightMagnitude);
+		pearcl_search(pd_node->pdcl, trits, offset, len * 3, minWeightMagnitude);
 	} 
 	if(pd_node->pdcl->pd.status != PD_FOUND && pd_node->pdcl->pd.status != PD_INVALID && pd_node->pdcl->pd.status != PD_INTERRUPTED) {
 #ifdef DEBUG

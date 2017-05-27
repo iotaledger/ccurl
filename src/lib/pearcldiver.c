@@ -21,6 +21,7 @@ typedef struct {
 	trit_t *trits;
 	size_t min_weight_magnitude;
 	size_t index;
+	size_t offset;
 	PearCLDiver  *pdcl;
 } PDCLThread;
 
@@ -81,13 +82,14 @@ DWORD WINAPI pearcl_find(void *data) {
 #endif
 		size_t local_work_size,
 			   global_work_size,
-			   global_offset = 0,
+			   global_offset,
 			   num_groups;
 		char found = 0;
 		cl_event ev, ev1;
 		PDCLThread *thread;
 		PearCLDiver *pdcl;
 		thread = (PDCLThread *)data;
+		global_offset = thread->offset;
 		pdcl = thread->pdcl;
 		num_groups = (pdcl->cl.num_cores[thread->index]);
 		local_work_size = STATE_LENGTH;
@@ -160,6 +162,7 @@ DWORD WINAPI pearcl_find(void *data) {
 	void pearcl_search(
 			PearCLDiver *pdcl,
 			trit_t *const trits,
+			size_t offset,
 			size_t length,
 			size_t min_weight_magnitude
 			) {
@@ -198,6 +201,7 @@ DWORD WINAPI pearcl_find(void *data) {
 					.trits = trits,
 					.min_weight_magnitude = min_weight_magnitude,
 					.index = numberOfThreads,
+					.offset = offset,
 					.pdcl = pdcl
 			};
 			pthread_create(&tid[numberOfThreads], NULL, &pearcl_find,
