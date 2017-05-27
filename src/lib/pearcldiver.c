@@ -25,31 +25,31 @@ typedef struct {
 } PDCLThread;
 
 int init_pearcl(PearCLDiver *pdcl) {
+	CLContext *cl;
 	unsigned char *src[PD_NUM_SRC] = { pearl_cl };
 	size_t size[PD_NUM_SRC] = { pearl_cl_len };
 	char **names = (char *[]) { "init", "search", "finalize" };
-
 	if (!pdcl) {
 		pdcl = malloc(sizeof(PearCLDiver));
 	}
-
-	pdcl->cl.kernel.num_src = PD_NUM_SRC;
-	pdcl->cl.kernel.num_kernels = 3;
-	if (pd_init_cl(&(pdcl->cl), src, size, names) != 0) {
+	cl = &(pdcl->cl);
+	cl->kernel.num_src = PD_NUM_SRC;
+	cl->kernel.num_kernels = 3;
+	if (pd_init_cl(cl, src, size, names) != 0) {
 		return 1;
 	}
-	pdcl->cl.kernel.num_buffers = 9;
-	pdcl->cl.kernel.buffer[0] = (BufferInfo) { sizeof(trit_t)*HASH_LENGTH, CL_MEM_WRITE_ONLY };  // trit_hash //
-	pdcl->cl.kernel.buffer[1] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
-	pdcl->cl.kernel.buffer[2] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
-	pdcl->cl.kernel.buffer[3] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
-	pdcl->cl.kernel.buffer[4] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
-	pdcl->cl.kernel.buffer[5] = (BufferInfo) { sizeof(size_t), CL_MEM_READ_ONLY };                		// minweightmagnitude //
-	pdcl->cl.kernel.buffer[6] = (BufferInfo) { sizeof(char), CL_MEM_READ_WRITE };                 		// found //
-	pdcl->cl.kernel.buffer[7] = (BufferInfo) { sizeof(trit_t), CL_MEM_READ_WRITE, 2 };           // nonce_probe //
-	pdcl->cl.kernel.buffer[8] = (BufferInfo) { sizeof(size_t), CL_MEM_READ_ONLY};           // loop_length //
+	cl->kernel.num_buffers = 9;
+	cl->kernel.buffer[0] = (BufferInfo) { sizeof(trit_t)*HASH_LENGTH, CL_MEM_WRITE_ONLY };  // trit_hash //
+	cl->kernel.buffer[1] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
+	cl->kernel.buffer[2] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
+	cl->kernel.buffer[3] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
+	cl->kernel.buffer[4] = (BufferInfo) { sizeof(trit_t)*STATE_LENGTH, CL_MEM_READ_WRITE, 2 }; // states array  //
+	cl->kernel.buffer[5] = (BufferInfo) { sizeof(size_t), CL_MEM_READ_ONLY };                		// minweightmagnitude //
+	cl->kernel.buffer[6] = (BufferInfo) { sizeof(char), CL_MEM_READ_WRITE };                 		// found //
+	cl->kernel.buffer[7] = (BufferInfo) { sizeof(trit_t), CL_MEM_READ_WRITE, 2 };           // nonce_probe //
+	cl->kernel.buffer[8] = (BufferInfo) { sizeof(size_t), CL_MEM_READ_ONLY};           // loop_length //
 
-	return kernel_init_buffers(&(pdcl->cl));
+	return kernel_init_buffers(cl);
 }
 
 void pearcl_write_buffers(PDCLThread *thread) {
@@ -59,9 +59,6 @@ void pearcl_write_buffers(PDCLThread *thread) {
 	cl_mem *mem = cl->buffers[thread->index];
 	BufferInfo *bufinfo = cl->kernel.buffer;
 
-#ifdef DEBUG
-	fprintf(stderr, "Writing buffers... ");
-#endif
 	clEnqueueWriteBuffer(*cmdq, mem[1], CL_TRUE, 0, bufinfo[1].size, 
 			&(thread->states.mid_low), 0, NULL, NULL);
 	clEnqueueWriteBuffer(*cmdq, mem[2], CL_TRUE, 0, bufinfo[2].size, 
@@ -70,9 +67,6 @@ void pearcl_write_buffers(PDCLThread *thread) {
 			&(thread->min_weight_magnitude), 0, NULL, NULL);
 	clEnqueueWriteBuffer(*cmdq, mem[8], CL_TRUE, 0, bufinfo[8].size,
 			&(pdcl->loop_count), 0, NULL, NULL);
-#ifdef DEBUG
-	fprintf(stderr, "Buffers Written.\n");
-#endif
 	/*
 	   fprintf(stderr, "E: failed to write mid state low");
 	   fprintf(stderr, "E: failed to write mid state low");
@@ -107,9 +101,6 @@ DWORD WINAPI pearcl_find(void *data) {
 		}
 		pearcl_write_buffers(thread);
 
-#ifdef DEBUG
-		fprintf(stderr, "Initializing cores... ");
-#endif
 		if(CL_SUCCESS == 
 				clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
 					pdcl->cl.clkernel[thread->index][0], 1, &global_offset,
@@ -117,9 +108,6 @@ DWORD WINAPI pearcl_find(void *data) {
 		  ) {
 			clWaitForEvents(1, &ev);
 			clReleaseEvent(ev);
-#ifdef DEBUG
-			fprintf(stderr, "Done.\nRunning search kernels...");
-#endif
 
 			while (found == 0 && pdcl->pd.status == PD_SEARCHING) {
 				if(
@@ -146,37 +134,22 @@ DWORD WINAPI pearcl_find(void *data) {
 			clReleaseEvent(ev);
 		}
 
-#ifdef DEBUG
-		fprintf(stderr, "Done.\nFinalizing...");
-#endif
 		if(CL_SUCCESS != 
 				clEnqueueNDRangeKernel(pdcl->cl.clcmdq[thread->index],
 					pdcl->cl.clkernel[thread->index][2], 1, NULL,
 					&global_work_size, &local_work_size, 0, NULL, &ev))
 			fprintf(stderr, "E: running finalize kernel failed.\n");
 
-#ifdef DEBUG
-		fprintf(stderr, "Finalize finished.\n");
-#endif
 		if (found > 0) {
 			pthread_mutex_lock(&pdcl->pd.new_thread_search);
 			if (pdcl->pd.status != PD_FOUND) {
 				pdcl->pd.status = PD_FOUND;
-#ifdef DEBUG
-				fprintf(stderr, "Reading output trits...\n");
-#endif
 				if(CL_SUCCESS != 
 						clEnqueueReadBuffer(pdcl->cl.clcmdq[thread->index],
 							pdcl->cl.buffers[thread->index][0], CL_TRUE,
 							0, HASH_LENGTH * sizeof(trit_t), &(thread->trits[TRANSACTION_LENGTH - HASH_LENGTH]),
 							1, &ev, NULL)) {
-#ifdef DEBUG
-					fprintf(stderr, "E: reading transaction hash failed.\n");
-#endif
 				}
-#ifdef DEBUG
-				fprintf(stderr, "output trit read done.\n");
-#endif
 			}
 			pthread_mutex_unlock(&pdcl->pd.new_thread_search);
 		}
@@ -195,10 +168,6 @@ DWORD WINAPI pearcl_find(void *data) {
 
 		if (length != TRANSACTION_LENGTH || min_weight_magnitude > HASH_LENGTH) {
 			pdcl->pd.status = PD_INVALID;
-#ifdef DEBUG
-			fprintf(stderr, "E: Invalid transaction length. Got %lu, expected %lu\n",
-					length, (size_t)TRANSACTION_LENGTH);
-#endif
 			return;
 			/*
 			   return Invalid_transaction_trits_length;
@@ -223,9 +192,6 @@ DWORD WINAPI pearcl_find(void *data) {
 		thread_count = numberOfThreads;
 
 		PDCLThread  *pdthreads = (PDCLThread  *)malloc(numberOfThreads * sizeof(PDCLThread));
-#ifdef DEBUG
-		fprintf(stderr, "Starting CL Threads. \n");
-#endif
 		while (numberOfThreads-- > 0) {
 			pdthreads[numberOfThreads] = (PDCLThread) {
 				.states = states,
@@ -238,18 +204,12 @@ DWORD WINAPI pearcl_find(void *data) {
 					(void *)&(pdthreads[numberOfThreads]));
 		}
 
-#ifdef DEBUG
-		fprintf(stderr, "Waiting for CL Threads to finish. \n");
-#endif
 		sched_yield();
 		for (k = thread_count; k > 0; k--) {
 			pthread_join(tid[k - 1], NULL);
 		}
 
 		pthread_mutex_destroy(&pdcl->pd.new_thread_search);
-#ifdef DEBUG
-		fprintf(stderr, "Returning to master. Status is %u \n", pdcl->pd.status);
-#endif
 		free(tid);
 		free(pdthreads);
 		//return pdcl->pd.interrupted;
