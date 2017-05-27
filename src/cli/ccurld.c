@@ -25,20 +25,22 @@
 #define HINTS "### CCURL DAEMON ###\nUsage:\n\tccurld <MinWeightMagnitude> <path>\n"
 static volatile bool running = true;
 static void shutdown();
-static char *path;
+static char *path = "/tmp/pow";
 
 int main(int argc, char *argv[]) {
 	char *out = NULL, *str, *digest;
-	path = (char *)malloc(sizeof(char)*(TRYTE_LENGTH + 1));
 	long min_weight_magnitude;
 	int fd;
 
 	signal(SIGINT, shutdown);
-	if (argc < 2) {
+	if (argc < 1) {
 		fprintf(stderr, HINTS);
 		return 1;
 	}
+
 	if (argc > 2) {
+		fprintf(stderr, "Copying!.\n");
+		path = (char *)malloc(sizeof(char)*strlen(argv[2]));
 		memcpy(path, argv[2], sizeof(char)*strlen(argv[2]));
 	} 
 
@@ -103,5 +105,15 @@ static void shutdown() {
 	fprintf(stderr, "\nCaught SIGINT. Shutting down... \n");
 	running = false;
 	ccurl_pow_interrupt();
+	pid_t childPID;
+    if((childPID = fork())<0){
+		exit(EXIT_FAILURE);
+	}
+	if(!childPID) {
+		int fd = open(path, O_WRONLY);
+		char null[TRYTE_LENGTH];
+		write(fd, null, strlen(null));
+		close(fd);
+	}
 }
 
