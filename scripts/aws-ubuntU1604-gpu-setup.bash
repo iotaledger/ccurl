@@ -8,5 +8,3 @@ sudo apt-get -y install cuda
 export PATH=/usr/local/cuda/bin:$PATH
 export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
 sudo apt-get -y install opencl-headers
-echo PATH=/usr/local/cuda/bin:$PATH >> /home/ubuntu/.bashrc
-echo LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH >> /home/ubuntu/.bashrc
