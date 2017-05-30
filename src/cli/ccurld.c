@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
 	int fd;
 
 	signal(SIGINT, shutdown);
-	if (argc < 1) {
+	if (argc < 2) {
 		fprintf(stderr, HINTS);
 		return 1;
 	}
