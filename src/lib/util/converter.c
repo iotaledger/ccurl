@@ -140,18 +140,26 @@ static void increment( trit_t *trits, int size) {
 }
 
 void init_converter() {
-    trit_t trits[NUMBER_OF_TRITS_IN_A_BYTE];
-	memset(trits, 0, NUMBER_OF_TRITS_IN_A_BYTE*sizeof(trit_t));
-	for (int i = 0; i < HASH_LENGTH; i++) {
-		memcpy(&(BYTE_TO_TRITS_MAPPINGS[i]), trits, NUMBER_OF_TRITS_IN_A_BYTE * sizeof(trit_t));
-		//BYTE_TO_TRITS_MAPPINGS[i] = mytrits;/*Arrays.copyOf(trits, NUMBER_OF_TRITS_IN_A_BYTE);*/
-		increment(trits, NUMBER_OF_TRITS_IN_A_BYTE);
-	}
-	for (int i = 0; i < TRYTE_SPACE; i++) {
-		memcpy(&(TRYTE_TO_TRITS_MAPPINGS[i]), trits, NUMBER_OF_TRITS_IN_A_TRYTE * sizeof(trit_t));
-		//TRYTE_TO_TRITS_MAPPINGS[i] = mytrits; /*Arrays.copyOf(trits, NUMBER_OF_TRITS_IN_A_TRYTE);*/
-		increment(trits, NUMBER_OF_TRITS_IN_A_TRYTE);
-	}
+  static char isInitialized = 0; 
+
+  if(isInitialized) {
+    return;
+  }
+
+  trit_t trits[NUMBER_OF_TRITS_IN_A_BYTE];
+  memset(trits, 0, NUMBER_OF_TRITS_IN_A_BYTE*sizeof(trit_t));
+  for (int i = 0; i < HASH_LENGTH; i++) {
+    memcpy(&(BYTE_TO_TRITS_MAPPINGS[i]), trits, NUMBER_OF_TRITS_IN_A_BYTE * sizeof(trit_t));
+    //BYTE_TO_TRITS_MAPPINGS[i] = mytrits;/*Arrays.copyOf(trits, NUMBER_OF_TRITS_IN_A_BYTE);*/
+    increment(trits, NUMBER_OF_TRITS_IN_A_BYTE);
+  }
+  for (int i = 0; i < TRYTE_SPACE; i++) {
+    memcpy(&(TRYTE_TO_TRITS_MAPPINGS[i]), trits, NUMBER_OF_TRITS_IN_A_TRYTE * sizeof(trit_t));
+    //TRYTE_TO_TRITS_MAPPINGS[i] = mytrits; /*Arrays.copyOf(trits, NUMBER_OF_TRITS_IN_A_TRYTE);*/
+    increment(trits, NUMBER_OF_TRITS_IN_A_TRYTE);
+  }
+
+  isInitialized = 1;
 }
 
 
