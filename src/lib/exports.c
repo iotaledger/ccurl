@@ -8,7 +8,7 @@ EXPORT char* ccurl_digest_transaction(char* trytes) {
   init_converter();
   Curl curl;
   init_curl(&curl);
-  size_t length = strlen(trytes);
+  size_t length = strnlen(trytes, TRANSACTION_LENGTH);
   trit_t digest[HASH_LENGTH];
   trit_t* input =
       trits_from_trytes(trytes, length < TRYTE_LENGTH ? length : TRYTE_LENGTH);
