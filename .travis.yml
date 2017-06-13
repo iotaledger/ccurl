@@ -28,3 +28,5 @@ deploy:
     skip_cleanup: true
     on:
       tags: true
+      repo: iotaledger/ccurl
+      branch: master
