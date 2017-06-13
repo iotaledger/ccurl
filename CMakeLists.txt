@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 3.5)
+cmake_minimum_required (VERSION 3.2)
 enable_language (C)
 #find_package (OpenCL)
 if (WIN32 AND NOT MINGW)
