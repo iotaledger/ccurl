@@ -2,6 +2,14 @@ language: c
 
 compiler: clang
 
+addons:
+  apt:
+    sources:
+      - george-edison55-precise-backports
+    packages:
+      - cmake-data
+      - cmake
+
 before_script:
     - mkdir build
     - cd build
