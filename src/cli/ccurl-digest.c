@@ -8,19 +8,20 @@
 
 #define TRYTE_LENGTH 2673
 
-#define HINTS "### CCURL DIGEST ###\nUsage:\n\tccurl-cli [TRYTES (length: %d)] \n\techo TRYTES | ccurl-cli \n"
+#define HINTS                                                                  \
+  "### CCURL DIGEST ###\nUsage:\n\tccurl-cli [TRYTES (length: %d)] \n\techo "  \
+  "TRYTES | ccurl-cli \n"
 
-int main(int argc, char *argv[]) {
-	char *buf;
+int main(int argc, char* argv[]) {
+  char* buf;
 
-	if (argc > 1 && strlen(argv[1]) >= TRYTE_LENGTH) {
-		buf = argv[1];
-		//memcpy(buf, argv[1], sizeof(char)*TRYTE_LENGTH);
-	}
-	else {
-		fprintf(stderr, HINTS, TRYTE_LENGTH);
-		return 1;
-	}
-	fputs(ccurl_digest_transaction(buf),stdout);
-	return 0;
+  if (argc > 1 && strlen(argv[1]) >= TRYTE_LENGTH) {
+    buf = argv[1];
+    // memcpy(buf, argv[1], sizeof(char)*TRYTE_LENGTH);
+  } else {
+    fprintf(stderr, HINTS, TRYTE_LENGTH);
+    return 1;
+  }
+  fputs(ccurl_digest_transaction(buf), stdout);
+  return 0;
 }

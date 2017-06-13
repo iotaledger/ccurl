@@ -9,14 +9,16 @@
 #else
 #include <pthread.h>
 #endif
-#include <stdbool.h>
 #include "hash.h"
+#include <stdbool.h>
 
 #define Invalid_transaction_trits_length 0x63
 #define Invalid_min_weight_magnitude 0x64
 #define InterruptedException 0x65
-//#define HIGH_BITS 0b1111111111111111111111111111111111111111111111111111111111111111L
-//#define LOW_BITS 0b0000000000000000000000000000000000000000000000000000000000000000L
+//#define HIGH_BITS
+//0b1111111111111111111111111111111111111111111111111111111111111111L
+//#define LOW_BITS
+//0b0000000000000000000000000000000000000000000000000000000000000000L
 #define HIGH_BITS 0xFFFFFFFFFFFFFFFF
 #define LOW_BITS 0x0000000000000000
 #define LOW_0 0xDB6DB6DB6DB6DB6D
@@ -37,36 +39,39 @@
 #define pthread_join(A, B) WaitForSingleObject(A, INFINITE)
 #define pthread_mutex_t CRITICAL_SECTION
 #define pthread_mutex_unlock(A) LeaveCriticalSection(A)
-//http://stackoverflow.com/questions/800383/what-is-the-difference-between-mutex-and-critical-section
+// http://stackoverflow.com/questions/800383/what-is-the-difference-between-mutex-and-critical-section
 #define pthread_mutex_lock(A) EnterCriticalSection(A)
 #endif
 
 typedef struct {
-	trit_t mid_low[STATE_LENGTH];
-	trit_t mid_high[STATE_LENGTH];
-	trit_t low[STATE_LENGTH];
-	trit_t high[STATE_LENGTH];
+  trit_t mid_low[STATE_LENGTH];
+  trit_t mid_high[STATE_LENGTH];
+  trit_t low[STATE_LENGTH];
+  trit_t high[STATE_LENGTH];
 } States;
 
 typedef enum {
-	PD_FINISHED,
-	PD_SEARCHING,
-	PD_FAILED,
-	PD_FOUND,
-	PD_INTERRUPTED,
-	PD_INVALID
+  PD_FINISHED,
+  PD_SEARCHING,
+  PD_FAILED,
+  PD_FOUND,
+  PD_INTERRUPTED,
+  PD_INVALID
 } PDStatus;
 
 typedef struct {
-	PDStatus status;
-	pthread_mutex_t new_thread_search;
+  PDStatus status;
+  pthread_mutex_t new_thread_search;
 } PearlDiver;
 
-void init_pearldiver(PearlDiver *ctx);
-void interrupt(PearlDiver *ctx);
-void pd_search(PearlDiver *ctx, trit_t *const transaction_trits, int length, const int min_weight_magnitude, int numberOfThreads);
-void pd_transform( trit_t *const stateLow, trit_t *const stateHigh, trit_t *const scratchpadLow, trit_t *const scratchpadHigh);
-void pd_increment(trit_t *const midStateCopyLow, trit_t *const midStateCopyHigh, const int fromIndex, const int toIndex);
-void pd_search_init(States *states, trit_t *transaction_trits);
+void init_pearldiver(PearlDiver* ctx);
+void interrupt(PearlDiver* ctx);
+void pd_search(PearlDiver* ctx, trit_t* const transaction_trits, int length,
+               const int min_weight_magnitude, int numberOfThreads);
+void pd_transform(trit_t* const stateLow, trit_t* const stateHigh,
+                  trit_t* const scratchpadLow, trit_t* const scratchpadHigh);
+void pd_increment(trit_t* const midStateCopyLow, trit_t* const midStateCopyHigh,
+                  const int fromIndex, const int toIndex);
+void pd_search_init(States* states, trit_t* transaction_trits);
 
 #endif

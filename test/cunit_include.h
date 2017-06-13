@@ -7,6 +7,6 @@
 #include "BCUnit/BCUnit.h"
 #endif
 
-int run_tests(CU_SuiteInfo *suites);
+int run_tests(CU_SuiteInfo* suites);
 
 #endif

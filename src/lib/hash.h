@@ -22,5 +22,5 @@ typedef int64_t trit_t;
 
 #ifndef DEBUG
 #define DEBUG
-#endif //DEBUG
+#endif // DEBUG
 #endif
