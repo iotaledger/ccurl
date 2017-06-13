@@ -26,10 +26,11 @@
   "### CCURL DAEMON ###\nUsage:\n\tccurld <MinWeightMagnitude> <path>\n"
 static volatile bool running = true;
 static void shutdown();
-static char* path = "/tmp/pow";
+static char* defaultPath = "/tmp/pow";
+static char* path;
 
 int main(int argc, char* argv[]) {
-  char *out = NULL, *str, *digest;
+  char *out = NULL, *str, *digest = NULL;
   long min_weight_magnitude;
   int fd;
 
@@ -43,6 +44,8 @@ int main(int argc, char* argv[]) {
     fprintf(stderr, "Copying!.\n");
     path = (char*)malloc(sizeof(char) * strlen(argv[2]));
     memcpy(path, argv[2], sizeof(char) * strlen(argv[2]));
+  } else {
+    path = defaultPath;
   }
 
   int result = mkfifo(path, S_IWUSR | S_IRUSR | S_IRGRP | S_IROTH);
@@ -74,7 +77,8 @@ int main(int argc, char* argv[]) {
       fprintf(stderr, "Error opening FIFO.\n");
       exit(EXIT_FAILURE);
     }
-    char buf[TRYTE_LENGTH];
+    char buf[TRYTE_LENGTH + 1] = {0};
+
     read(fd, buf, sizeof(buf));
     close(fd);
     if (running) {
@@ -88,6 +92,9 @@ int main(int argc, char* argv[]) {
         close(fd);
         digest = ccurl_digest_transaction(out);
         fprintf(stderr, "%s: %f s\n", digest, difftime(end, start));
+
+        free((void*) digest);
+        free((void*) out);
       }
     }
   }
@@ -97,8 +104,7 @@ int main(int argc, char* argv[]) {
     printf("%s erased.\n", path);
   }
   ccurl_pow_finalize();
-  free(out);
-  free(digest);
+
   return 0;
 }
 
@@ -112,8 +118,12 @@ static void shutdown() {
   }
   if (!childPID) {
     int fd = open(path, O_WRONLY);
-    char null[TRYTE_LENGTH];
+    char null[TRYTE_LENGTH] = {0};
     write(fd, null, strlen(null));
     close(fd);
+  }
+
+  if(path != defaultPath) {
+    free((void*) path);
   }
 }

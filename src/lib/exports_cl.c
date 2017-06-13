@@ -68,7 +68,7 @@ EXPORT void ccurl_pow_interrupt() {
 EXPORT char* ccurl_pow(char* trytes, int minWeightMagnitude) {
   init_converter();
   char* buf = NULL; //= malloc(sizeof(char)*TRYTE_LENGTH);
-  size_t len = strlen(trytes);
+  size_t len = strnlen(trytes, TRANSACTION_LENGTH/3);
   trit_t* trits = trits_from_trytes(trytes, len);
   pdcl_node_t* pd_node = &base;
 
@@ -89,7 +89,7 @@ EXPORT char* ccurl_pow(char* trytes, int minWeightMagnitude) {
       pd_node->pdcl->loop_count = loop_count;
     }
 #ifdef DEBUG
-    fprintf(stderr, "OpenCL Hashing with %lu loops...",
+    fprintf(stderr, "OpenCL Hashing with %lu loops...\n",
             pd_node->pdcl->loop_count);
 #endif
     pearcl_search(pd_node->pdcl, trits, offset, len * 3, minWeightMagnitude);
@@ -98,7 +98,7 @@ EXPORT char* ccurl_pow(char* trytes, int minWeightMagnitude) {
       pd_node->pdcl->pd.status != PD_INVALID &&
       pd_node->pdcl->pd.status != PD_INTERRUPTED) {
 #ifdef DEBUG
-    fprintf(stderr, "Thread Hashing...");
+    fprintf(stderr, "Thread Hashing...\n");
 #endif
     pd_search(&(pd_node->pdcl->pd), trits, len * 3, minWeightMagnitude, -1);
   }

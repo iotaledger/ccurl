@@ -16,5 +16,6 @@ EXPORT char* ccurl_digest_transaction(char* trytes) {
   squeeze(&curl, digest, 0, HASH_LENGTH);
   hash = trytes_from_trits(digest, 0, HASH_LENGTH);
   // hash[HASH_LENGTH] = 0;
+  free((void*) input);
   return hash;
 }

@@ -25,11 +25,11 @@ void* find_nonce(void* states);
 #endif
 
 void interrupt(PearlDiver* ctx) {
+  pthread_mutex_lock(&ctx->new_thread_search);
   if (ctx->status == PD_SEARCHING) {
-    pthread_mutex_lock(&ctx->new_thread_search);
     ctx->status = PD_INTERRUPTED;
-    pthread_mutex_unlock(&ctx->new_thread_search);
   }
+  pthread_mutex_unlock(&ctx->new_thread_search);
 }
 
 void pd_search(PearlDiver* ctx, trit_t* const transactionTrits, int length,
@@ -40,6 +40,7 @@ void pd_search(PearlDiver* ctx, trit_t* const transactionTrits, int length,
   if (length != TRANSACTION_LENGTH || min_weight_magnitude < 0 ||
       min_weight_magnitude > HASH_LENGTH) {
     ctx->status = PD_INVALID;
+
 #ifdef DEBUG
     fprintf(stderr, "E: Invalid arguments.\n");
 #endif
@@ -70,27 +71,32 @@ void pd_search(PearlDiver* ctx, trit_t* const transactionTrits, int length,
 
   pthread_mutex_init(&ctx->new_thread_search, NULL);
   pthread_t* tid = malloc(numberOfThreads * sizeof(pthread_t));
-  thread_count = numberOfThreads;
 
   PDThread* pdthreads = (PDThread*)malloc(numberOfThreads * sizeof(PDThread));
+  thread_count = 0;
 #ifdef DEBUG
   fprintf(stderr, "I: Starting search threads.\n");
 #endif
-  while (numberOfThreads-- > 0) {
+  while (thread_count < numberOfThreads) {
 
-    pdthreads[numberOfThreads] =
+    pdthreads[thread_count] =
         (PDThread){.states = &states,
                    .trits = transactionTrits + TRANSACTION_LENGTH - HASH_LENGTH,
                    .min_weight_magnitude = min_weight_magnitude,
-                   .threadIndex = numberOfThreads,
+                   .threadIndex = thread_count,
                    .ctx = ctx};
-    pthread_create(&tid[numberOfThreads], NULL, &find_nonce,
-                   (void*)&(pdthreads[numberOfThreads]));
+    if(pthread_create(&tid[thread_count], NULL, &find_nonce,
+                       (void*)&(pdthreads[thread_count]))) {
+      tid[thread_count] = 0;
+    }
+    thread_count++;
   }
 
-  sched_yield();
-  for (k = thread_count; k > 0; k--) {
-    pthread_join(tid[k - 1], NULL);
+  for (k = 0; k < thread_count; k++) {
+    // Could be that thread creation has failed.
+    if(tid[k]) {
+      pthread_join(tid[k], NULL);
+    }
   }
 
 #ifdef DEBUG
@@ -175,6 +181,24 @@ int is_found_fast(trit_t* low, trit_t* high, int min_weight_magnitude) {
   return lastMeasurement;
 }
 
+char ctxStatusEq(PDThread* thread, PearlDiver* ctx, int cmp) {
+#if defined(_WIN32) && !defined(__MINGW32__)
+  EnterCriticalSection(&thread->ctx->new_thread_search);
+#else
+  pthread_mutex_lock(&thread->ctx->new_thread_search);
+#endif
+
+  char eq = ctx->status == cmp;
+  
+#if defined(_WIN32) && !defined(__MINGW32__)
+  LeaveCriticalSection(&thread->ctx->new_thread_search);
+#else
+  pthread_mutex_unlock(&thread->ctx->new_thread_search);
+#endif
+
+  return eq;
+}
+
 #if defined(_WIN32) && !defined(__MINGW32__)
 DWORD WINAPI find_nonce(void* data) {
 #else
@@ -205,7 +229,8 @@ void* find_nonce(void* data) {
   memset(stateHigh, 0, STATE_LENGTH * sizeof(trit_t));
   memset(scratchpadLow, 0, STATE_LENGTH * sizeof(trit_t));
   memset(scratchpadHigh, 0, STATE_LENGTH * sizeof(trit_t));
-  while (ctx->status == PD_SEARCHING) {
+
+  while (ctxStatusEq(my_thread, ctx, PD_SEARCHING)) {
     pd_increment(midStateCopyLow, midStateCopyHigh, (HASH_LENGTH / 3) * 2,
                  HASH_LENGTH);
     memcpy(stateLow, midStateCopyLow, STATE_LENGTH * sizeof(trit_t));
@@ -219,18 +244,17 @@ void* find_nonce(void* data) {
 #if defined(_WIN32) && !defined(__MINGW32__)
 #ifdef _WIN64
     _BitScanForward64(&shift, nonce_probe);
-    nonce_output = 1 << shift;
-    EnterCriticalSection(&my_thread->ctx->new_thread_search);
 #else
     _BitScanForward(&shift, nonce_probe);
+#endif
     nonce_output = 1 << shift;
     EnterCriticalSection(&my_thread->ctx->new_thread_search);
-#endif
 #else
     shift = __builtin_ctzll(nonce_probe);
     nonce_output = 1 << shift;
     pthread_mutex_lock(&my_thread->ctx->new_thread_search);
 #endif
+
     if (ctx->status != PD_FOUND) {
       ctx->status = PD_FOUND;
       for (i = 0; i < HASH_LENGTH; i++) {
@@ -241,7 +265,13 @@ void* find_nonce(void* data) {
                                                                          : 0);
       }
     }
+
+#if defined(_WIN32) && !defined(__MINGW32__)
+    LeaveCriticalSection(&my_thread->ctx->new_thread_search);
+#else
     pthread_mutex_unlock(&my_thread->ctx->new_thread_search);
+#endif
+
     return 0;
   }
   return 0;
@@ -278,18 +308,13 @@ void pd_increment(trit_t* const midStateCopyLow, trit_t* const midStateCopyHigh,
   for (i = fromIndex; i < toIndex; i++) {
 
     if (midStateCopyLow[i] == LOW_BITS) {
-
       midStateCopyLow[i] = HIGH_BITS;
       midStateCopyHigh[i] = LOW_BITS;
-
     } else {
 
       if (midStateCopyHigh[i] == LOW_BITS) {
-
         midStateCopyHigh[i] = HIGH_BITS;
-
       } else {
-
         midStateCopyLow[i] = LOW_BITS;
       }
 
