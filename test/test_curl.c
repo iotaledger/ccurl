@@ -6,6 +6,8 @@
 #include "random_trits.h"
 #include <stdio.h>
 #include <string.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 
 static const size_t length = STATE_LENGTH;
 static const int length_2 = length;
@@ -400,12 +402,31 @@ void test_export_hash_trytes(void) {
   CU_ASSERT(strcmp(ccurl_digest_transaction(nocl_pd_trans), nocl_pd_hash) == 0);
 }
 
+void test_curl_benchmark() {
+  float start, end;
+  int count = 1000;
+  Curl curl;
+  init_curl(&curl);
+  trit_t* mytrits = trits_from_trytes(nocl_pd_trans, TRANSACTION_LENGTH / 3);
+  trit_t myhash[HASH_LENGTH];
+
+  start = (float)clock()/CLOCKS_PER_SEC;
+  for(int i = 0; i < count; i++) {
+    absorb(&curl, mytrits, 0, TRANSACTION_LENGTH);
+    squeeze(&curl, myhash, 0, HASH_LENGTH);
+    reset(&curl);
+  }
+  end = (float)clock()/CLOCKS_PER_SEC;
+  fprintf (stderr, "\nTime elapsed %f \n", (end-start)/count);
+}
+
 static CU_TestInfo tests[] = {
     {"Curl Absorb Test", test_curl_absorb},
     {"Curl Reset Test", test_curl_reset},
     {"Curl NoReset Fail Test", test_curl_noreset_fail},
     {"Curl Hash Fail Test", test_curl_hash_works},
     {"Curl export digest test", test_export_hash_trytes},
+    {"Curl benchmark", test_curl_benchmark},
     CU_TEST_INFO_NULL,
 };
 

@@ -8,9 +8,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define __TRUTH_TABLE 1, 0, -1, 1, -1, 0, -1, 1, 0
+#define __TRUTH_TABLE 1, 0, -1, 2, 1, -1, 0, 2, -1, 1, 0
 
-static const trit_t TRUTH_TABLE[9] = {__TRUTH_TABLE};
+static const trit_t TRUTH_TABLE[11] = {__TRUTH_TABLE};
 
 void transform(Curl* ctx);
 
@@ -49,7 +49,7 @@ void transform(Curl* ctx) {
       scratchpadIndexSave = scratchpadIndex;
       scratchpadIndex += (scratchpadIndex < 365 ? 364 : -365);
       ctx->state[stateIndex] = TRUTH_TABLE[scratchpad[scratchpadIndexSave] +
-                                           scratchpad[scratchpadIndex] * 3 + 4];
+                                           (scratchpad[scratchpadIndex]<<2) +5 ];
     }
   }
 }

@@ -9,7 +9,6 @@ include(InstallRequiredSystemLibraries)
 project (ccurl)
 
 set(CMAKE_INSTALL_PREFIX "/usr")
-
 set (LIBRARY_NAME ccurl)
 #set (OPENCL_LIBRARIES ${CMAKE_SOURCE_DIR}/deps/libopencl-stub/build/lib/libOpenCL.a)
 set (CL_LIBRARY_NAME OpenCL)
@@ -20,7 +19,7 @@ add_subdirectory (deps/libopencl-stub)
 if (WIN32 AND NOT MINGW)
     set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall ")
 else()
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall -g -O0")
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall -O3")
     #set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread -Wall -O0")
 endif()
 
