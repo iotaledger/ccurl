@@ -94,6 +94,7 @@ void* pearcl_find(void* data) {
   cl_event ev, ev1;
   PDCLThread* thread;
   PearCLDiver* pdcl;
+  int i;
   thread = (PDCLThread*)data;
   global_offset = thread->offset;
   pdcl = thread->pdcl;
@@ -104,7 +105,7 @@ void* pearcl_find(void* data) {
   }
   global_work_size = local_work_size * num_groups;
 
-  for (int i = 0; i < thread->index; i++) {
+  for (i = 0; i < thread->index; i++) {
     global_offset += pdcl->cl.num_cores[i];
   }
   pearcl_write_buffers(thread);

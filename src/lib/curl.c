@@ -40,12 +40,13 @@ void squeeze(Curl* ctx, trit_t* trits, int offset, int length) {
 }
 
 void transform(Curl* ctx) {
+  int round, stateIndex;
   trit_t scratchpad[STATE_LENGTH];
   int scratchpadIndex = 0;
   int scratchpadIndexSave;
-  for (int round = 0; round < NUMBER_OF_ROUNDS; round++) {
+  for (round = 0; round < NUMBER_OF_ROUNDS; round++) {
     memcpy(scratchpad, ctx->state, STATE_LENGTH * sizeof(trit_t));
-    for (int stateIndex = 0; stateIndex < STATE_LENGTH; stateIndex++) {
+    for (stateIndex = 0; stateIndex < STATE_LENGTH; stateIndex++) {
       scratchpadIndexSave = scratchpadIndex;
       scratchpadIndex += (scratchpadIndex < 365 ? 364 : -365);
       ctx->state[stateIndex] = TRUTH_TABLE[scratchpad[scratchpadIndexSave] +
