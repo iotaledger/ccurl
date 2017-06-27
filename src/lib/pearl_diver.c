@@ -70,9 +70,9 @@ void pd_search(PearlDiver* ctx, trit_t* const transactionTrits, int length,
   }
 
   pthread_mutex_init(&ctx->new_thread_search, NULL);
-  pthread_t* tid = malloc(numberOfThreads * sizeof(pthread_t));
+  pthread_t tid[numberOfThreads];
 
-  PDThread* pdthreads = (PDThread*)malloc(numberOfThreads * sizeof(PDThread));
+  PDThread pdthreads[numberOfThreads];
   thread_count = 0;
 #ifdef DEBUG
   fprintf(stderr, "I: Starting search threads.\n");
@@ -87,7 +87,7 @@ void pd_search(PearlDiver* ctx, trit_t* const transactionTrits, int length,
                    .ctx = ctx};
     if(pthread_create(&tid[thread_count], NULL, &find_nonce,
                        (void*)&(pdthreads[thread_count]))) {
-      tid[thread_count] = 0;
+      //tid[thread_count] = 0;
     }
     thread_count++;
   }
@@ -102,8 +102,6 @@ void pd_search(PearlDiver* ctx, trit_t* const transactionTrits, int length,
 #ifdef DEBUG
   fprintf(stderr, "I: Found threads. Returning.\n");
 #endif
-  free(tid);
-  free(pdthreads);
   return; // ctx->status == PD_INTERRUPTED;
 }
 
