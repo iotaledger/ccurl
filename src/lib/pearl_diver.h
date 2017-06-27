@@ -66,12 +66,12 @@ typedef struct {
 
 void init_pearldiver(PearlDiver* ctx);
 void interrupt(PearlDiver* ctx);
-void pd_search(PearlDiver* ctx, trit_t* const transaction_trits, int length,
+void pd_search(PearlDiver* ctx, char* const transaction_trits, int length,
                const int min_weight_magnitude, int numberOfThreads);
 void pd_transform(trit_t* const stateLow, trit_t* const stateHigh,
                   trit_t* const scratchpadLow, trit_t* const scratchpadHigh);
 void pd_increment(trit_t* const midStateCopyLow, trit_t* const midStateCopyHigh,
                   const int fromIndex, const int toIndex);
-void pd_search_init(States* states, trit_t* transaction_trits);
+void pd_search_init(States* states, char* transaction_trits);
 
 #endif

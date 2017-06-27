@@ -47,8 +47,8 @@ int main(int argc, char* argv[]) {
   }
   init_converter();
   size_t length = strlen(buf);
-  trit_t* input = trits_from_trytes(buf, length);
-  trit_t value = long_value(input, 0, length * 3);
-  fprintf(stdout, "%ld", value);
+  char* input = trits_from_trytes(buf, length);
+  char value = long_value(input, 0, length * 3);
+  fprintf(stdout, "%hhd", value);
   return 0;
 }

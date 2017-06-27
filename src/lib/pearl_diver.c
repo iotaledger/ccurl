@@ -12,7 +12,7 @@
 
 typedef struct {
   States* states;
-  trit_t* trits;
+  char* trits;
   int min_weight_magnitude;
   int threadIndex;
   PearlDiver* ctx;
@@ -32,7 +32,7 @@ void interrupt(PearlDiver* ctx) {
   pthread_mutex_unlock(&ctx->new_thread_search);
 }
 
-void pd_search(PearlDiver* ctx, trit_t* const transactionTrits, int length,
+void pd_search(PearlDiver* ctx, char* const transactionTrits, int length,
                const int min_weight_magnitude, int numberOfThreads) {
 
   int k, thread_count;
@@ -45,10 +45,6 @@ void pd_search(PearlDiver* ctx, trit_t* const transactionTrits, int length,
     fprintf(stderr, "E: Invalid arguments.\n");
 #endif
     return;
-    /*
-    return Invalid_transaction_trits_length;
-    return Invalid_min_weight_magnitude;
-    */
   }
 
   ctx->status = PD_SEARCHING;
@@ -105,7 +101,7 @@ void pd_search(PearlDiver* ctx, trit_t* const transactionTrits, int length,
   return; // ctx->status == PD_INTERRUPTED;
 }
 
-void pd_search_init(States* states, trit_t* transactionTrits) {
+void pd_search_init(States* states, char* transactionTrits) {
   int i, j, offset = 0;
   for (i = HASH_LENGTH; i < STATE_LENGTH; i++) {
 
@@ -206,7 +202,7 @@ void* find_nonce(void* data) {
   int i, shift;
   trit_t nonce_probe, nonce_output;
   PDThread* my_thread = (PDThread*)data;
-  trit_t* trits = my_thread->trits;
+  char* trits = my_thread->trits;
 
   memset(midStateCopyLow, 0, STATE_LENGTH * sizeof(trit_t));
   memset(midStateCopyHigh, 0, STATE_LENGTH * sizeof(trit_t));

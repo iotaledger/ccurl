@@ -13,7 +13,7 @@ typedef struct {
 } PearCLDiver;
 
 int init_pearcl(PearCLDiver* pd);
-void pearcl_search(PearCLDiver* pdcl, trit_t* const trits, size_t offset,
+void pearcl_search(PearCLDiver* pdcl, char* const trits, size_t offset,
                    size_t length, size_t min_weight_magnitude);
 
 #endif /* _PEARCLDIVER_H_ */

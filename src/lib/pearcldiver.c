@@ -18,7 +18,7 @@
 
 typedef struct {
   States states;
-  trit_t* trits;
+  char* trits;
   size_t min_weight_magnitude;
   size_t index;
   size_t offset;
@@ -40,7 +40,7 @@ int init_pearcl(PearCLDiver* pdcl) {
     return 1;
   }
   cl->kernel.num_buffers = 9;
-  cl->kernel.buffer[0] = (BufferInfo){sizeof(trit_t) * HASH_LENGTH,
+  cl->kernel.buffer[0] = (BufferInfo){sizeof(char) * HASH_LENGTH,
                                       CL_MEM_WRITE_ONLY}; // trit_hash //
   cl->kernel.buffer[1] = (BufferInfo){sizeof(trit_t) * STATE_LENGTH,
                                       CL_MEM_READ_WRITE, 2}; // states array  //
@@ -154,7 +154,7 @@ void* pearcl_find(void* data) {
       if (CL_SUCCESS != clEnqueueReadBuffer(
                             pdcl->cl.clcmdq[thread->index],
                             pdcl->cl.buffers[thread->index][0], CL_TRUE, 0,
-                            HASH_LENGTH * sizeof(trit_t),
+                            HASH_LENGTH * sizeof(char),
                             &(thread->trits[TRANSACTION_LENGTH - HASH_LENGTH]),
                             1, &ev, NULL)) {
       }
@@ -165,7 +165,7 @@ void* pearcl_find(void* data) {
   return 0;
 }
 
-void pearcl_search(PearCLDiver* pdcl, trit_t* const trits, size_t offset,
+void pearcl_search(PearCLDiver* pdcl, char* const trits, size_t offset,
                    size_t length, size_t min_weight_magnitude) {
   int k, thread_count;
   int numberOfThreads = pdcl->cl.num_devices;

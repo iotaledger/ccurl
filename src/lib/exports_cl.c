@@ -69,7 +69,7 @@ EXPORT char* ccurl_pow(char* trytes, int minWeightMagnitude) {
   init_converter();
   char* buf = NULL; //= malloc(sizeof(char)*TRYTE_LENGTH);
   size_t len = strnlen(trytes, TRANSACTION_LENGTH/3);
-  trit_t* trits = trits_from_trytes(trytes, len);
+  char* trits = trits_from_trytes(trytes, len);
   pdcl_node_t* pd_node = &base;
 
 #ifdef DEBUG

@@ -80,7 +80,7 @@ static void test_search(void) {
   int nonce_size = 13;
   char *digest, *trans;
 
-  trit_t *mytrits, hash_trits[HASH_LENGTH];
+  char *mytrits, hash_trits[HASH_LENGTH];
 
   if (init_pearcl(&pdcl) != 0) {
     CU_FAIL("E: Could not initialize opencl\n");
@@ -96,7 +96,7 @@ static void test_search(void) {
   while (nonce_size < 19) {
     fprintf(stderr, "Testing mwm of %d: ", nonce_size);
     start = clock();
-    pearcl_search(&pdcl, mytrits, TRANSACTION_LENGTH, nonce_size);
+    pearcl_search(&pdcl, mytrits, TRANSACTION_LENGTH, nonce_size, -1);
     diff = clock() - start;
 
     // printf("I took this many seconds: %ld", diff / CLOCKS_PER_SEC);
