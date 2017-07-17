@@ -4,7 +4,7 @@
 
 //#define _CL_ALL_
 #ifndef DEBUG
-//#define DEBUG
+#define DEBUG
 #endif
 
 static void CL_CALLBACK pfn_notify(const char* errinfo,

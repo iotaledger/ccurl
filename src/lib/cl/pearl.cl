@@ -87,14 +87,14 @@ void setup_ids(__private size_t* id, __private size_t* gid,
 void increment(__global trit_t* mid_low, __global trit_t* mid_high,
                __private size_t from_index, __private size_t to_index) {
   size_t i;
-  size_t carry = 0;
+  trit_t carry = 1;
   trit_t low, hi;
   for (i = from_index; i < to_index && carry != 0; i++) {
     low = mid_low[i];
-    hi = mid_hi[i];
-    mid_low = high ^ low;
-    mid_hi = low;
-    carry = hi & (^low);
+    hi = mid_high[i];
+    mid_low[i] = hi ^ low;
+    mid_high[i] = low;
+    carry = hi & (~low);
   }
 }
 
