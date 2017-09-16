@@ -6,14 +6,13 @@
 #include <string.h>
 #include <time.h>
 
-#define NUMBER_OF_ROUNDS 27
 
-typedef struct _Curl { char state[STATE_LENGTH]; } Curl;
+typedef struct { char state[STATE_LENGTH]; } curl_t;
 
-EXPORT void init_curl(Curl* ctx);
+EXPORT void init_curl(curl_t* ctx);
 
-EXPORT void absorb(Curl* ctx, char* const trits, int offset, int length);
-EXPORT void squeeze(Curl* ctx, char* const trits, int offset, int length);
-EXPORT void reset(Curl* ctx);
+EXPORT void absorb(curl_t* ctx, char* const trits, int length);
+EXPORT void squeeze(curl_t* ctx, char* const trits, int length);
+EXPORT void reset(curl_t* ctx);
 
 #endif
