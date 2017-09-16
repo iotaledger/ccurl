@@ -1,5 +1,6 @@
 #include "pearcldiver.h"
 #include "claccess/clcontext.h"
+#include "constants.h"
 #include "hash.h"
 #include "pearl.cl.h"
 #include "pearl_diver.h"
@@ -19,6 +20,7 @@
 typedef struct {
   States states;
   char* trits;
+  curl_t *curl;
   size_t min_weight_magnitude;
   size_t index;
   size_t offset;
@@ -42,20 +44,20 @@ int init_pearcl(PearCLDiver* pdcl) {
   cl->kernel.num_buffers = 9;
   cl->kernel.buffer[0] = (BufferInfo){sizeof(char) * HASH_LENGTH,
                                       CL_MEM_WRITE_ONLY}; // trit_hash //
-  cl->kernel.buffer[1] = (BufferInfo){sizeof(trit_t) * STATE_LENGTH,
+  cl->kernel.buffer[1] = (BufferInfo){sizeof(bc_trit_t) * STATE_LENGTH,
                                       CL_MEM_READ_WRITE, 2}; // states array  //
-  cl->kernel.buffer[2] = (BufferInfo){sizeof(trit_t) * STATE_LENGTH,
+  cl->kernel.buffer[2] = (BufferInfo){sizeof(bc_trit_t) * STATE_LENGTH,
                                       CL_MEM_READ_WRITE, 2}; // states array  //
-  cl->kernel.buffer[3] = (BufferInfo){sizeof(trit_t) * STATE_LENGTH,
+  cl->kernel.buffer[3] = (BufferInfo){sizeof(bc_trit_t) * STATE_LENGTH,
                                       CL_MEM_READ_WRITE, 2}; // states array  //
-  cl->kernel.buffer[4] = (BufferInfo){sizeof(trit_t) * STATE_LENGTH,
+  cl->kernel.buffer[4] = (BufferInfo){sizeof(bc_trit_t) * STATE_LENGTH,
                                       CL_MEM_READ_WRITE, 2}; // states array  //
   cl->kernel.buffer[5] =
       (BufferInfo){sizeof(size_t), CL_MEM_READ_ONLY}; // minweightmagnitude //
   cl->kernel.buffer[6] =
       (BufferInfo){sizeof(char), CL_MEM_READ_WRITE}; // found //
   cl->kernel.buffer[7] =
-      (BufferInfo){sizeof(trit_t), CL_MEM_READ_WRITE, 2}; // nonce_probe //
+      (BufferInfo){sizeof(bc_trit_t), CL_MEM_READ_WRITE, 2}; // nonce_probe //
   cl->kernel.buffer[8] =
       (BufferInfo){sizeof(size_t), CL_MEM_READ_ONLY}; // loop_length //
 
@@ -155,7 +157,8 @@ void* pearcl_find(void* data) {
                             pdcl->cl.clcmdq[thread->index],
                             pdcl->cl.buffers[thread->index][0], CL_TRUE, 0,
                             HASH_LENGTH * sizeof(char),
-                            &(thread->trits[TRANSACTION_LENGTH - HASH_LENGTH]),
+                            &(thread->curl[0]),
+                            //&(thread->trits[TRANSACTION_LENGTH - HASH_LENGTH]),
                             1, &ev, NULL)) {
       }
     }
@@ -165,24 +168,24 @@ void* pearcl_find(void* data) {
   return 0;
 }
 
-void pearcl_search(PearCLDiver* pdcl, char* const trits, size_t offset,
-                   size_t length, size_t min_weight_magnitude) {
+void pearcl_search(
+		PearCLDiver* pdcl, 
+		curl_t * const curl, 
+		size_t offset, 
+		size_t min_weight_magnitude
+		) {
   int k, thread_count;
   int numberOfThreads = pdcl->cl.num_devices;
 
-  if (length != TRANSACTION_LENGTH || min_weight_magnitude > HASH_LENGTH) {
+  if (min_weight_magnitude > HASH_LENGTH) {
     pdcl->pd.status = PD_INVALID;
     return;
-    /*
-       return Invalid_transaction_trits_length;
-       return Invalid_min_weight_magnitude;
-       */
   }
 
   pdcl->pd.status = PD_SEARCHING;
 
   States states;
-  pd_search_init(&states, trits);
+  pd_search_init(&states, curl, HASH_LENGTH - NONCE_LENGTH);
 
   if (numberOfThreads == 0) {
     pdcl->pd.status = PD_FAILED;
@@ -198,7 +201,7 @@ void pearcl_search(PearCLDiver* pdcl, char* const trits, size_t offset,
   while (numberOfThreads-- > 0) {
     pdthreads[numberOfThreads] =
         (PDCLThread){.states = states,
-                     .trits = trits,
+                     .curl = curl,
                      .min_weight_magnitude = min_weight_magnitude,
                      .index = numberOfThreads,
                      .offset = offset,

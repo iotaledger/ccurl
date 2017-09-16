@@ -4,6 +4,7 @@
 
 #include "curl.h"
 #include "hash.h"
+#include "constants.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -65,13 +66,14 @@
 static const size_t TRUTH_TABLE[11] = {__TRUTH_TABLE};
 static const size_t INDEX[STATE_LENGTH+1] = {__INDEX_TABLE};
 
-void transform(Curl* ctx);
+void transform(curl_t* ctx);
 
-void init_curl(Curl* ctx) {
+void init_curl(curl_t* ctx) {
   memset(ctx->state, 0, STATE_LENGTH * sizeof(char));
 }
 int i = 0;
-void absorb(Curl* ctx, char* const trits, int offset, int length) {
+void absorb(curl_t* ctx, char* const trits, int length) {
+  int offset = 0;
   do {
     memcpy(ctx->state, trits + offset,
            (length < HASH_LENGTH ? length : HASH_LENGTH) * sizeof(char));
@@ -80,7 +82,8 @@ void absorb(Curl* ctx, char* const trits, int offset, int length) {
   } while ((length -= HASH_LENGTH) > 0);
 }
 
-void squeeze(Curl* ctx, char* trits, int offset, int length) {
+void squeeze(curl_t* ctx, char* trits, int length) {
+  int offset = 0;
   do {
     // memcpy(trits+offset,  ctx->state, (length < HASH_LENGTH? length:
     // HASH_LENGTH) * sizeof(char));
@@ -91,7 +94,7 @@ void squeeze(Curl* ctx, char* trits, int offset, int length) {
   } while ((length -= HASH_LENGTH) > 0);
 }
 
-void transform(Curl* ctx) {
+void transform(curl_t* ctx) {
   int round, stateIndex;
   char scratchpad[STATE_LENGTH];
   for (round = 0; round < NUMBER_OF_ROUNDS; round++) {
@@ -103,4 +106,4 @@ void transform(Curl* ctx) {
   }
 }
 
-void reset(Curl* ctx) { memset(ctx->state, 0, STATE_LENGTH * sizeof(char)); }
+void reset(curl_t* ctx) { memset(ctx->state, 0, STATE_LENGTH * sizeof(char)); }

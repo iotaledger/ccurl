@@ -158,42 +158,19 @@ static void increment(char* trits, int size) {
   }
 }
 
+void init_converter (void) __attribute__ ((constructor));
 void init_converter() {
   int i;
-  static char isInitialized = 0;
-
-  if (isInitialized) {
-    return;
-  }
-
   char trits[NUMBER_OF_TRITS_IN_A_BYTE];
   memset(trits, 0, NUMBER_OF_TRITS_IN_A_BYTE * sizeof(char));
   for (i = 0; i < HASH_LENGTH; i++) {
     memcpy(&(BYTE_TO_TRITS_MAPPINGS[i]), trits,
            NUMBER_OF_TRITS_IN_A_BYTE * sizeof(char));
-    // BYTE_TO_TRITS_MAPPINGS[i] = mytrits;/*Arrays.copyOf(trits,
-    // NUMBER_OF_TRITS_IN_A_BYTE);*/
     increment(trits, NUMBER_OF_TRITS_IN_A_BYTE);
   }
   for (i = 0; i < TRYTE_SPACE; i++) {
     memcpy(&(TRYTE_TO_TRITS_MAPPINGS[i]), trits,
            NUMBER_OF_TRITS_IN_A_TRYTE * sizeof(char));
-    // TRYTE_TO_TRITS_MAPPINGS[i] = mytrits; /*Arrays.copyOf(trits,
-    // NUMBER_OF_TRITS_IN_A_TRYTE);*/
     increment(trits, NUMBER_OF_TRITS_IN_A_TRYTE);
   }
-
-  isInitialized = 1;
 }
-
-/*
-   static void increment(char *const trits, const int size) {
-   for (int i = 0; i < size; i++) {
-   if (++trits[i] > Converter.MAX_TRIT_VALUE) {
-   trits[i] = Converter.MIN_TRIT_VALUE;
-   } else {
-   break;
-   }
-   }
-   }
-   */

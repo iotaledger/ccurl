@@ -1,5 +1,6 @@
 #include "curl.h"
 #include "pearcldiver.h"
+#include "transaction.h"
 #include "pearl_diver.h"
 #include "util/converter.h"
 #include <stdio.h>
@@ -66,17 +67,11 @@ EXPORT void ccurl_pow_interrupt() {
 }
 
 EXPORT char* ccurl_pow(char* trytes, int minWeightMagnitude) {
-  init_converter();
   char* buf = NULL; //= malloc(sizeof(char)*TRYTE_LENGTH);
   size_t len = strnlen(trytes, TRANSACTION_LENGTH/3);
   char* trits = trits_from_trytes(trytes, len);
   pdcl_node_t* pd_node = &base;
 
-#ifdef DEBUG
-  fprintf(
-      stderr,
-      "Welcome to CCURL 0.2.1, home of the ccurl. can I take your vector?\n");
-#endif
   ccurl_pow_node_init(pd_node);
   while (pd_node->pdcl->pd.status == PD_SEARCHING) {
     if (pd_node->next != NULL) {
@@ -84,15 +79,21 @@ EXPORT char* ccurl_pow(char* trytes, int minWeightMagnitude) {
     }
   }
 
+  curl_t curl;
+  init_curl(&curl);
+  absorb(&curl, trits, TRANSACTION_LENGTH - HASH_LENGTH);
+  memcpy(&curl.state, &trits[TRANSACTION_LENGTH - HASH_LENGTH], HASH_LENGTH * sizeof(char));
+  buf = trytes_from_trits(curl.state, 0, HASH_LENGTH);
+  fprintf(stderr, "Curl: %s\n", buf);
+
   if (ccurl_pow_node_init(pd_node) == 0) {
     if (pd_node->pdcl->loop_count < 1) {
       pd_node->pdcl->loop_count = loop_count;
     }
 #ifdef DEBUG
-    fprintf(stderr, "OpenCL Hashing with %lu loops...\n",
-            pd_node->pdcl->loop_count);
+    fprintf(stderr, "OpenCL Hashing with %lu loops...\n", pd_node->pdcl->loop_count);
 #endif
-    pearcl_search(pd_node->pdcl, trits, offset, len * 3, minWeightMagnitude);
+    pearcl_search(pd_node->pdcl, &curl, offset, minWeightMagnitude);
   }
   if (pd_node->pdcl->pd.status != PD_FOUND &&
       pd_node->pdcl->pd.status != PD_INVALID &&
@@ -100,12 +101,12 @@ EXPORT char* ccurl_pow(char* trytes, int minWeightMagnitude) {
 #ifdef DEBUG
     fprintf(stderr, "Thread Hashing...\n");
 #endif
-    pd_search(&(pd_node->pdcl->pd), trits, len * 3, minWeightMagnitude, -1);
+    pd_search(&(pd_node->pdcl->pd), &curl, minWeightMagnitude, -1);
   }
   if (pd_node->pdcl->pd.status == PD_FOUND) {
-#ifdef DEBUG
-    fprintf(stderr, "Pow Finished.\n");
-#endif
+	memcpy(&trits[TRANSACTION_LENGTH - HASH_LENGTH], &curl.state, HASH_LENGTH * sizeof(char));
+	buf = trytes_from_trits(curl.state, 0, HASH_LENGTH);
+	fprintf(stderr, "Curl: %s\n", buf);
     buf = trytes_from_trits(trits, 0, TRANSACTION_LENGTH);
   }
 

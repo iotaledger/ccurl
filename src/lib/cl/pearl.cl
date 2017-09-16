@@ -1,4 +1,11 @@
 #define HASH_LENGTH 243
+#define OFFSET_LENGTH 4
+#define NONCE_LENGTH HASH_LENGTH / 3
+#define INT_LENGTH NONCE_LENGTH / 3
+#define NONCE_START HASH_LENGTH - NONCE_LENGTH
+#define NONCE_INIT_START NONCE_START + OFFSET_LENGTH
+#define NONCE_INCREMENT_START NONCE_INIT_START + INT_LENGTH
+#define NUMBER_OF_ROUNDS 81
 #define STATE_LENGTH 3 * HASH_LENGTH
 #define HALF_LENGTH 364
 #define HIGH_BITS 0xFFFFFFFFFFFFFFFF
@@ -65,30 +72,30 @@ __constant size_t INDEX[STATE_LENGTH + 1] = {
  * t2 = ((j%2)+1)*HALF_LENGTH - ((j)>>1);
  */
 
-typedef long trit_t;
+typedef long bc_trit_t;
 
-void increment(__global trit_t* mid_low, __global trit_t* mid_high,
+void increment(__global bc_trit_t* mid_low, __global bc_trit_t* mid_high,
                __private size_t from_index, __private size_t to_index);
-void copy_mid_to_state(__global trit_t* mid_low, __global trit_t* mid_high,
-                       __global trit_t* state_low, __global trit_t* state_high,
+void copy_mid_to_state(__global bc_trit_t* mid_low, __global bc_trit_t* mid_high,
+                       __global bc_trit_t* state_low, __global bc_trit_t* state_high,
                        __private size_t id, __private size_t l_size,
                        __private size_t l_trits);
-void transform(__global trit_t* state_low, __global trit_t* state_high,
+void transform(__global bc_trit_t* state_low, __global bc_trit_t* state_high,
                __private size_t id, __private size_t l_size,
                __private size_t l_trits);
-void check(__global trit_t* state_low, __global trit_t* state_high,
+void check(__global bc_trit_t* state_low, __global bc_trit_t* state_high,
            __global volatile char* found,
            __constant size_t* min_weight_magnitude,
-           __global trit_t* nonce_probe, __private size_t gr_id);
+           __global bc_trit_t* nonce_probe, __private size_t gr_id);
 void setup_ids(__private size_t* id, __private size_t* gid,
                __private size_t* gr_id, __private size_t* l_size,
                __private size_t* n_trits);
 
-void increment(__global trit_t* mid_low, __global trit_t* mid_high,
+void increment(__global bc_trit_t* mid_low, __global bc_trit_t* mid_high,
                __private size_t from_index, __private size_t to_index) {
   size_t i;
-  trit_t carry = 1;
-  trit_t low, hi;
+  bc_trit_t carry = 1;
+  bc_trit_t low, hi;
   for (i = from_index; i < to_index && carry != 0; i++) {
     low = mid_low[i];
     hi = mid_high[i];
@@ -98,8 +105,8 @@ void increment(__global trit_t* mid_low, __global trit_t* mid_high,
   }
 }
 
-void copy_mid_to_state(__global trit_t* mid_low, __global trit_t* mid_high,
-                       __global trit_t* state_low, __global trit_t* state_high,
+void copy_mid_to_state(__global bc_trit_t* mid_low, __global bc_trit_t* mid_high,
+                       __global bc_trit_t* state_low, __global bc_trit_t* state_high,
                        __private size_t id, __private size_t l_size,
                        __private size_t n_trits) {
   size_t i, j;
@@ -110,12 +117,12 @@ void copy_mid_to_state(__global trit_t* mid_low, __global trit_t* mid_high,
   }
 }
 
-void transform(__global trit_t* state_low, __global trit_t* state_high,
+void transform(__global bc_trit_t* state_low, __global bc_trit_t* state_high,
                __private size_t id, __private size_t l_size,
                __private size_t n_trits) {
   __private size_t round, i, j, k;
-  __private trit_t alpha, beta, gamma, delta, sp_low[3], sp_high[3];
-  for (round = 0; round < 27; round++) {
+  __private bc_trit_t alpha, beta, gamma, delta, sp_low[3], sp_high[3];
+  for (round = 0; round < NUMBER_OF_ROUNDS; round++) {
     for (i = 0; i < n_trits; i++) {
       j = id + i * l_size;
       k = j+1;
@@ -137,10 +144,10 @@ void transform(__global trit_t* state_low, __global trit_t* state_high,
   }
 }
 
-void check(__global trit_t* state_low, __global trit_t* state_high,
+void check(__global bc_trit_t* state_low, __global bc_trit_t* state_high,
            __global volatile char* found,
            __constant size_t* min_weight_magnitude,
-           __global trit_t* nonce_probe, __private size_t gr_id) {
+           __global bc_trit_t* nonce_probe, __private size_t gr_id) {
   int i;
   *nonce_probe = HIGH_BITS;
   for (i = HASH_LENGTH - *min_weight_magnitude; i < HASH_LENGTH; i++) {
@@ -168,11 +175,11 @@ void setup_ids(__private size_t* id, __private size_t* gid,
   *n_trits -= (*n_trits) * (*id) < STATE_LENGTH ? 0 : 1;
 }
 
-__kernel void init(__global char* trit_hash, __global trit_t* mid_low,
-                   __global trit_t* mid_high, __global trit_t* state_low,
-                   __global trit_t* state_high,
+__kernel void init(__global char* trit_hash, __global bc_trit_t* mid_low,
+                   __global bc_trit_t* mid_high, __global bc_trit_t* state_low,
+                   __global bc_trit_t* state_high,
                    __constant size_t* min_weight_magnitude,
-                   __global volatile char* found, __global trit_t* nonce_probe,
+                   __global volatile char* found, __global bc_trit_t* nonce_probe,
                    __constant size_t* loop_count) {
   __private size_t i, j, id, gid, gr_id, gl_off, l_size, n_trits;
   setup_ids(&id, &gid, &gr_id, &l_size, &n_trits);
@@ -193,25 +200,25 @@ __kernel void init(__global char* trit_hash, __global trit_t* mid_low,
 
   if (id == 0) {
     for (i = 0; i < gr_id + gl_off; i++) {
-      increment(&(mid_low[gid]), &(mid_high[gid]), HASH_LENGTH / 3,
-                (HASH_LENGTH / 3) * 2);
+      increment(&(mid_low[gid]), &(mid_high[gid]), NONCE_INIT_START,
+                NONCE_INCREMENT_START);
     }
   }
 }
 
-__kernel void search(__global char* trit_hash, __global trit_t* mid_low,
-                     __global trit_t* mid_high, __global trit_t* state_low,
-                     __global trit_t* state_high,
+__kernel void search(__global char* trit_hash, __global bc_trit_t* mid_low,
+                     __global bc_trit_t* mid_high, __global bc_trit_t* state_low,
+                     __global bc_trit_t* state_high,
                      __constant size_t* min_weight_magnitude,
                      __global volatile char* found,
-                     __global trit_t* nonce_probe,
+                     __global bc_trit_t* nonce_probe,
                      __constant size_t* loop_count) {
   __private size_t i, id, gid, gr_id, l_size, n_trits;
   setup_ids(&id, &gid, &gr_id, &l_size, &n_trits);
 
   for (i = 0; i < *loop_count; i++) {
     if (id == 0)
-      increment(&(mid_low[gid]), &(mid_high[gid]), (HASH_LENGTH / 3) * 2,
+      increment(&(mid_low[gid]), &(mid_high[gid]), NONCE_INCREMENT_START,
                 HASH_LENGTH);
 
     barrier(CLK_LOCAL_MEM_FENCE);
@@ -232,12 +239,12 @@ __kernel void search(__global char* trit_hash, __global trit_t* mid_low,
   }
 }
 
-__kernel void finalize(__global char* trit_hash, __global trit_t* mid_low,
-                       __global trit_t* mid_high, __global trit_t* state_low,
-                       __global trit_t* state_high,
+__kernel void finalize(__global char* trit_hash, __global bc_trit_t* mid_low,
+                       __global bc_trit_t* mid_high, __global bc_trit_t* state_low,
+                       __global bc_trit_t* state_high,
                        __constant size_t* min_weight_magnitude,
                        __global volatile char* found,
-                       __global trit_t* nonce_probe,
+                       __global bc_trit_t* nonce_probe,
                        __constant size_t* loop_count) {
   __private size_t i, j, id, gid, gr_id, l_size, n_trits;
   setup_ids(&id, &gid, &gr_id, &l_size, &n_trits);

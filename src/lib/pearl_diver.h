@@ -2,6 +2,8 @@
 #ifndef PEARLDIVER_H
 #define PEARLDIVER_H
 
+#include "curl.h"
+
 #if defined(_WIN32)
 #include <windows.h>
 #endif
@@ -44,10 +46,10 @@
 #endif
 
 typedef struct {
-  trit_t mid_low[STATE_LENGTH];
-  trit_t mid_high[STATE_LENGTH];
-  trit_t low[STATE_LENGTH];
-  trit_t high[STATE_LENGTH];
+  bc_trit_t mid_low[STATE_LENGTH];
+  bc_trit_t mid_high[STATE_LENGTH];
+  bc_trit_t low[STATE_LENGTH];
+  bc_trit_t high[STATE_LENGTH];
 } States;
 
 typedef enum {
@@ -66,12 +68,12 @@ typedef struct {
 
 void init_pearldiver(PearlDiver* ctx);
 void interrupt(PearlDiver* ctx);
-void pd_search(PearlDiver* ctx, char* const transaction_trits, int length,
+void pd_search(PearlDiver* ctx, curl_t* const curl,
                const int min_weight_magnitude, int numberOfThreads);
-void pd_transform(trit_t* const stateLow, trit_t* const stateHigh,
-                  trit_t* const scratchpadLow, trit_t* const scratchpadHigh);
-void pd_increment(trit_t* const midStateCopyLow, trit_t* const midStateCopyHigh,
+void pd_transform(bc_trit_t* const stateLow, bc_trit_t* const stateHigh,
+                  bc_trit_t* const scratchpadLow, bc_trit_t* const scratchpadHigh);
+void pd_increment(bc_trit_t* const midStateCopyLow, bc_trit_t* const midStateCopyHigh,
                   const int fromIndex, const int toIndex);
-void pd_search_init(States* states, char* transaction_trits);
+void pd_search_init(States* states, curl_t *const curl, size_t offset);
 
 #endif
