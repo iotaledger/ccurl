@@ -83,8 +83,6 @@ EXPORT char* ccurl_pow(char* trytes, int minWeightMagnitude) {
   init_curl(&curl);
   absorb(&curl, trits, TRANSACTION_LENGTH - HASH_LENGTH);
   memcpy(&curl.state, &trits[TRANSACTION_LENGTH - HASH_LENGTH], HASH_LENGTH * sizeof(char));
-  buf = trytes_from_trits(curl.state, 0, HASH_LENGTH);
-  fprintf(stderr, "Curl: %s\n", buf);
 
   if (ccurl_pow_node_init(pd_node) == 0) {
     if (pd_node->pdcl->loop_count < 1) {
@@ -105,8 +103,6 @@ EXPORT char* ccurl_pow(char* trytes, int minWeightMagnitude) {
   }
   if (pd_node->pdcl->pd.status == PD_FOUND) {
 	memcpy(&trits[TRANSACTION_LENGTH - HASH_LENGTH], &curl.state, HASH_LENGTH * sizeof(char));
-	buf = trytes_from_trits(curl.state, 0, HASH_LENGTH);
-	fprintf(stderr, "Curl: %s\n", buf);
     buf = trytes_from_trits(trits, 0, TRANSACTION_LENGTH);
   }
 
