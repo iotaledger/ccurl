@@ -45,7 +45,6 @@ int main(int argc, char* argv[]) {
       return 1;
     }
   }
-  init_converter();
   size_t length = strlen(buf);
   char* input = trits_from_trytes(buf, length);
   for(int i = 0; i < length * 3; i++ ) {
