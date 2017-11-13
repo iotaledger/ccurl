@@ -6,7 +6,7 @@
 //#define HASH_LENGTH 243
 #define TRYTE_SPACE 27
 #define MIN_TRYTE_VALUE -13
-#define MAX_TRYTE_VALUE = 13
+#define MAX_TRYTE_VALUE 13
 #define RADIX 3
 #define MAX_TRIT_VALUE (RADIX - 1) / 2
 #define MIN_TRIT_VALUE -MAX_TRIT_VALUE

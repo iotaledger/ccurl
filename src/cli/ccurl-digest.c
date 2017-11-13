@@ -15,7 +15,7 @@
 int main(int argc, char* argv[]) {
   char* buf;
 
-  if (argc > 1 && strlen(argv[1]) >= TRYTE_LENGTH) {
+  if (argc > 1) {
     buf = argv[1];
     // memcpy(buf, argv[1], sizeof(char)*TRYTE_LENGTH);
   } else {
