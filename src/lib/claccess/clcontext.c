@@ -30,7 +30,8 @@ int check_clerror(cl_int err, char *comment, ...) {
 */
 
 void free_platforms(cl_platform_id* platforms, cl_uint num_platforms) {
-  for (cl_uint i = 0; i < num_platforms; i++) {
+  cl_uint i = 0;
+  for (i = 0; i < num_platforms; i++) {
     clUnloadPlatformCompiler(platforms[i]);
   }
   free(platforms);
